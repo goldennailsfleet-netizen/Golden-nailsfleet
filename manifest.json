@@ -1,0 +1,22 @@
+{
+  "name": "Golden Nails Fleet",
+  "short_name": "GN Fleet",
+  "description": "نظام إدارة الأسطول الزراعي",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#1a3a2a",
+  "theme_color": "#1a3a2a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/1a3a2a/d4a017?text=GN",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/1a3a2a/d4a017?text=GN",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
