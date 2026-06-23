@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a3a2a" />
+  <title>Golden Nails Fleet</title>
+  <link rel="manifest" href="manifest.json" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDKs (compat version - no import needed) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root {
+      --green-dark:#1a3a2a; --green-mid:#2d6a4f; --green-light:#52b788;
+      --gold:#d4a017; --gold-light:#f0c040; --bg:#f5f7f5; --card:#ffffff;
+      --text:#1a2a1a; --muted:#6b7c6b; --danger:#c0392b; --warning:#e67e22;
+      --radius:12px; --shadow:0 2px 12px rgba(0,0,0,0.08);
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    body.lang-en { font-family:'Inter',sans-serif; }
+
+    #auth-screen { min-height:100vh; background:linear-gradient(160deg,var(--green-dark),var(--green-mid)); display:flex; align-items:center; justify-content:center; padding:24px; }
+    .auth-card { background:var(--card); border-radius:20px; padding:36px 28px; width:100%; max-width:380px; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+    .auth-logo { text-align:center; margin-bottom:28px; }
+    .auth-logo .icon { font-size:48px; }
+    .auth-logo h1 { font-size:22px; font-weight:900; color:var(--green-dark); margin-top:8px; }
+    .auth-logo p  { font-size:13px; color:var(--muted); }
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-size:13px; font-weight:600; color:var(--muted); margin-bottom:6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width:100%; padding:12px 14px; border:1.5px solid #dde8dd;
+      border-radius:var(--radius); font-family:inherit; font-size:15px; outline:none; transition:border 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color:var(--green-light); }
+    .form-group select { background:#fff; }
+    .form-group textarea { resize:vertical; min-height:80px; }
+    .btn-primary { width:100%; padding:13px; background:var(--green-mid); color:#fff; border:none; border-radius:var(--radius); font-family:inherit; font-size:16px; font-weight:700; cursor:pointer; }
+    .auth-error { color:var(--danger); font-size:13px; text-align:center; margin-top:10px; display:none; }
+    .auth-lang-row { text-align:center; margin-top:14px; }
+    .lang-switch-btn { background:none; border:1.5px solid #dde8dd; color:var(--muted); border-radius:20px; padding:5px 20px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+
+    #app { display:none; flex-direction:column; min-height:100vh; }
+    .app-header { background:var(--green-dark); color:#fff; padding:13px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+    .app-header h2 { font-size:16px; font-weight:700; }
+    .header-actions { display:flex; gap:8px; align-items:center; }
+    .btn-icon { background:rgba(255,255,255,0.12); border:none; color:#fff; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; }
+    .lang-pill { background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.3); color:#fff; border-radius:20px; padding:4px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
+
+    .main-content { flex:1; padding:16px; max-width:600px; margin:0 auto; width:100%; padding-bottom:80px; }
+    .nav-tabs { display:flex; background:var(--card); border-radius:var(--radius); padding:4px; margin-bottom:16px; box-shadow:var(--shadow); gap:4px; }
+    .nav-tab { flex:1; padding:9px 4px; border:none; background:transparent; font-family:inherit; font-size:12px; font-weight:600; color:var(--muted); border-radius:8px; cursor:pointer; transition:all 0.2s; }
+    .nav-tab.active { background:var(--green-mid); color:#fff; }
+
+    .card { background:var(--card); border-radius:var(--radius); padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+    .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .card-title { font-size:16px; font-weight:700; }
+    .card-subtitle { font-size:12px; color:var(--muted); margin-top:2px; }
+
+    .stats-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+    .stat-card { background:var(--card); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); text-align:center; }
+    .stat-value { font-size:26px; font-weight:900; color:var(--green-mid); }
+    .stat-label { font-size:11px; color:var(--muted); margin-top:2px; }
+    .stat-card.gold .stat-value { color:var(--gold); }
+    .stat-card.danger .stat-value { color:var(--danger); }
+
+    .machine-item { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eef2ee; }
+    .machine-item:last-child { border-bottom:none; }
+    .machine-info { flex:1; }
+    .machine-name { font-size:14px; font-weight:700; }
+    .machine-meta { font-size:12px; color:var(--muted); margin-top:3px; }
+    .machine-status { font-size:11px; font-weight:700; padding:3px 8px; border-radius:20px; margin-right:6px; }
+    .status-ok    { background:#e8f5e9; color:#2e7d32; }
+    .status-maint { background:#fff3e0; color:var(--warning); }
+    .status-broken{ background:#ffebee; color:var(--danger); }
+
+    .btn-sm { padding:6px 11px; border-radius:8px; border:none; font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; margin-right:4px; }
+    .btn-outline { background:transparent; border:1.5px solid var(--green-light); color:var(--green-mid); }
+    .btn-green-sm { background:#e8f5e9; color:#2e7d32; }
+    .btn-danger-sm{ background:#ffebee; color:var(--danger); }
+
+    .cost-badge { font-size:13px; font-weight:700; color:var(--gold); background:#fdf3d0; padding:4px 10px; border-radius:20px; white-space:nowrap; }
+    .section-title { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:20px 0 10px; }
+
+    .fab { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--gold); color:var(--green-dark); border:none; border-radius:50px; padding:14px 28px; font-family:inherit; font-size:15px; font-weight:900; cursor:pointer; box-shadow:0 4px 16px rgba(212,160,23,0.4); z-index:50; }
+
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:flex-end; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--card); border-radius:20px 20px 0 0; padding:24px 20px 40px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; animation:slideUp 0.25s ease; }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .modal-title { font-size:18px; font-weight:900; margin-bottom:20px; color:var(--green-dark); }
+    .modal-close { float:right; background:none; border:none; font-size:22px; cursor:pointer; color:var(--muted); }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    .report-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eef2ee; }
+    .report-row:last-child { border-bottom:none; }
+    .report-label { font-size:13px; color:var(--muted); }
+    .report-value { font-size:14px; font-weight:700; }
+    .report-total { background:var(--green-dark); color:#fff; border-radius:var(--radius); padding:14px 16px; display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+    .report-total span:last-child { font-size:20px; font-weight:900; color:var(--gold-light); }
+
+    .alert-bubble { background:#fff3e0; border-right:4px solid var(--warning); border-radius:var(--radius); padding:12px 14px; margin-bottom:10px; font-size:13px; }
+    .alert-bubble.danger { background:#ffebee; border-color:var(--danger); }
+    .empty { text-align:center; padding:40px 20px; color:var(--muted); }
+    .empty .emoji { font-size:40px; margin-bottom:12px; }
+    .loader { text-align:center; padding:40px; color:var(--muted); font-size:14px; }
+    .tag { display:inline-block; font-size:11px; padding:3px 8px; border-radius:10px; font-weight:600; }
+    .tag-admin { background:#e8f5e9; color:#2e7d32; }
+    .tag-user  { background:#e3f2fd; color:#1565c0; }
+  </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="icon">🚜</div>
+      <h1>Golden Nails Fleet</h1>
+      <p id="auth-sub">نظام إدارة الأسطول الزراعي</p>
+    </div>
+    <div class="form-group">
+      <label id="lbl-email">البريد الإلكتروني</label>
+      <input type="email" id="login-email" placeholder="example@mail.com" />
+    </div>
+    <div class="form-group">
+      <label id="lbl-pass">كلمة المرور</label>
+      <input type="password" id="login-pass" placeholder="••••••••" />
+    </div>
+    <button class="btn-primary" id="btn-login" onclick="doLogin()">دخول</button>
+    <p class="auth-error" id="auth-error">بيانات خاطئة، حاول مجدداً</p>
+    <div class="auth-lang-row">
+      <button class="lang-switch-btn" onclick="toggleLang()">English</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="app-header">
+    <h2>🚜 Golden Nails Fleet</h2>
+    <div class="header-actions">
+      <span id="user-tag" class="tag"></span>
+      <button class="lang-pill" onclick="toggleLang()" id="lang-pill">EN</button>
+      <button class="btn-icon" onclick="doLogout()">🚪</button>
+    </div>
+  </header>
+  <div class="main-content">
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-btn-dashboard" onclick="showTab('dashboard')">الرئيسية</button>
+      <button class="nav-tab" id="tab-btn-machines"  onclick="showTab('machines')">الآليات</button>
+      <button class="nav-tab" id="tab-btn-costs"     onclick="showTab('costs')">التكاليف</button>
+      <button class="nav-tab admin-only" id="tab-btn-reports" onclick="showTab('reports')" style="display:none">التقارير</button>
+    </div>
+    <div id="tab-dashboard"></div>
+    <div id="tab-machines"  style="display:none"></div>
+    <div id="tab-costs"     style="display:none"></div>
+    <div id="tab-reports"   style="display:none"></div>
+  </div>
+  <button class="fab admin-only" id="fab-btn" onclick="openAddMachine()" style="display:none">＋ <span id="fab-label">إضافة آلية</span></button>
+</div>
+
+<!-- MODAL: Add Machine -->
+<div class="modal-overlay" id="modal-machine">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-machine')">✕</button>
+    <div class="modal-title" id="mm-title">➕ إضافة آلية جديدة</div>
+    <div class="form-group"><label id="mm-lbl-name">اسم الآلية</label><input type="text" id="m-name" /></div>
+    <div class="form-row">
+      <div class="form-group"><label id="mm-lbl-type">النوع</label>
+        <select id="m-type">
+          <option>Hedge Trimmer</option><option>Blower</option><option>Push Mower</option>
+          <option>Brush Cutter</option><option>Small Tractor</option><option>Spray Machine</option>
+          <option>SAW</option><option>Lawn Mower</option><option>Tractor</option>
+          <option>Grass Edging Machine</option><option>Aerator Machine</option><option>Other / أخرى</option>
+        </select>
+      </div>
+      <div class="form-group"><label id="mm-lbl-brand">الماركة</label><input type="text" id="m-brand" placeholder="Honda, Makita..." /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label id="mm-lbl-project">المشروع</label>
+        <select id="m-project">
+          <option>1 Group</option><option>14 Group</option><option>8th Group</option>
+          <option>Egla Gardens</option><option>MOEHE</option><option>Q.U(2)</option>
+          <option>QU</option><option>Store</option><option>U.C.C</option>
+        </select>
+      </div>
+      <div class="form-group"><label id="mm-lbl-number">رقم الآلية</label><input type="text" id="m-number" placeholder="GNF-001" /></div>
+    </div>
+    <div class="form-group"><label id="mm-lbl-status">الحالة</label>
+      <select id="m-status">
+        <option value="ok">✅ شغالة / Working</option>
+        <option value="maint">🔧 صيانة / Maintenance</option>
+        <option value="broken">🔴 عطل / Broken</option>
+      </select>
+    </div>
+    <div class="form-group"><label id="mm-lbl-notes">ملاحظات</label><textarea id="m-notes"></textarea></div>
+    <button class="btn-primary" id="mm-btn-save" onclick="saveMachine()">حفظ</button>
+  </div>
+</div>
+
+<!-- MODAL: Add Cost -->
+<div class="modal-overlay" id="modal-cost">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-cost')">✕</button>
+    <div class="modal-title" id="cost-modal-title">💰 إضافة تكلفة</div>
+    <div class="form-group"><label id="mc-lbl-type">نوع التكلفة</label>
+      <select id="c-type">
+        <option value="invoice">فاتورة صيانة / Invoice</option>
+        <option value="petty">بتي كاش / Petty Cash</option>
+        <option value="debt">دين / Debt</option>
+        <option value="rent">إيجار / Rent</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label id="mc-lbl-amount">المبلغ ($)</label><input type="number" id="c-amount" placeholder="0.00" /></div>
+      <div class="form-group"><label id="mc-lbl-date">التاريخ</label><input type="date" id="c-date" /></div>
+    </div>
+    <div class="form-group"><label id="mc-lbl-desc">الوصف</label><textarea id="c-desc"></textarea></div>
+    <div class="form-group"><label id="mc-lbl-supplier">المورد / الكراج</label><input type="text" id="c-supplier" /></div>
+    <input type="hidden" id="c-machine-id" />
+    <button class="btn-primary" id="mc-btn-save" onclick="saveCost()">حفظ</button>
+  </div>
+</div>
+
+<!-- MODAL: Detail -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-detail')">✕</button>
+    <div class="modal-title" id="detail-title"></div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- MODAL: Report -->
+<div class="modal-overlay" id="modal-report">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-report')">✕</button>
+    <div class="modal-title" id="report-modal-title">📋 بلاغ</div>
+    <div class="form-group"><label id="mr-lbl-type">النوع</label>
+      <select id="r-type">
+        <option value="maintenance">🔧 صيانة / Maintenance</option>
+        <option value="breakdown">🔴 عطل / Breakdown</option>
+      </select>
+    </div>
+    <div class="form-group"><label id="mr-lbl-desc">الوصف</label><textarea id="r-desc"></textarea></div>
+    <div class="form-group"><label id="mr-lbl-date">التاريخ</label><input type="date" id="r-date" /></div>
+    <input type="hidden" id="r-machine-id" />
+    <button class="btn-primary" id="mr-btn-save" onclick="saveReport()">إرسال</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  FIREBASE INIT (compat - no import)
+// ══════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyAK7cJ3jNXC0uCoo4fDkAsraq8eiZTr-uo",
+  authDomain: "golden-nails-fleet.firebaseapp.com",
+  projectId: "golden-nails-fleet",
+  storageBucket: "golden-nails-fleet.firebasestorage.app",
+  messagingSenderId: "73563212206",
+  appId: "1:73563212206:web:a56728f31c51abf9a1603f"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ══════════════════════════════════════
+//  TRANSLATIONS
+// ══════════════════════════════════════
+const TR = {
+  ar: {
+    authSub:'نظام إدارة الأسطول الزراعي', lblEmail:'البريد الإلكتروني', lblPass:'كلمة المرور',
+    btnLogin:'دخول', authErr:'بيانات خاطئة، حاول مجدداً', langSwitch:'English', langPill:'EN',
+    tabDash:'الرئيسية', tabMachines:'الآليات', tabCosts:'التكاليف', tabReports:'التقارير',
+    fabLabel:'إضافة آلية', tagAdmin:'مدير',
+    statTotal:'إجمالي الآليات', statCost:'إجمالي التكاليف $', statMaint:'قيد الصيانة', statBroken:'أعطال',
+    alertsTitle:'آخر التنبيهات', noAlerts:'لا توجد تنبيهات',
+    loading:'جاري التحميل...', noMachines:'لا توجد آليات بعد',
+    btnDetails:'تفاصيل', btnReport:'بلاغ',
+    statusOk:'✅ شغالة', statusMaint:'🔧 صيانة', statusBroken:'🔴 عطل',
+    mmTitle:'➕ إضافة آلية', mmName:'اسم الآلية', mmType:'النوع', mmBrand:'الماركة',
+    mmProject:'المشروع', mmNumber:'رقم الآلية', mmStatus:'الحالة', mmNotes:'ملاحظات', mmSave:'حفظ الآلية',
+    enterName:'أدخل اسم الآلية',
+    noCosts:'لا توجد تكاليف', addCostBtn:'+ إضافة تكلفة', addCostTitle:'💰 إضافة تكلفة', costFor:'💰 تكلفة:',
+    mcType:'نوع التكلفة', mcAmount:'المبلغ ($)', mcDate:'التاريخ', mcDesc:'الوصف', mcSupplier:'المورد / الكراج', mcSave:'حفظ',
+    enterAmount:'أدخل المبلغ',
+    typeLabels:{ invoice:'فواتير الصيانة', petty:'البتي كاش', debt:'الديون', rent:'الإيجارات' },
+    grandTotal:'الإجمالي الكلي', totalCosts:'إجمالي التكاليف', adminOnly:'هذا القسم للمدير فقط',
+    detType:'النوع', detBrand:'الماركة', detNumber:'الرقم', detProject:'المشروع', detStatus:'الحالة',
+    detNotes:'ملاحظات', detCosts:'التكاليف', detReports:'البلاغات والصيانة', noReports:'لا توجد بلاغات',
+    changeStatus:'تغيير الحالة', addReportBtn:'+ تسجيل بلاغ', reportsLogged:'بلاغ مسجل',
+    reportsPerMachine:'تقرير التكاليف لكل آلية',
+    reportTitle:'📋 بلاغ:', mrType:'النوع', mrDesc:'الوصف', mrDate:'التاريخ', mrSave:'إرسال',
+    enterDesc:'اشرح المشكلة', sent:'تم الإرسال ✅',
+    maintenance:'🔧 صيانة', breakdown:'🔴 عطل',
+  },
+  en: {
+    authSub:'Agricultural Fleet Management', lblEmail:'Email', lblPass:'Password',
+    btnLogin:'Login', authErr:'Invalid credentials', langSwitch:'عربي', langPill:'AR',
+    tabDash:'Dashboard', tabMachines:'Machines', tabCosts:'Costs', tabReports:'Reports',
+    fabLabel:'Add Machine', tagAdmin:'Admin',
+    statTotal:'Total Machines', statCost:'Total Costs $', statMaint:'In Maintenance', statBroken:'Breakdowns',
+    alertsTitle:'Latest Alerts', noAlerts:'No alerts',
+    loading:'Loading...', noMachines:'No machines yet',
+    btnDetails:'Details', btnReport:'Report',
+    statusOk:'✅ Working', statusMaint:'🔧 Maintenance', statusBroken:'🔴 Broken',
+    mmTitle:'➕ Add Machine', mmName:'Machine Name', mmType:'Type', mmBrand:'Brand',
+    mmProject:'Project', mmNumber:'Machine Number', mmStatus:'Status', mmNotes:'Notes', mmSave:'Save Machine',
+    enterName:'Enter machine name',
+    noCosts:'No costs recorded', addCostBtn:'+ Add Cost', addCostTitle:'💰 Add Cost', costFor:'💰 Cost:',
+    mcType:'Cost Type', mcAmount:'Amount ($)', mcDate:'Date', mcDesc:'Description', mcSupplier:'Supplier / Garage', mcSave:'Save',
+    enterAmount:'Enter amount',
+    typeLabels:{ invoice:'Maintenance Invoices', petty:'Petty Cash', debt:'Debts', rent:'Rent' },
+    grandTotal:'Grand Total', totalCosts:'Total Costs', adminOnly:'Admin only section',
+    detType:'Type', detBrand:'Brand', detNumber:'Number', detProject:'Project', detStatus:'Status',
+    detNotes:'Notes', detCosts:'Costs', detReports:'Reports & Maintenance', noReports:'No reports',
+    changeStatus:'Change Status', addReportBtn:'+ Add Report', reportsLogged:'report(s)',
+    reportsPerMachine:'Cost Report Per Machine',
+    reportTitle:'📋 Report:', mrType:'Type', mrDesc:'Description', mrDate:'Date', mrSave:'Send',
+    enterDesc:'Describe the issue', sent:'Sent successfully ✅',
+    maintenance:'🔧 Maintenance', breakdown:'🔴 Breakdown',
+  }
+};
+
+let currentLang = localStorage.getItem('gnf-lang') || 'ar';
+function t(key) { return TR[currentLang][key] || key; }
+
+function applyLang() {
+  const isAr = currentLang === 'ar';
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir  = isAr ? 'rtl' : 'ltr';
+  document.body.classList.toggle('lang-en', !isAr);
+  document.getElementById('auth-sub').textContent    = t('authSub');
+  document.getElementById('lbl-email').textContent   = t('lblEmail');
+  document.getElementById('lbl-pass').textContent    = t('lblPass');
+  document.getElementById('btn-login').textContent   = t('btnLogin');
+  document.getElementById('auth-error').textContent  = t('authErr');
+  document.querySelector('.lang-switch-btn').textContent = t('langSwitch');
+  document.getElementById('lang-pill').textContent   = t('langPill');
+  document.getElementById('tab-btn-dashboard').textContent = t('tabDash');
+  document.getElementById('tab-btn-machines').textContent  = t('tabMachines');
+  document.getElementById('tab-btn-costs').textContent     = t('tabCosts');
+  document.getElementById('tab-btn-reports').textContent   = t('tabReports');
+  document.getElementById('fab-label').textContent   = t('fabLabel');
+  document.getElementById('mm-title').textContent    = t('mmTitle');
+  document.getElementById('mm-lbl-name').textContent = t('mmName');
+  document.getElementById('mm-lbl-type').textContent = t('mmType');
+  document.getElementById('mm-lbl-brand').textContent= t('mmBrand');
+  document.getElementById('mm-lbl-project').textContent = t('mmProject');
+  document.getElementById('mm-lbl-number').textContent  = t('mmNumber');
+  document.getElementById('mm-lbl-status').textContent  = t('mmStatus');
+  document.getElementById('mm-lbl-notes').textContent   = t('mmNotes');
+  document.getElementById('mm-btn-save').textContent    = t('mmSave');
+  document.getElementById('mc-lbl-type').textContent    = t('mcType');
+  document.getElementById('mc-lbl-amount').textContent  = t('mcAmount');
+  document.getElementById('mc-lbl-date').textContent    = t('mcDate');
+  document.getElementById('mc-lbl-desc').textContent    = t('mcDesc');
+  document.getElementById('mc-lbl-supplier').textContent= t('mcSupplier');
+  document.getElementById('mc-btn-save').textContent    = t('mcSave');
+  document.getElementById('mr-lbl-type').textContent    = t('mrType');
+  document.getElementById('mr-lbl-desc').textContent    = t('mrDesc');
+  document.getElementById('mr-lbl-date').textContent    = t('mrDate');
+  document.getElementById('mr-btn-save').textContent    = t('mrSave');
+  if (activeTab) renderCurrentTab(activeTab);
+}
+
+window.toggleLang = function() {
+  currentLang = currentLang === 'ar' ? 'en' : 'ar';
+  localStorage.setItem('gnf-lang', currentLang);
+  applyLang();
+};
+
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let currentUser = null, userRole = 'user', userProject = null, allMachines = [], activeTab = 'dashboard';
+
+// ══════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════
+window.doLogin = function() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  auth.signInWithEmailAndPassword(email, pass).catch(function() {
+    document.getElementById('auth-error').style.display = 'block';
+  });
+};
+window.doLogout = function() { auth.signOut(); };
+
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    currentUser = user;
+    db.collection('users').doc(user.uid).get().then(function(doc) {
+      if (doc.exists) {
+        userRole    = doc.data().role    || 'user';
+        userProject = doc.data().project || null;
+      } else {
+        userRole = 'admin';
+      }
+      showApp();
+    });
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('auth-error').style.display = 'none';
+  var tag = document.getElementById('user-tag');
+  if (userRole === 'admin') {
+    tag.textContent = t('tagAdmin'); tag.className = 'tag tag-admin';
+    document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display=''; });
+  } else {
+    tag.textContent = userProject || ''; tag.className = 'tag tag-user';
+  }
+  applyLang();
+  loadDashboard();
+}
+
+// ══════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════
+window.showTab = function(tab) {
+  activeTab = tab;
+  ['dashboard','machines','costs','reports'].forEach(function(t2){
+    document.getElementById('tab-'+t2).style.display = t2===tab ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-tab').forEach(function(el,i){
+    el.classList.toggle('active', ['dashboard','machines','costs','reports'][i]===tab);
+  });
+  renderCurrentTab(tab);
+};
+
+function renderCurrentTab(tab) {
+  if (tab==='dashboard') loadDashboard();
+  else if (tab==='machines') loadMachines();
+  else if (tab==='costs')    loadCosts();
+  else if (tab==='reports' && userRole==='admin') loadReports();
+}
+
+// ══════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════
+function loadDashboard() {
+  var el = document.getElementById('tab-dashboard');
+  el.innerHTML = '<div class="loader">'+t('loading')+'</div>';
+  db.collection('machines').get().then(function(snap) {
+    allMachines = [];
+    snap.forEach(function(d){ allMachines.push(Object.assign({id:d.id},d.data())); });
+    var visible = userRole==='admin' ? allMachines : allMachines.filter(function(m){ return m.project===userProject; });
+    db.collection('costs').get().then(function(csnap) {
+      var total = 0;
+      csnap.forEach(function(d){
+        var c = d.data();
+        if (userRole==='admin' || visible.find(function(m){ return m.id===c.machineId; }))
+          total += parseFloat(c.amount||0);
+      });
+      var alerts = visible.filter(function(m){ return m.status==='broken'||m.status==='maint'; });
+      el.innerHTML =
+        '<div class="stats-row">'+
+          '<div class="stat-card"><div class="stat-value">'+visible.length+'</div><div class="stat-label">'+t('statTotal')+'</div></div>'+
+          '<div class="stat-card gold"><div class="stat-value">'+total.toFixed(0)+'</div><div class="stat-label">'+t('statCost')+'</div></div>'+
+          '<div class="stat-card"><div class="stat-value">'+visible.filter(function(m){return m.status==='maint';}).length+'</div><div class="stat-label">'+t('statMaint')+'</div></div>'+
+          '<div class="stat-card danger"><div class="stat-value">'+visible.filter(function(m){return m.status==='broken';}).length+'</div><div class="stat-label">'+t('statBroken')+'</div></div>'+
+        '</div>'+
+        '<div class="section-title">'+t('alertsTitle')+'</div>'+
+        (alerts.length===0
+          ? '<div class="empty"><div class="emoji">✅</div><p>'+t('noAlerts')+'</p></div>'
+          : alerts.map(function(m){
+              return '<div class="alert-bubble '+(m.status==='broken'?'danger':'')+'"><strong>'+m.name+'</strong> — '+(m.status==='broken'?t('statusBroken'):t('statusMaint'))+'<br><small>'+m.project+'</small></div>';
+            }).join(''));
+    });
+  });
+}
+
+// ══════════════════════════════════════
+//  MACHINES
+// ══════════════════════════════════════
+function loadMachines() {
+  var list = document.getElementById('tab-machines');
+  list.innerHTML = '<div class="loader">'+t('loading')+'</div>';
+  db.collection('machines').get().then(function(snap) {
+    allMachines = [];
+    snap.forEach(function(d){ allMachines.push(Object.assign({id:d.id},d.data())); });
+    var visible = userRole==='admin' ? allMachines : allMachines.filter(function(m){ return m.project===userProject; });
+    if (!visible.length) {
+      list.innerHTML = '<div class="empty"><div class="emoji">🚜</div><p>'+t('noMachines')+'</p></div>';
+      return;
+    }
+    var byProject = {};
+    visible.forEach(function(m){ if(!byProject[m.project]) byProject[m.project]=[]; byProject[m.project].push(m); });
+    list.innerHTML = Object.keys(byProject).map(function(proj){
+      return '<div class="section-title">'+proj+'</div><div class="card">'+
+        byProject[proj].map(function(m){
+          return '<div class="machine-item">'+
+            '<div class="machine-info">'+
+              '<div class="machine-name">'+m.name+'<span class="machine-status '+sClass(m.status)+'">'+sLabel(m.status)+'</span></div>'+
+              '<div class="machine-meta">'+m.type+' · '+(m.brand||'')+' · '+(m.number||'')+'</div>'+
+            '</div>'+
+            '<div>'+
+              '<button class="btn-sm btn-outline" onclick="openDetail(\''+m.id+'\')">'+t('btnDetails')+'</button>'+
+              (userRole!=='admin'?'<button class="btn-sm btn-danger-sm" onclick="openReport(\''+m.id+'\',\''+m.name+'\')">'+t('btnReport')+'</button>':'')+
+            '</div>'+
+          '</div>';
+        }).join('')+'</div>';
+    }).join('');
+  });
+}
+
+// ══════════════════════════════════════
+//  COSTS
+// ══════════════════════════════════════
+function loadCosts() {
+  var list = document.getElementById('tab-costs');
+  list.innerHTML = '<div class="loader">'+t('loading')+'</div>';
+  if (userRole!=='admin') {
+    list.innerHTML = '<div class="empty"><div class="emoji">🔒</div><p>'+t('adminOnly')+'</p></div>';
+    return;
+  }
+  db.collection('costs').get().then(function(snap) {
+    var costs = [];
+    snap.forEach(function(d){ costs.push(Object.assign({id:d.id},d.data())); });
+    if (!costs.length) {
+      list.innerHTML = '<div class="empty"><div class="emoji">💰</div><p>'+t('noCosts')+'</p></div>'+
+        '<div style="text-align:center;margin-top:16px"><button class="btn-primary" style="width:auto;padding:10px 24px" onclick="openAddCost()">'+t('addCostBtn')+'</button></div>';
+      return;
+    }
+    var byType = {invoice:[],petty:[],debt:[],rent:[]};
+    var total = 0;
+    costs.forEach(function(c){ if(byType[c.type]) byType[c.type].push(c); total+=parseFloat(c.amount||0); });
+    list.innerHTML =
+      '<div style="margin-bottom:12px"><button class="btn-sm btn-outline" onclick="openAddCost()">'+t('addCostBtn')+'</button></div>'+
+      Object.keys(byType).filter(function(k){ return byType[k].length; }).map(function(type){
+        var items = byType[type];
+        var sub = items.reduce(function(s,c){ return s+parseFloat(c.amount||0); },0);
+        return '<div class="section-title">'+t('typeLabels')[type]+' — $'+sub.toFixed(2)+'</div>'+
+          '<div class="card">'+items.map(function(c){
+            var machine = allMachines.find(function(m){ return m.id===c.machineId; });
+            return '<div class="machine-item">'+
+              '<div class="machine-info"><div class="machine-name">'+(c.desc||'—')+'</div>'+
+              '<div class="machine-meta">'+(machine?machine.name:'—')+' · '+(c.supplier||'')+' · '+(c.date||'')+'</div></div>'+
+              '<span class="cost-badge">$'+parseFloat(c.amount).toFixed(2)+'</span></div>';
+          }).join('')+'</div>';
+      }).join('')+
+      '<div class="report-total"><span>'+t('grandTotal')+'</span><span>$'+total.toFixed(2)+'</span></div>';
+  });
+}
+
+// ══════════════════════════════════════
+//  REPORTS TAB
+// ══════════════════════════════════════
+function loadReports() {
+  var content = document.getElementById('tab-reports');
+  content.innerHTML = '<div class="loader">'+t('loading')+'</div>';
+  Promise.all([
+    db.collection('machines').get(),
+    db.collection('costs').get(),
+    db.collection('reports').get()
+  ]).then(function(results) {
+    var machines=[]; results[0].forEach(function(d){ machines.push(Object.assign({id:d.id},d.data())); });
+    var costs=[];    results[1].forEach(function(d){ costs.push(d.data()); });
+    var reports=[];  results[2].forEach(function(d){ reports.push(d.data()); });
+    var machineCosts = {};
+    costs.forEach(function(c){ if(!machineCosts[c.machineId]) machineCosts[c.machineId]=0; machineCosts[c.machineId]+=parseFloat(c.amount||0); });
+    var totalAll = costs.reduce(function(s,c){ return s+parseFloat(c.amount||0); },0);
+    content.innerHTML =
+      '<div class="section-title">'+t('reportsPerMachine')+'</div>'+
+      machines.map(function(m){
+        var cost = machineCosts[m.id]||0;
+        var mReps = reports.filter(function(r){ return r.machineId===m.id; });
+        return '<div class="card"><div class="card-header">'+
+          '<div><div class="card-title">'+m.name+'</div><div class="card-subtitle">'+m.project+' · '+m.type+'</div></div>'+
+          '<span class="cost-badge">$'+cost.toFixed(2)+'</span></div>'+
+          (mReps.length?'<div style="font-size:12px;color:var(--muted)">'+mReps.length+' '+t('reportsLogged')+'</div>':'')+
+          '</div>';
+      }).join('')+
+      '<div class="report-total"><span>'+t('grandTotal')+'</span><span>$'+totalAll.toFixed(2)+'</span></div>';
+  });
+}
+
+// ══════════════════════════════════════
+//  DETAIL
+// ══════════════════════════════════════
+window.openDetail = function(id) {
+  var m = allMachines.find(function(x){ return x.id===id; });
+  if (!m) return;
+  document.getElementById('detail-title').textContent = m.name;
+  Promise.all([
+    db.collection('costs').where('machineId','==',id).get(),
+    db.collection('reports').where('machineId','==',id).get()
+  ]).then(function(results) {
+    var costs=[]; results[0].forEach(function(d){ costs.push(d.data()); });
+    var reps=[];  results[1].forEach(function(d){ reps.push(d.data()); });
+    var totalCost = costs.reduce(function(s,c){ return s+parseFloat(c.amount||0); },0);
+    document.getElementById('detail-content').innerHTML =
+      '<div class="report-row"><span class="report-label">'+t('detType')+'</span><span class="report-value">'+m.type+'</span></div>'+
+      '<div class="report-row"><span class="report-label">'+t('detBrand')+'</span><span class="report-value">'+(m.brand||'—')+'</span></div>'+
+      '<div class="report-row"><span class="report-label">'+t('detNumber')+'</span><span class="report-value">'+(m.number||'—')+'</span></div>'+
+      '<div class="report-row"><span class="report-label">'+t('detProject')+'</span><span class="report-value">'+m.project+'</span></div>'+
+      '<div class="report-row"><span class="report-label">'+t('detStatus')+'</span><span class="report-value">'+sLabel(m.status)+'</span></div>'+
+      (m.notes?'<div class="report-row"><span class="report-label">'+t('detNotes')+'</span><span class="report-value">'+m.notes+'</span></div>':'')+
+      (userRole==='admin'?
+        '<div class="section-title" style="margin-top:16px">'+t('detCosts')+' ('+costs.length+')</div>'+
+        (costs.length?costs.map(function(c){
+          return '<div class="alert-bubble"><strong>'+(c.desc||'—')+'</strong> · $'+parseFloat(c.amount).toFixed(2)+'<br><small>'+(c.supplier||'')+' · '+(c.date||'')+'</small></div>';
+        }).join(''):'<p style="font-size:13px;color:var(--muted)">'+t('noCosts')+'</p>')+
+        '<div class="report-total" style="margin-top:8px"><span>'+t('totalCosts')+'</span><span>$'+totalCost.toFixed(2)+'</span></div><br>'+
+        '<button class="btn-sm btn-outline" onclick="openAddCostForMachine(\''+id+'\',\''+m.name+'\')">'+t('addCostBtn')+'</button>'+
+        '<button class="btn-sm btn-green-sm" onclick="changeStatus(\''+id+'\')">'+t('changeStatus')+'</button>'
+      :'')+
+      '<div class="section-title" style="margin-top:16px">'+t('detReports')+' ('+reps.length+')</div>'+
+      (reps.length?reps.map(function(r){
+        return '<div class="alert-bubble '+(r.type==='breakdown'?'danger':'')+'"><strong>'+(r.type==='breakdown'?t('breakdown'):t('maintenance'))+'</strong><br>'+r.desc+'<br><small>'+(r.date||'')+'</small></div>';
+      }).join(''):'<p style="font-size:13px;color:var(--muted)">'+t('noReports')+'</p>')+
+      (userRole!=='admin'?'<br><button class="btn-primary" onclick="openReport(\''+id+'\',\''+m.name+'\')">'+t('addReportBtn')+'</button>':'');
+    document.getElementById('modal-detail').classList.add('open');
+  });
+};
+
+window.changeStatus = function(id) {
+  var m = allMachines.find(function(x){ return x.id===id; });
+  var next = m.status==='ok'?'maint':m.status==='maint'?'broken':'ok';
+  db.collection('machines').doc(id).update({status:next}).then(function(){
+    closeModal('modal-detail'); loadMachines(); loadDashboard();
+  });
+};
+
+// ══════════════════════════════════════
+//  ADD MACHINE
+// ══════════════════════════════════════
+window.openAddMachine = function() { document.getElementById('modal-machine').classList.add('open'); };
+window.saveMachine = function() {
+  var name = document.getElementById('m-name').value.trim();
+  if (!name) return alert(t('enterName'));
+  db.collection('machines').add({
+    name: name,
+    type: document.getElementById('m-type').value,
+    brand: document.getElementById('m-brand').value.trim(),
+    project: document.getElementById('m-project').value,
+    number: document.getElementById('m-number').value.trim(),
+    status: document.getElementById('m-status').value,
+    notes: document.getElementById('m-notes').value.trim(),
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    closeModal('modal-machine');
+    document.getElementById('m-name').value='';
+    loadMachines(); loadDashboard();
+  });
+};
+
+// ══════════════════════════════════════
+//  ADD COST
+// ══════════════════════════════════════
+window.openAddCost = function() {
+  document.getElementById('cost-modal-title').textContent = t('addCostTitle');
+  document.getElementById('c-machine-id').value = '';
+  document.getElementById('c-date').value = today();
+  document.getElementById('modal-cost').classList.add('open');
+};
+window.openAddCostForMachine = function(id, name) {
+  closeModal('modal-detail');
+  document.getElementById('cost-modal-title').textContent = t('costFor')+' '+name;
+  document.getElementById('c-machine-id').value = id;
+  document.getElementById('c-date').value = today();
+  document.getElementById('modal-cost').classList.add('open');
+};
+window.saveCost = function() {
+  var amount = document.getElementById('c-amount').value;
+  if (!amount) return alert(t('enterAmount'));
+  db.collection('costs').add({
+    machineId: document.getElementById('c-machine-id').value || null,
+    type: document.getElementById('c-type').value,
+    amount: amount,
+    date: document.getElementById('c-date').value,
+    desc: document.getElementById('c-desc').value.trim(),
+    supplier: document.getElementById('c-supplier').value.trim(),
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    closeModal('modal-cost');
+    document.getElementById('c-amount').value='';
+    document.getElementById('c-desc').value='';
+    loadCosts(); loadDashboard();
+  });
+};
+
+// ══════════════════════════════════════
+//  REPORT
+// ══════════════════════════════════════
+window.openReport = function(id, name) {
+  closeModal('modal-detail');
+  document.getElementById('report-modal-title').textContent = t('reportTitle')+' '+name;
+  document.getElementById('r-machine-id').value = id;
+  document.getElementById('r-date').value = today();
+  document.getElementById('modal-report').classList.add('open');
+};
+window.saveReport = function() {
+  var desc = document.getElementById('r-desc').value.trim();
+  if (!desc) return alert(t('enterDesc'));
+  var type = document.getElementById('r-type').value;
+  var machineId = document.getElementById('r-machine-id').value;
+  db.collection('reports').add({
+    machineId: machineId, type: type, desc: desc,
+    date: document.getElementById('r-date').value,
+    reportedBy: currentUser.email,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    if (type==='breakdown') {
+      db.collection('machines').doc(machineId).update({status:'broken'});
+    }
+    closeModal('modal-report');
+    document.getElementById('r-desc').value='';
+    alert(t('sent'));
+  });
+};
+
+// ══════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════
+window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
+document.querySelectorAll('.modal-overlay').forEach(function(el){
+  el.addEventListener('click', function(e){ if(e.target===el) el.classList.remove('open'); });
+});
+function sClass(s){ return s==='ok'?'status-ok':s==='maint'?'status-maint':'status-broken'; }
+function sLabel(s){ return s==='ok'?t('statusOk'):s==='maint'?t('statusMaint'):t('statusBroken'); }
+function today(){ return new Date().toISOString().split('T')[0]; }
+
+applyLang();
+</script>
+</body>
+</html>
