@@ -322,28 +322,19 @@
 
   <script>
   (function() {
-    'use strict';
 
-    // Polyfill Promise.any for older browsers
-    if (!Promise.any) {
-      Promise.any = function(promises) {
-        return new Promise(function(resolve, reject) {
-          var errors = [];
-          var remaining = 0;
-          var arr = [];
-          promises.forEach(function(p){ arr.push(p); });
-          remaining = arr.length;
-          if (remaining === 0) { reject(new Error('All promises rejected')); return; }
-          arr.forEach(function(p, i) {
-            Promise.resolve(p).then(resolve).catch(function(e) {
-              errors[i] = e;
-              remaining--;
-              if (remaining === 0) reject(new Error('All promises rejected'));
-            });
-          });
-        });
-      };
-    }
+    // Show any JS errors on screen so user can report them
+    window.onerror = function(msg, url, line) {
+      var d = document.getElementById('err-box');
+      if (!d) {
+        d = document.createElement('div');
+        d.id = 'err-box';
+        d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#ff0;color:#000;padding:8px;font-size:11px;z-index:99999;max-height:100px;overflow:auto;direction:ltr;text-align:left';
+        document.body.appendChild(d);
+      }
+      d.textContent = 'Error: ' + msg + ' (line ' + line + ')';
+      return true;
+    };
 
     var $ = function(s){ return document.querySelector(s); };
     var $$ = function(s){ return document.querySelectorAll(s); };
@@ -531,124 +522,110 @@
       imgTimeout = setTimeout(tryNext, 30000);
     }
 
-    // ====== AI CHAT API - ALL METHODS IN PARALLEL ======
-    function tryFetch(url, opts, timeoutMs) {
-      return new Promise(function(resolve, reject) {
-        var done = false;
-        var timer = setTimeout(function() {
-          if (!done) { done = true; reject(new Error('timeout')); }
-        }, timeoutMs || 10000);
-
-        opts = opts || {};
-        try {
-          if (typeof AbortController !== 'undefined') {
-            var ac = new AbortController();
-            opts.signal = ac.signal;
-            setTimeout(function(){ try{ac.abort();}catch(e){} }, timeoutMs || 10000);
-          }
-        } catch(e) {}
-
-        fetch(url, opts).then(function(r) {
-          if (done) return;
-          clearTimeout(timer);
-          if (!r.ok) { done = true; reject(new Error('HTTP ' + r.status)); return; }
-          return r.text();
-        }).then(function(txt) {
-          if (done) return;
-          clearTimeout(timer);
-          done = true;
-          if (txt && txt.length > 2) resolve(txt);
-          else reject(new Error('empty'));
-        }).catch(function(e) {
-          if (!done) { done = true; clearTimeout(timer); reject(e); }
-        });
-      });
-    }
-
-    function tryXHR(url, timeoutMs) {
-      return new Promise(function(resolve, reject) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', url, true);
-        xhr.timeout = timeoutMs || 10000;
-        xhr.onload = function() {
-          if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText && xhr.responseText.length > 2) {
-            resolve(xhr.responseText);
-          } else {
-            reject(new Error('xhr fail'));
-          }
-        };
-        xhr.onerror = function(){ reject(new Error('xhr error')); };
-        xhr.ontimeout = function(){ reject(new Error('xhr timeout')); };
-        try { xhr.send(); } catch(e) { reject(e); }
-      });
-    }
-
-    async function callAI(messages, timeout) {
-      timeout = timeout || 12000;
-      var lastMsg = messages[messages.length - 1].content;
-      var sysMsg = messages.length > 0 ? messages[0].content : '';
+    // ====== AI CHAT API - SIMPLE XHR WITH CALLBACK ======
+    function callAI(msg, callback) {
+      var done = false;
       var seed = Math.floor(Math.random() * 999999);
+      var sysMsg = state.convo.length > 0 ? state.convo[0].content : '';
+      var url = 'https://text.pollinations.ai/' + encodeURIComponent(msg) + '?model=openai&jsonMode=false&system=' + encodeURIComponent(sysMsg) + '&seed=' + seed;
 
-      var directGetUrl = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&jsonMode=false&system=' + encodeURIComponent(sysMsg) + '&seed=' + seed;
-
-      var attempts = [
-        tryFetch(directGetUrl, {}, timeout),
-
-        tryXHR(directGetUrl, timeout),
-
-        tryFetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(directGetUrl), {}, timeout),
-
-        tryFetch('https://corsproxy.io/?' + encodeURIComponent(directGetUrl), {}, timeout),
-
-        tryFetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(directGetUrl), {}, timeout),
-
-        tryFetch('https://text.pollinations.ai/', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({messages:messages, model:'openai', seed:seed})
-        }, timeout)
+      var urls = [
+        url,
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+        'https://corsproxy.io/?' + encodeURIComponent(url),
+        'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url)
       ];
 
-      try {
-        var result = await Promise.any(attempts);
+      function win(txt) {
+        if (done) return;
+        done = true;
         state.txtApiOk = true;
-        return result;
-      } catch(e) {
-        state.txtApiOk = false;
-        throw new Error('all_failed');
+        callback(txt, null);
       }
+
+      var fails = 0;
+      function lose() {
+        fails++;
+        if (fails >= urls.length && !done) {
+          done = true;
+          state.txtApiOk = false;
+          callback(null, 'fail');
+        }
+      }
+
+      // Try all URLs in parallel with XHR (most compatible)
+      for (var i = 0; i < urls.length; i++) {
+        (function(u) {
+          try {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', u, true);
+            xhr.timeout = 12000;
+            xhr.onload = function() {
+              if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText && xhr.responseText.length > 3) {
+                win(xhr.responseText);
+              } else { lose(); }
+            };
+            xhr.onerror = lose;
+            xhr.ontimeout = lose;
+            xhr.send();
+          } catch(e) { lose(); }
+        })(urls[i]);
+      }
+
+      // Safety timeout
+      setTimeout(function() {
+        if (!done) { done = true; callback(null, 'timeout'); }
+      }, 15000);
     }
 
     // ====== WEB SCRAPING ======
-    async function scrapeUrl(url) {
-      if (url.length > 500) throw new Error('URL too long');
-      for (var i = 0; i < PROXIES.length; i++) {
+    function scrapeUrl(targetUrl, callback) {
+      var proxyUrls = [
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl),
+        'https://corsproxy.io/?' + encodeURIComponent(targetUrl),
+        'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(targetUrl)
+      ];
+      var done = false;
+      var fails = 0;
+
+      function parseHTML(html) {
         try {
-          var r = await fetch(PROXIES[i].wrap(url));
-          if (!r.ok) continue;
-          var html;
-          if (PROXIES[i].json) {
-            var d = await r.json(); html = d.contents;
-          } else {
-            html = await r.text();
-          }
           var parser = new DOMParser();
           var doc = parser.parseFromString(html, 'text/html');
           doc.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(function(s){ s.remove(); });
-          var title = (doc.querySelector('title') || {}).textContent || url;
+          var title = (doc.querySelector('title') || {}).textContent || targetUrl;
           var headings = [], paragraphs = [], links = [];
           doc.querySelectorAll('h1,h2,h3,h4').forEach(function(h){ var t = h.textContent.trim(); if (t && t.length > 2) headings.push(t); });
           doc.querySelectorAll('p,article,section>div').forEach(function(p){ var t = p.textContent.trim(); if (t && t.length > 20) paragraphs.push(t); });
           doc.querySelectorAll('a[href]').forEach(function(a){
             var href = a.getAttribute('href'), text = a.textContent.trim();
-            if (href && text && text.length > 1 && !href.startsWith('#') && !href.startsWith('javascript')) {
-              try { links.push({text:text.substring(0,80), url:new URL(href,url).href}); } catch(e){ links.push({text:text.substring(0,80), url:href}); }
+            if (href && text && text.length > 1 && href.indexOf('#') !== 0 && href.indexOf('javascript') !== 0) {
+              try { links.push({text:text.substring(0,80), url:new URL(href,targetUrl).href}); } catch(e){ links.push({text:text.substring(0,80), url:href}); }
             }
           });
           return {ok:true, title:title, headings:headings.slice(0,15), paragraphs:paragraphs.slice(0,40), links:links.slice(0,30)};
-        } catch(e) { continue; }
+        } catch(e) { return {ok:false}; }
       }
-      return {ok:false};
+
+      for (var i = 0; i < proxyUrls.length; i++) {
+        (function(pu) {
+          try {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', pu, true);
+            xhr.timeout = 15000;
+            xhr.onload = function() {
+              if (done) return;
+              if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText) {
+                done = true;
+                callback(parseHTML(xhr.responseText));
+              } else { fails++; if (fails >= proxyUrls.length) callback({ok:false}); }
+            };
+            xhr.onerror = function() { fails++; if (!done && fails >= proxyUrls.length) callback({ok:false}); };
+            xhr.ontimeout = function() { fails++; if (!done && fails >= proxyUrls.length) callback({ok:false}); };
+            xhr.send();
+          } catch(e) { fails++; if (!done && fails >= proxyUrls.length) callback({ok:false}); }
+        })(proxyUrls[i]);
+      }
     }
 
     // ====== INTENT DETECTION ======
@@ -707,7 +684,7 @@
     });
 
     // ====== CONNECTIVITY TEST ======
-    async function testConnectivity() {
+    function testConnectivity() {
       var bar = $('#conn-status');
       var dot = $('#conn-dot');
       var txt = $('#conn-text');
@@ -717,42 +694,47 @@
 
       var txtOk = false;
       var imgOk = false;
+      var checks = 0;
+      var total = 2;
 
-      // Test text API - try fetch and XHR in parallel
-      var txtTest = Promise.any([
-        tryFetch('https://text.pollinations.ai/hi?seed=1', {}, 6000),
-        tryXHR('https://text.pollinations.ai/hi?seed=1', 6000),
-        tryXHR('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://text.pollinations.ai/hi?seed=1'), 6000)
-      ]).then(function(){ txtOk = true; }).catch(function(){});
+      function checkDone() {
+        checks++;
+        if (checks < total) return;
+        state.imgApiOk = imgOk;
+        state.txtApiOk = txtOk;
+        if (imgOk && txtOk) {
+          dot.className = 'conn-dot on';
+          txt.textContent = 'متصل بخدمات AI ✓';
+        } else if (txtOk) {
+          dot.className = 'conn-dot on';
+          txt.textContent = 'الدردشة AI تعمل ✓';
+        } else if (imgOk) {
+          dot.className = 'conn-dot on';
+          txt.textContent = 'توليد الصور يعمل ✓';
+        } else {
+          dot.className = 'conn-dot off';
+          txt.textContent = 'وضع محلي ذكي - جاهز للاستخدام';
+        }
+        setTimeout(function(){ bar.classList.add('hidden'); }, 4000);
+      }
+
+      // Test text API via XHR
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'https://text.pollinations.ai/hi?seed=1', true);
+        xhr.timeout = 8000;
+        xhr.onload = function() { if (xhr.status >= 200 && xhr.status < 300) txtOk = true; checkDone(); };
+        xhr.onerror = function() { checkDone(); };
+        xhr.ontimeout = function() { checkDone(); };
+        xhr.send();
+      } catch(e) { checkDone(); }
 
       // Test image API
-      var imgTest = new Promise(function(resolve) {
-        var testImg = new Image();
-        var timer = setTimeout(function(){ resolve(); }, 6000);
-        testImg.onload = function(){ clearTimeout(timer); imgOk = true; resolve(); };
-        testImg.onerror = function(){ clearTimeout(timer); resolve(); };
-        testImg.src = 'https://image.pollinations.ai/prompt/test?width=32&height=32&seed=1&nologo=true';
-      });
-
-      await Promise.all([txtTest, imgTest]);
-
-      state.imgApiOk = imgOk;
-      state.txtApiOk = txtOk;
-
-      if (imgOk && txtOk) {
-        dot.className = 'conn-dot on';
-        txt.textContent = 'متصل بخدمات AI ✓';
-      } else if (txtOk) {
-        dot.className = 'conn-dot on';
-        txt.textContent = 'الدردشة AI تعمل ✓';
-      } else if (imgOk) {
-        dot.className = 'conn-dot on';
-        txt.textContent = 'توليد الصور يعمل ✓';
-      } else {
-        dot.className = 'conn-dot off';
-        txt.textContent = 'وضع محلي ذكي - جاهز للاستخدام';
-      }
-      setTimeout(function(){ bar.classList.add('hidden'); }, 4000);
+      var testImg = new Image();
+      var imgTimer = setTimeout(function(){ checkDone(); }, 8000);
+      testImg.onload = function() { clearTimeout(imgTimer); imgOk = true; checkDone(); };
+      testImg.onerror = function() { clearTimeout(imgTimer); checkDone(); };
+      testImg.src = 'https://image.pollinations.ai/prompt/test?width=32&height=32&seed=1&nologo=true';
     }
 
     // ====== NAVIGATION ======
@@ -820,7 +802,7 @@
     });
 
     // ====== CHAT SUBMIT ======
-    $('#chat-form').addEventListener('submit', async function(e) {
+    $('#chat-form').addEventListener('submit', function(e) {
       e.preventDefault();
       if (state.busy) return;
       var input = $('#chat-input'), msg = input.value.trim();
@@ -837,57 +819,47 @@
       var isOffline = $('#offline-toggle').checked;
       state.busy = true;
 
-      try {
-        if (intent === 'image') {
-          await handleImageChat(msg);
-        } else if (intent === 'video') {
-          await handleVideoChat(msg);
-        } else if (isOffline) {
-          handleOfflineChat(msg);
-        } else {
-          await handleTextChat(msg);
-        }
-      } catch(err) {
-        removeTyping();
-        addMsg('assistant', 'حدث خطأ غير متوقع. حاول مرة أخرى.', 'خطأ', 0);
+      if (intent === 'image') {
+        handleImageChat(msg);
+      } else if (intent === 'video') {
+        handleVideoChat(msg);
+      } else if (isOffline) {
+        handleOfflineChat(msg);
+      } else {
+        handleTextChat(msg);
       }
-      state.busy = false;
     });
 
-    async function handleImageChat(msg) {
+    function handleImageChat(msg) {
       var prompt = cleanPrompt(msg, ['قم ب','ولد لي','ارسم لي','صمم لي','ولد','ارسم','صمم','توليد','generate','صورة','صوره','لي','من فضلك','ارجوك','أرجوك','please','بليز','لو سمحت']);
       var el = addMsg('assistant', '', 'AI Image', 0, true);
       var bbl = el.querySelector('.msg-bbl');
       var cid = 'imgc' + genId();
       bbl.innerHTML = '🎨 جاري توليد الصورة...<br><br><div id="'+cid+'"></div>';
       var container = document.getElementById(cid);
-      return new Promise(function(resolve) {
-        loadAIImage(container, prompt, '', 1024, 1024, function(elapsed) {
-          if (elapsed > 0) {
-            toast('تم توليد الصورة!', 'success');
-            var meta = el.querySelector('.msg-meta');
-            if (meta) meta.textContent = 'AI Image • ' + (elapsed/1000).toFixed(1) + 's';
-          }
-          $('#model-badge').textContent = 'AI Image';
-          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
-          resolve();
-        });
+      loadAIImage(container, prompt, '', 1024, 1024, function(elapsed) {
+        if (elapsed > 0) {
+          toast('تم توليد الصورة!', 'success');
+          var meta = el.querySelector('.msg-meta');
+          if (meta) meta.textContent = 'AI Image - ' + (elapsed/1000).toFixed(1) + 's';
+        }
+        $('#model-badge').textContent = 'AI Image';
+        $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+        state.busy = false;
       });
     }
 
-    async function handleVideoChat(msg) {
+    function handleVideoChat(msg) {
       var prompt = cleanPrompt(msg, ['قم ب','ولد لي','صمم لي','ولد','توليد','generate','فيديو','فديو','مقطع','لي','من فضلك','ارجوك','حرك','مشهد']);
       var el = addMsg('assistant', '', 'AI Video', 0, true);
       var bbl = el.querySelector('.msg-bbl');
       var cid = 'vidc' + genId();
       bbl.innerHTML = '🎬 جاري توليد مشهد الفيديو...<br><br><div id="'+cid+'"></div>';
       var container = document.getElementById(cid);
-      return new Promise(function(resolve) {
-        loadAIImage(container, prompt + ', cinematic scene, wide angle, dramatic lighting', 'cinematic', 1280, 720, function(elapsed) {
-          if (elapsed > 0) toast('تم توليد المشهد!', 'success');
-          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
-          resolve();
-        });
+      loadAIImage(container, prompt + ', cinematic scene, wide angle, dramatic lighting', 'cinematic', 1280, 720, function(elapsed) {
+        if (elapsed > 0) toast('تم توليد المشهد!', 'success');
+        $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+        state.busy = false;
       });
     }
 
@@ -898,29 +870,32 @@
         var r = offlineReply(msg);
         addMsg('assistant', r.t, r.m, 0);
         $('#model-badge').textContent = 'Offline';
+        state.busy = false;
       }, 400);
     }
 
-    async function handleTextChat(msg) {
-      addTyping('🤖 جاري التفكير...');
-      state.convo.push({role:'user', content:msg});
+    function handleTextChat(msg) {
+      addTyping('جاري التفكير...');
       var t0 = Date.now();
-      try {
-        var reply = await callAI(state.convo, 12000);
+      state.convo.push({role:'user', content:msg});
+
+      callAI(msg, function(reply, err) {
         removeTyping();
-        state.convo.push({role:'assistant', content:reply});
-        if (state.convo.length > 21) state.convo = [state.convo[0]].concat(state.convo.slice(-20));
-        addMsg('assistant', reply, 'AI Online', Date.now() - t0);
-        $('#model-badge').textContent = 'AI Online';
-        $('#model-badge').style.color = 'var(--accent)';
-      } catch(err) {
-        removeTyping();
-        state.convo.pop();
-        var smartReply = smartLocalReply(msg);
-        addMsg('assistant', smartReply.text, smartReply.model, Date.now() - t0);
-        $('#model-badge').textContent = smartReply.model;
-        $('#model-badge').style.color = 'var(--text-muted)';
-      }
+        if (reply && !err) {
+          state.convo.push({role:'assistant', content:reply});
+          if (state.convo.length > 21) state.convo = [state.convo[0]].concat(state.convo.slice(-20));
+          addMsg('assistant', reply, 'AI Online', Date.now() - t0);
+          $('#model-badge').textContent = 'AI Online';
+          $('#model-badge').style.color = 'var(--accent)';
+        } else {
+          state.convo.pop();
+          var sr = smartLocalReply(msg);
+          addMsg('assistant', sr.text, sr.model, Date.now() - t0);
+          $('#model-badge').textContent = sr.model;
+          $('#model-badge').style.color = 'var(--text-muted)';
+        }
+        state.busy = false;
+      });
     }
 
     function smartLocalReply(msg) {
@@ -1051,7 +1026,7 @@
     });
 
     // ====== WEB SCRAPING PAGE ======
-    $('#web-form').addEventListener('submit', async function(e) {
+    $('#web-form').addEventListener('submit', function(e) {
       e.preventDefault();
       var url = $('#web-url').value.trim();
       if (!url) { toast('أدخل رابط', 'error'); return; }
@@ -1062,10 +1037,9 @@
       $('#web-output').innerHTML = '<div class="lbox"><div class="spin"></div><div class="ltxt">جاري سحب المحتوى...</div></div>';
 
       var t0 = Date.now();
-      try {
-        var res = await scrapeUrl(url);
+      scrapeUrl(url, function(res) {
         var elapsed = Date.now() - t0;
-        if (res.ok) {
+        if (res && res.ok) {
           var type = $('#web-type').value;
           var html = '<div style="color:var(--accent);font-weight:700;margin-bottom:8px">' + esc(res.title) + '</div>';
           html += '<div style="margin-bottom:12px"><span style="background:var(--bg-card);padding:4px 10px;border-radius:8px;font-size:12px;color:var(--success)">✓ '+(elapsed/1000).toFixed(1)+'s</span></div>';
@@ -1090,10 +1064,8 @@
           $('#web-output').innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px">❌ فشل سحب المحتوى<br><small style="color:var(--text-muted)">تأكد من الرابط وحاول مرة أخرى</small></div>';
           toast('فشل السحب', 'error');
         }
-      } catch(err) {
-        $('#web-output').innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px">❌ خطأ في الاتصال</div>';
-      }
-      $('#web-btn').disabled = false;
+        $('#web-btn').disabled = false;
+      });
     });
 
     // ====== VPN ======
