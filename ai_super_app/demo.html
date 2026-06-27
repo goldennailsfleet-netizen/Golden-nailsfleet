@@ -2,13 +2,13 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>AI Super App</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet" />
   <style>
     :root{--primary:#6c5ce7;--primary-dark:#5a4bd1;--primary-light:#a29bfe;--accent:#00cec9;--accent-dark:#00b5b0;--bg:#0f0f1a;--bg2:#1a1a2e;--bg-card:#16213e;--bg-input:#1a1a2e;--text:#e8e8f0;--text-muted:#8888a0;--text-light:#b0b0c8;--border:#2a2a40;--success:#00b894;--danger:#ff6b6b;--shadow:0 4px 20px rgba(0,0,0,.3);--radius:12px;--radius-lg:16px;--radius-xl:24px}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+    body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
     .hidden{display:none!important}
 
     #login-screen{min-height:100vh;background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
@@ -23,15 +23,14 @@
     .login-header p{color:var(--text-muted);margin-top:4px;font-size:14px}
     .input-group{margin-bottom:16px}
     .input-group label{display:block;font-size:13px;font-weight:600;color:var(--text-light);margin-bottom:6px}
-    input,textarea,select{width:100%;padding:12px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:14px;transition:.3s;outline:none}
+    input,textarea,select{width:100%;padding:12px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:16px;transition:.3s;outline:none;-webkit-appearance:none}
     input:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,92,231,.2)}
     input::placeholder,textarea::placeholder{color:var(--text-muted)}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border:none;border-radius:var(--radius);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:.3s}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border:none;border-radius:var(--radius);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:.3s;-webkit-appearance:none}
     .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
     .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(108,92,231,.4)}
     .btn-primary:disabled{opacity:.6;transform:none;cursor:not-allowed}
     .btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff}
-    .btn-accent:hover{transform:translateY(-1px)}
     .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
     .btn-outline:hover{background:var(--bg2);border-color:var(--primary)}
     .btn-full{width:100%}
@@ -65,7 +64,7 @@
     #menu-btn{display:none}
     .page{display:none;flex:1;flex-direction:column}.page.active{display:flex}
 
-    .chat-container{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+    .chat-container{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
     .welcome-message{text-align:center;padding:60px 20px;animation:fadeIn .5s}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
     .welcome-icon{font-size:64px;margin-bottom:16px}
@@ -78,13 +77,14 @@
     @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
     .message.user{align-self:flex-start;flex-direction:row}
     .message.assistant{align-self:flex-end;flex-direction:row-reverse}
-    .message-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-    .message.user .message-avatar{background:var(--primary)}
-    .message.assistant .message-avatar{background:var(--accent)}
-    .message-bubble{padding:12px 16px;border-radius:var(--radius-lg);font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
-    .message.user .message-bubble{background:var(--bg-card);border:1px solid var(--border)}
-    .message.assistant .message-bubble{background:linear-gradient(135deg,rgba(108,92,231,.15),rgba(0,206,201,.1));border:1px solid rgba(108,92,231,.2)}
-    .message-meta{font-size:11px;color:var(--text-muted);margin-top:4px;text-align:left}
+    .msg-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .message.user .msg-av{background:var(--primary)}
+    .message.assistant .msg-av{background:var(--accent)}
+    .msg-body{flex:1;min-width:0}
+    .msg-bbl{padding:12px 16px;border-radius:var(--radius-lg);font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+    .message.user .msg-bbl{background:var(--bg-card);border:1px solid var(--border)}
+    .message.assistant .msg-bbl{background:linear-gradient(135deg,rgba(108,92,231,.15),rgba(0,206,201,.1));border:1px solid rgba(108,92,231,.2)}
+    .msg-meta{font-size:11px;color:var(--text-muted);margin-top:4px;text-align:left}
     .chat-input-area{padding:12px 20px 20px;background:var(--bg2);border-top:1px solid var(--border)}
     .chat-options{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px}
     .toggle-option{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer}
@@ -104,7 +104,7 @@
     .gen-result h4{margin-bottom:12px;font-size:14px;color:var(--accent)}
     .gen-meta{display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--text-muted);flex-wrap:wrap}
     .gen-meta span{background:var(--bg2);padding:4px 10px;border-radius:8px}
-    .web-output{background:var(--bg2);border-radius:var(--radius);padding:16px;max-height:500px;overflow-y:auto;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+    .web-output{background:var(--bg2);border-radius:var(--radius);padding:16px;max-height:500px;overflow-y:auto;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word;-webkit-overflow-scrolling:touch}
 
     .vpn-header-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px}
     .vpn-header-card h3{margin-bottom:20px}
@@ -130,23 +130,27 @@
     @keyframes toastIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
     @keyframes toastOut{to{opacity:0;transform:translateX(-20px)}}
 
-    .loading-box{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px;width:100%}
-    .spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .loading-text{color:var(--text-muted);font-size:14px;text-align:center}
-    .ai-img{max-width:100%;border-radius:12px;border:1px solid var(--border);display:block;background:var(--bg2);min-height:100px}
-    .img-wrap{position:relative;overflow:hidden;border-radius:12px}
-    .img-wrap .spinner-overlay{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--bg-card);z-index:2;min-height:200px}
-    .img-wrap .spinner-overlay.done{display:none}
-    .img-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-    .img-actions a{background:var(--bg2);padding:6px 14px;border-radius:8px;font-size:12px;color:var(--accent);text-decoration:none;border:1px solid var(--border)}
+    .lbox{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px;width:100%}
+    .spin{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:sp 1s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .ltxt{color:var(--text-muted);font-size:14px;text-align:center}
+    .ai-img{max-width:100%;border-radius:12px;border:1px solid var(--border);display:block;background:var(--bg2);min-height:60px}
+    .img-wrap{position:relative;overflow:hidden;border-radius:12px;min-height:120px;background:var(--bg-card)}
+    .img-wrap .spo{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--bg-card);z-index:2;min-height:120px}
+    .img-wrap .spo.ok{display:none}
+    .iact{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .iact a{background:var(--bg2);padding:6px 14px;border-radius:8px;font-size:12px;color:var(--accent);text-decoration:none;border:1px solid var(--border)}
+    .conn-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px;margin:8px 20px}
+    .conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .conn-dot.on{background:var(--success)}.conn-dot.off{background:var(--danger)}.conn-dot.wait{background:var(--text-muted);animation:blink 1s infinite}
+    @keyframes blink{50%{opacity:.3}}
 
     @media(max-width:768px){
       .sidebar{transform:translateX(100%)}.sidebar.open{transform:translateX(0)}
       .main-content{margin-right:0}#menu-btn{display:block}#close-sidebar{display:block}
       .vpn-stats{grid-template-columns:repeat(2,1fr)}.form-row{flex-direction:column}
       .message{max-width:95%}.quick-actions{flex-direction:column;align-items:center}
-      .quick-btn{width:100%;max-width:250px}.login-card{padding:28px 20px}
+      .quick-btn{width:100%;max-width:280px}.login-card{padding:28px 20px}
     }
     @media(min-width:769px){#close-sidebar{display:none}}
     ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}
@@ -164,8 +168,8 @@
           <p>تطبيق الذكاء الاصطناعي الشامل</p>
         </div>
         <form id="login-form">
-          <div class="input-group"><label>اسم المستخدم</label><input type="text" id="username" value="admin@1234" required /></div>
-          <div class="input-group"><label>كلمة المرور</label><input type="password" id="password" value="asd12345" required /></div>
+          <div class="input-group"><label>اسم المستخدم</label><input type="text" id="username" value="admin@1234" required maxlength="50" /></div>
+          <div class="input-group"><label>كلمة المرور</label><input type="password" id="password" value="asd12345" required maxlength="50" /></div>
           <button type="submit" class="btn btn-primary btn-full">تسجيل الدخول</button>
         </form>
         <div class="login-features">
@@ -213,13 +217,18 @@
         <button class="btn btn-sm btn-accent" id="new-chat-btn">+ محادثة جديدة</button>
       </header>
 
+      <div id="conn-status" class="conn-bar hidden">
+        <span class="conn-dot wait" id="conn-dot"></span>
+        <span id="conn-text">جاري فحص الاتصال...</span>
+      </div>
+
       <div id="page-chat" class="page active">
         <div class="chat-container" id="chat-messages">
           <div class="welcome-message" id="welcome-msg">
             <div class="welcome-icon">🤖</div>
             <h2>مرحبا بك في AI Super App</h2>
             <p>اكتب أي شيء وسأرد عليك بذكاء اصطناعي حقيقي</p>
-            <div class="quick-actions">
+            <div class="quick-actions" id="quick-actions">
               <button class="quick-btn" data-prompt="اكتب لي كود Python لحساب الفيبوناتشي">💻 اكتب كود</button>
               <button class="quick-btn" data-prompt="اكتب لي قصة قصيرة عن الفضاء">📝 اكتب قصة</button>
               <button class="quick-btn" data-prompt="ارسم لي صورة قطة لطيفة في الفضاء">🎨 ولد صورة</button>
@@ -233,7 +242,7 @@
             <span class="model-badge" id="model-badge">AI Online</span>
           </div>
           <form id="chat-form" class="chat-form">
-            <textarea id="chat-input" placeholder="اكتب رسالتك... يمكنك طلب صور، أكواد، قصص، أي شيء!" rows="1"></textarea>
+            <textarea id="chat-input" placeholder="اكتب رسالتك..." rows="1" maxlength="5000"></textarea>
             <button type="submit" class="btn btn-primary btn-send"><span class="send-icon">➤</span></button>
           </form>
         </div>
@@ -244,12 +253,12 @@
           <div class="gen-card">
             <h3>🎨 توليد صور حقيقية بالذكاء الاصطناعي</h3>
             <form id="image-form">
-              <div class="input-group"><label>وصف الصورة</label><textarea id="image-prompt" placeholder="مثال: فتاة جميلة في حديقة ورود، أو cat in space..." rows="3"></textarea></div>
+              <div class="input-group"><label>وصف الصورة</label><textarea id="image-prompt" placeholder="مثال: فتاة جميلة في حديقة ورود" rows="3" maxlength="500"></textarea></div>
               <div class="form-row">
                 <div class="input-group"><label>الحجم</label><select id="image-size"><option>1024x1024</option><option>512x512</option><option>1792x1024</option></select></div>
                 <div class="input-group"><label>الأسلوب</label><select id="image-style"><option value="">افتراضي</option><option value="photorealistic">واقعي</option><option value="anime">أنمي</option><option value="oil_painting">لوحة زيتية</option><option value="digital_art">فن رقمي</option><option value="cinematic">سينمائي</option><option value="3d">ثلاثي الأبعاد</option></select></div>
               </div>
-              <button type="submit" class="btn btn-primary btn-full">🎨 توليد الصورة</button>
+              <button type="submit" class="btn btn-primary btn-full" id="img-gen-btn">🎨 توليد الصورة</button>
             </form>
           </div>
           <div id="image-result" class="gen-result hidden"><h4>النتيجة:</h4><div id="image-output"></div><div id="image-meta" class="gen-meta"></div></div>
@@ -261,12 +270,12 @@
           <div class="gen-card">
             <h3>🎬 توليد مشاهد فيديو بالذكاء الاصطناعي</h3>
             <form id="video-form">
-              <div class="input-group"><label>وصف المشهد</label><textarea id="video-prompt" placeholder="صف المشهد... مثال: شلال في غابة خضراء" rows="3"></textarea></div>
+              <div class="input-group"><label>وصف المشهد</label><textarea id="video-prompt" placeholder="صف المشهد..." rows="3" maxlength="500"></textarea></div>
               <div class="form-row">
-                <div class="input-group"><label>المدة</label><select id="video-duration"><option value="2">2 ثانية</option><option value="4" selected>4 ثواني</option><option value="8">8 ثواني</option></select></div>
+                <div class="input-group"><label>المدة</label><select id="video-duration"><option value="4" selected>4 ثواني</option></select></div>
                 <div class="input-group"><label>الدقة</label><select id="video-resolution"><option value="720p">720p HD</option><option value="1080p">1080p Full HD</option></select></div>
               </div>
-              <button type="submit" class="btn btn-primary btn-full">🎬 توليد المشهد</button>
+              <button type="submit" class="btn btn-primary btn-full" id="vid-gen-btn">🎬 توليد المشهد</button>
             </form>
           </div>
           <div id="video-result" class="gen-result hidden"><h4>النتيجة:</h4><div id="video-output"></div><div id="video-meta" class="gen-meta"></div></div>
@@ -278,9 +287,9 @@
           <div class="gen-card">
             <h3>🌐 سحب محتوى المواقع</h3>
             <form id="web-form">
-              <div class="input-group"><label>رابط الموقع</label><input type="url" id="web-url" placeholder="https://example.com" /></div>
-              <div class="input-group"><label>النوع</label><select id="web-type"><option value="article">مقال / نص</option><option value="full">صفحة كاملة</option><option value="links">استخراج الروابط</option></select></div>
-              <button type="submit" class="btn btn-primary btn-full">🌐 سحب المحتوى</button>
+              <div class="input-group"><label>رابط الموقع</label><input type="url" id="web-url" placeholder="https://example.com" maxlength="500" /></div>
+              <div class="input-group"><label>النوع</label><select id="web-type"><option value="article">مقال</option><option value="full">صفحة كاملة</option><option value="links">روابط</option></select></div>
+              <button type="submit" class="btn btn-primary btn-full" id="web-btn">🌐 سحب المحتوى</button>
             </form>
           </div>
           <div id="web-result" class="gen-result hidden"><h4>المحتوى:</h4><div id="web-output" class="web-output"></div></div>
@@ -299,9 +308,9 @@
             </div>
           </div>
           <div class="vpn-actions">
-            <button class="btn btn-accent" onclick="showToast('تم التحديث','success')">🔄 تحديث</button>
-            <button class="btn btn-outline" onclick="showToast('تم تدوير البروكسي','success')">🔀 تدوير</button>
-            <button class="btn btn-outline" onclick="showToast('اتصال ناجح! '+Math.floor(80+Math.random()*200)+'ms','success')">🧪 اختبار</button>
+            <button class="btn btn-accent" onclick="AI.toast('تم التحديث','success')">🔄 تحديث</button>
+            <button class="btn btn-outline" onclick="AI.toast('تم تدوير البروكسي','success')">🔀 تدوير</button>
+            <button class="btn btn-outline" onclick="AI.testConn()">🧪 اختبار الاتصال</button>
           </div>
           <div id="vpn-proxies" class="proxy-list"></div>
         </div>
@@ -312,226 +321,293 @@
   <div id="toast-container" class="toast-container"></div>
 
   <script>
+  (function() {
+    'use strict';
+
     var $ = function(s){ return document.querySelector(s); };
     var $$ = function(s){ return document.querySelectorAll(s); };
-    var chatHistory = [];
-    var chatCounter = 0;
-    var reqCount = 0;
-    var busy = false;
-    var uid = 0;
+    var _uid = 0;
+    var genId = function(){ return ++_uid; };
 
-    var convoMsgs = [
-      { role: 'system', content: 'أنت مساعد ذكي اسمك AI Super App. أجب باللغة العربية دائماً. يمكنك كتابة أكواد برمجية، تحليل نصوص، شرح مفاهيم، كتابة قصص ومقالات، ترجمة، حل مسائل، وأي شيء يطلبه المستخدم. أجب بشكل مفصل ومنظم.' }
-    ];
-
-    // ====== ARABIC TO ENGLISH TRANSLATION DICTIONARY ======
-    var dict = {
-      'فتاة':'girl','فتاه':'girl','بنت':'girl','امرأة':'woman','امراة':'woman','رجل':'man','ولد':'boy','طفل':'child','أطفال':'children','اطفال':'children','شخص':'person',
-      'جميلة':'beautiful','جميله':'beautiful','جميل':'beautiful','حلوة':'pretty','حلوه':'pretty','رائع':'amazing','رائعة':'amazing','مذهل':'stunning',
-      'بيضاء':'white','بيضا':'white','ابيض':'white','أبيض':'white','اسود':'black','أسود':'black','سوداء':'black',
-      'ازرق':'blue','أزرق':'blue','زرقاء':'blue','احمر':'red','أحمر':'red','حمراء':'red','اخضر':'green','أخضر':'green','خضراء':'green',
-      'اصفر':'yellow','أصفر':'yellow','برتقالي':'orange','وردي':'pink','بنفسجي':'purple','ذهبي':'golden','فضي':'silver',
-      'فستان':'dress','ثوب':'gown','قميص':'shirt','بدلة':'suit','حجاب':'hijab','تاج':'crown',
-      'قطة':'cat','قط':'cat','قطه':'cat','كلب':'dog','حصان':'horse','أسد':'lion','اسد':'lion','نمر':'tiger','فراشة':'butterfly','فراشات':'butterflies','طائر':'bird','عصفور':'bird','دلفين':'dolphin','سمكة':'fish','أرنب':'rabbit','ارنب':'rabbit','تنين':'dragon','وحش':'monster',
-      'فضاء':'space','كون':'universe','كوكب':'planet','نجوم':'stars','نجمة':'star','قمر':'moon','شمس':'sun','مجرة':'galaxy',
-      'طبيعة':'nature','طبيعه':'nature','بحر':'sea','محيط':'ocean','جبل':'mountain','جبال':'mountains','نهر':'river','شلال':'waterfall','غابة':'forest','غابه':'forest',
-      'شجرة':'tree','أشجار':'trees','اشجار':'trees','شجر':'trees','ورد':'roses','وردة':'rose','ورود':'roses','زهور':'flowers','زهرة':'flower',
-      'سماء':'sky','غروب':'sunset','شروق':'sunrise','ليل':'night','نهار':'day','صحراء':'desert','ثلج':'snow','مطر':'rain','قوس قزح':'rainbow',
-      'منزل':'house','بيت':'house','قصر':'palace','قلعة':'castle','قلعه':'castle','مدينة':'city','مدينه':'city','شارع':'street','جسر':'bridge',
-      'سيارة':'car','سياره':'car','سفينة':'ship','قارب':'boat','طائرة':'airplane',
-      'حديقة':'garden','حديقه':'garden','ماء':'water','بحيرة':'lake',
-      'لطيفة':'cute','لطيف':'cute','لطيفه':'cute','كبير':'big','كبيرة':'big','صغير':'small','صغيرة':'small',
-      'سحري':'magical','سحرية':'magical','خيالي':'fantasy','واقعي':'realistic',
-      'حب':'love','قلب':'heart','عين':'eye','عيون':'eyes','شعر':'hair','وجه':'face',
-      'ملك':'king','ملكة':'queen','أميرة':'princess','اميرة':'princess','أمير':'prince','امير':'prince',
-      'روبوت':'robot','فضائي':'alien',
-      'في':'in','على':'on','مع':'with','و':'and','من':'from','تحت':'under','فوق':'above','بين':'between','أمام':'in front of','خلف':'behind',
-      'كبيره':'big','صغيره':'small'
+    // ====== STATE ======
+    var state = {
+      busy: false,
+      reqs: 0,
+      chatHistory: [],
+      chatCounter: 0,
+      convo: [
+        {role:'system', content:'أنت مساعد ذكي اسمك AI Super App. أجب باللغة العربية دائماً. يمكنك كتابة أكواد، تحليل نصوص، شرح مفاهيم، كتابة قصص ومقالات، ترجمة، حل مسائل، وأي شيء. أجب بشكل مفصل ومنظم ومفيد.'}
+      ],
+      imgApiOk: null,
+      txtApiOk: null
     };
 
-    function translateArabic(text) {
-      var result = text;
+    // ====== ARABIC→ENGLISH DICTIONARY ======
+    var dict = {
+      'فتاة':'girl','فتاه':'girl','بنت':'girl','امرأة':'woman','امراة':'woman','رجل':'man','ولد':'boy','شاب':'young man','طفل':'child','أطفال':'children','اطفال':'children','شخص':'person','عارضة':'model',
+      'جميلة':'beautiful','جميله':'beautiful','جميل':'beautiful','حلوة':'pretty','حلوه':'pretty','رائع':'amazing','رائعة':'amazing','مذهل':'stunning','مذهلة':'stunning','أنيق':'elegant','أنيقة':'elegant',
+      'بيضاء':'white','بيضا':'white','ابيض':'white','أبيض':'white','اسود':'black','أسود':'black','سوداء':'black',
+      'ازرق':'blue','أزرق':'blue','زرقاء':'blue','احمر':'red','أحمر':'red','حمراء':'red','اخضر':'green','أخضر':'green','خضراء':'green',
+      'اصفر':'yellow','أصفر':'yellow','برتقالي':'orange','وردي':'pink','بنفسجي':'purple','ذهبي':'golden','ذهبية':'golden','فضي':'silver',
+      'فستان':'dress','ثوب':'gown','قميص':'shirt','بدلة':'suit','حجاب':'hijab','تاج':'crown','نظارات':'glasses','قبعة':'hat',
+      'قطة':'cat','قط':'cat','قطه':'cat','كلب':'dog','حصان':'horse','أسد':'lion','اسد':'lion','نمر':'tiger','فراشة':'butterfly','فراشات':'butterflies',
+      'طائر':'bird','عصفور':'bird','دلفين':'dolphin','سمكة':'fish','أرنب':'rabbit','ارنب':'rabbit','تنين':'dragon','وحش':'monster','ثعبان':'snake','نسر':'eagle','حمامة':'dove',
+      'فضاء':'space','كون':'universe','كوكب':'planet','نجوم':'stars','نجمة':'star','قمر':'moon','شمس':'sun','مجرة':'galaxy',
+      'طبيعة':'nature','طبيعه':'nature','بحر':'sea','محيط':'ocean','جبل':'mountain','جبال':'mountains','نهر':'river','شلال':'waterfall','غابة':'forest','غابه':'forest',
+      'شجرة':'tree','أشجار':'trees','اشجار':'trees','شجر':'trees','ورد':'roses','وردة':'rose','ورود':'roses','زهور':'flowers','زهرة':'flower','عشب':'grass',
+      'سماء':'sky','غروب':'sunset','شروق':'sunrise','ليل':'night','نهار':'day','صحراء':'desert','ثلج':'snow','مطر':'rain','قوس قزح':'rainbow','سحاب':'clouds','ضباب':'fog',
+      'منزل':'house','بيت':'house','قصر':'palace','قلعة':'castle','قلعه':'castle','مدينة':'city','مدينه':'city','شارع':'street','جسر':'bridge','مسجد':'mosque','كنيسة':'church','برج':'tower',
+      'سيارة':'car','سياره':'car','سفينة':'ship','قارب':'boat','طائرة':'airplane','دراجة':'bicycle','قطار':'train',
+      'حديقة':'garden','حديقه':'garden','ماء':'water','بحيرة':'lake','شاطئ':'beach',
+      'لطيفة':'cute','لطيف':'cute','لطيفه':'cute','كبير':'big','كبيرة':'big','كبيره':'big','صغير':'small','صغيرة':'small','صغيره':'small','طويل':'tall','قصير':'short',
+      'سحري':'magical','سحرية':'magical','خيالي':'fantasy','واقعي':'realistic','قديم':'old','جديد':'new','حديث':'modern',
+      'حب':'love','قلب':'heart','عين':'eye','عيون':'eyes','شعر':'hair','وجه':'face','ابتسامة':'smile','دموع':'tears',
+      'ملك':'king','ملكة':'queen','أميرة':'princess','اميرة':'princess','أمير':'prince','امير':'prince','فارس':'knight','محارب':'warrior','ساحر':'wizard','ساحرة':'witch',
+      'روبوت':'robot','فضائي':'alien','مستقبل':'future','مستقبلي':'futuristic',
+      'طعام':'food','فاكهة':'fruit','خبز':'bread','كعكة':'cake','شاي':'tea','قهوة':'coffee',
+      'كتاب':'book','موسيقى':'music','رقص':'dance','رسم':'painting',
+      'في':'in','على':'on','مع':'with','و':'and','من':'from','تحت':'under','فوق':'above','بين':'between','أمام':'in front of','خلف':'behind','بجانب':'beside','حول':'around'
+    };
+
+    function hasArabic(t){ return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(t); }
+
+    function translateAr(text) {
+      var r = text;
       var keys = Object.keys(dict).sort(function(a,b){ return b.length - a.length; });
       for (var i = 0; i < keys.length; i++) {
-        result = result.split(keys[i]).join(dict[keys[i]]);
+        r = r.split(keys[i]).join(' ' + dict[keys[i]] + ' ');
       }
-      result = result.replace(/[،؟!؛]/g, ' ').replace(/\s+/g, ' ').trim();
-      return result;
-    }
-
-    function hasArabic(text) {
-      return /[؀-ۿ]/.test(text);
+      return r.replace(/[،؟!؛:.]/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
     // ====== UTILITIES ======
-    function showToast(msg, type) {
+    function toast(msg, type) {
       type = type || 'info';
       var t = document.createElement('div');
       t.className = 'toast ' + type;
-      t.innerHTML = '<span>' + (type==='success'?'✅':type==='error'?'❌':'ℹ️') + '</span> ' + msg;
+      var icon = type==='success'?'✅':type==='error'?'❌':'ℹ️';
+      t.textContent = icon + ' ' + msg;
       $('#toast-container').appendChild(t);
-      setTimeout(function(){ t.remove(); }, 3000);
+      setTimeout(function(){ if(t.parentNode) t.remove(); }, 3000);
     }
 
     function esc(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
-    function genId() { return ++uid; }
+    function sanitize(html) {
+      return html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+        .replace(/onerror\s*=/gi, 'data-err=')
+        .replace(/onclick\s*=/gi, 'data-clk=')
+        .replace(/onload\s*=/gi, 'data-ld=')
+        .replace(/javascript\s*:/gi, '');
+    }
 
     // ====== IMAGE URL BUILDER ======
-    function buildImageUrl(prompt, style, w, h) {
+    function buildImgUrl(prompt, style, w, h, seed) {
       var p = prompt;
-      if (hasArabic(p)) p = translateArabic(p);
-      if (style) {
-        var sm = {'photorealistic':',photorealistic,8k,detailed photo','anime':',anime style,manga,vibrant','oil_painting':',oil painting,classic art','digital_art':',digital art,concept art','cinematic':',cinematic,dramatic lighting,movie','3d':',3D render,octane render'};
-        p += (sm[style] || ', ' + style);
-      }
-      p += ', high quality, detailed';
-      var seed = Math.floor(Math.random() * 999999);
+      if (hasArabic(p)) p = translateAr(p);
+      var styleMap = {
+        'photorealistic': ', photorealistic photograph, 8k, ultra detailed',
+        'anime': ', anime style, manga art, vibrant colors, cel shading',
+        'oil_painting': ', oil painting, classic art, textured brushstrokes, masterpiece',
+        'digital_art': ', digital art, concept art, trending on artstation, detailed',
+        'cinematic': ', cinematic lighting, dramatic scene, movie still, depth of field',
+        '3d': ', 3D render, octane render, unreal engine, detailed 3D art'
+      };
+      if (style && styleMap[style]) p += styleMap[style];
+      p += ', high quality, masterpiece';
+      if (!seed) seed = Math.floor(Math.random() * 999999);
       return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(p) + '?width=' + w + '&height=' + h + '&nologo=true&seed=' + seed;
     }
 
-    // ====== IMAGE LOADING WITH RETRIES ======
-    function showAIImage(container, prompt, style, w, h, onDone) {
+    // ====== IMAGE LOADER WITH MULTI-RETRY ======
+    function loadAIImage(container, prompt, style, w, h, callback) {
       var id = genId();
-      var url1 = buildImageUrl(prompt, style, w, h);
-      var url2 = buildImageUrl(prompt, style, w, h);
-      var url3 = 'https://image.pollinations.ai/prompt/' + encodeURIComponent((hasArabic(prompt) ? translateArabic(prompt) : prompt) + ', high quality') + '?width=' + w + '&height=' + h + '&seed=' + Math.floor(Math.random()*999999);
+      var t0 = Date.now();
+      var attempt = 0;
+      var maxAttempts = 4;
 
-      var startTime = Date.now();
+      var urls = [
+        buildImgUrl(prompt, style, w, h),
+        buildImgUrl(prompt, style, w, h),
+        'https://corsproxy.io/?' + encodeURIComponent(buildImgUrl(prompt, style, w, h)),
+        buildImgUrl(prompt, '', Math.min(w, 512), Math.min(h, 512))
+      ];
 
       container.innerHTML =
         '<div class="img-wrap">' +
-          '<div class="spinner-overlay" id="spo-'+id+'">' +
-            '<div class="spinner"></div>' +
-            '<div class="loading-text" id="spt-'+id+'">🎨 جاري توليد الصورة بالذكاء الاصطناعي...<br>انتظر 15-60 ثانية</div>' +
+          '<div class="spo" id="spo'+id+'">' +
+            '<div class="spin"></div>' +
+            '<div class="ltxt" id="st'+id+'">🎨 جاري توليد الصورة...<br><small>قد يستغرق 15-60 ثانية</small></div>' +
           '</div>' +
-          '<img class="ai-img" id="aimg-'+id+'" />' +
+          '<img class="ai-img" id="im'+id+'" alt="AI Generated" />' +
         '</div>' +
-        '<div class="img-actions" id="iact-'+id+'" style="display:none"><a id="idl-'+id+'" href="#" target="_blank">💾 تحميل الصورة</a></div>';
+        '<div class="iact" id="ia'+id+'" style="display:none">' +
+          '<a id="dl'+id+'" href="#" target="_blank" download>💾 تحميل</a>' +
+        '</div>';
 
-      var imgEl = document.getElementById('aimg-'+id);
-      var overlay = document.getElementById('spo-'+id);
-      var statusText = document.getElementById('spt-'+id);
-      var actions = document.getElementById('iact-'+id);
-      var dlLink = document.getElementById('idl-'+id);
-      var attempt = 0;
+      var img = document.getElementById('im'+id);
+      var overlay = document.getElementById('spo'+id);
+      var stxt = document.getElementById('st'+id);
+      var acts = document.getElementById('ia'+id);
+      var dlnk = document.getElementById('dl'+id);
 
-      function onSuccess() {
-        overlay.classList.add('done');
-        actions.style.display = 'flex';
-        dlLink.href = imgEl.src;
-        var elapsed = Date.now() - startTime;
-        if (onDone) onDone(elapsed);
+      function success() {
+        if (!overlay) return;
+        overlay.classList.add('ok');
+        acts.style.display = 'flex';
+        dlnk.href = img.src;
+        if (callback) callback(Date.now() - t0);
       }
 
-      function onFail() {
+      function fail() {
         attempt++;
-        if (attempt === 1) {
-          statusText.innerHTML = '🔄 إعادة المحاولة (2/3)...';
-          imgEl.src = url2;
-        } else if (attempt === 2) {
-          statusText.innerHTML = '🔄 إعادة محاولة أخيرة (3/3)...';
-          imgEl.src = url3;
+        if (attempt < maxAttempts) {
+          var msgs = ['🔄 محاولة '+(attempt+1)+'/'+maxAttempts+'...', '🌐 جاري المحاولة عبر بروكسي...', '📐 محاولة بحجم أصغر...'];
+          if (stxt) stxt.innerHTML = msgs[attempt-1] || msgs[0];
+          img.src = urls[attempt];
         } else {
-          overlay.innerHTML = '<div class="loading-text" style="color:var(--danger)">❌ فشل توليد الصورة<br><br><span style="font-size:12px;color:var(--text-muted)">تأكد من:<br>• اتصالك بالإنترنت مستقر<br>• جرب مرة أخرى بعد قليل<br>• جرب وصف بالإنجليزي مثل:<br>beautiful girl in blue dress</span></div>';
-          if (onDone) onDone(-1);
+          if (overlay) {
+            overlay.innerHTML =
+              '<div class="ltxt" style="color:var(--danger)">❌ فشل توليد الصورة<br><br>' +
+              '<small style="color:var(--text-muted)">جرب:<br>' +
+              '• تأكد من اتصال الإنترنت<br>' +
+              '• جرب بالإنجليزي: beautiful cat in space<br>' +
+              '• انتظر دقيقة وحاول مرة أخرى</small></div>';
+          }
+          if (callback) callback(-1);
         }
       }
 
-      imgEl.onload = onSuccess;
-      imgEl.onerror = onFail;
-      imgEl.src = url1;
-
-      setTimeout(function() {
-        if (!imgEl.complete || imgEl.naturalWidth === 0) {
-          if (overlay && !overlay.classList.contains('done')) {
-            statusText.innerHTML = '⏳ لا يزال جاري التحميل... الرجاء الانتظار';
-          }
-        }
-      }, 30000);
+      img.onload = success;
+      img.onerror = fail;
+      img.src = urls[0];
     }
 
-    // ====== AI CHAT API ======
+    // ====== AI CHAT API WITH FALLBACKS ======
     async function callAI(messages, timeout) {
       timeout = timeout || 60000;
-      var ctrl = new AbortController();
-      var tid = setTimeout(function(){ ctrl.abort(); }, timeout);
+
+      // Method 1: Direct POST
       try {
-        var resp = await fetch('https://text.pollinations.ai/', {
+        var c1 = new AbortController();
+        var t1 = setTimeout(function(){ c1.abort(); }, timeout);
+        var r1 = await fetch('https://text.pollinations.ai/', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: messages, model: 'openai', seed: Math.floor(Math.random()*999999) }),
-          signal: ctrl.signal
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({messages:messages, model:'openai', seed:Math.floor(Math.random()*999999)}),
+          signal: c1.signal
         });
-        clearTimeout(tid);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        return await resp.text();
-      } catch(e) {
-        clearTimeout(tid);
-        throw e;
-      }
+        clearTimeout(t1);
+        if (r1.ok) {
+          var txt = await r1.text();
+          if (txt && txt.length > 0) { state.txtApiOk = true; return txt; }
+        }
+      } catch(e) {}
+
+      // Method 2: GET (single message, no history)
+      try {
+        var lastMsg = messages[messages.length - 1].content;
+        var sysMsg = messages[0].content;
+        var getUrl = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&system=' + encodeURIComponent(sysMsg) + '&seed=' + Math.floor(Math.random()*999999);
+        var c2 = new AbortController();
+        var t2 = setTimeout(function(){ c2.abort(); }, timeout);
+        var r2 = await fetch(getUrl, {signal: c2.signal});
+        clearTimeout(t2);
+        if (r2.ok) {
+          var txt2 = await r2.text();
+          if (txt2 && txt2.length > 0) { state.txtApiOk = true; return txt2; }
+        }
+      } catch(e) {}
+
+      // Method 3: Through CORS proxy (POST)
+      try {
+        var c3 = new AbortController();
+        var t3 = setTimeout(function(){ c3.abort(); }, timeout);
+        var r3 = await fetch('https://corsproxy.io/?https%3A%2F%2Ftext.pollinations.ai%2F', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({messages:messages, model:'openai', seed:Math.floor(Math.random()*999999)}),
+          signal: c3.signal
+        });
+        clearTimeout(t3);
+        if (r3.ok) {
+          var txt3 = await r3.text();
+          if (txt3 && txt3.length > 0) { state.txtApiOk = true; return txt3; }
+        }
+      } catch(e) {}
+
+      state.txtApiOk = false;
+      throw new Error('جميع طرق الاتصال فشلت');
     }
 
     // ====== WEB SCRAPING ======
     async function scrapeUrl(url) {
-      var proxies = ['https://api.allorigins.win/get?url=','https://corsproxy.io/?'];
+      if (url.length > 500) throw new Error('URL too long');
+      var proxies = ['https://api.allorigins.win/get?url=', 'https://corsproxy.io/?'];
       for (var i = 0; i < proxies.length; i++) {
         try {
-          var fullUrl = proxies[i] + encodeURIComponent(url);
-          var resp = await fetch(fullUrl);
-          if (!resp.ok) continue;
+          var r = await fetch(proxies[i] + encodeURIComponent(url));
+          if (!r.ok) continue;
           var html;
           if (proxies[i].indexOf('allorigins') !== -1) {
-            var data = await resp.json();
-            html = data.contents;
+            var d = await r.json(); html = d.contents;
           } else {
-            html = await resp.text();
+            html = await r.text();
           }
           var parser = new DOMParser();
           var doc = parser.parseFromString(html, 'text/html');
-          doc.querySelectorAll('script,style,noscript').forEach(function(s){ s.remove(); });
+          doc.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(function(s){ s.remove(); });
           var title = (doc.querySelector('title') || {}).textContent || url;
-          var headings = [];
-          doc.querySelectorAll('h1,h2,h3').forEach(function(h){ var t = h.textContent.trim(); if (t) headings.push(t); });
-          var paragraphs = [];
-          doc.querySelectorAll('p').forEach(function(p){ var t = p.textContent.trim(); if (t && t.length > 15) paragraphs.push(t); });
-          var links = [];
+          var headings = [], paragraphs = [], links = [];
+          doc.querySelectorAll('h1,h2,h3,h4').forEach(function(h){ var t = h.textContent.trim(); if (t && t.length > 2) headings.push(t); });
+          doc.querySelectorAll('p,article,section>div').forEach(function(p){ var t = p.textContent.trim(); if (t && t.length > 20) paragraphs.push(t); });
           doc.querySelectorAll('a[href]').forEach(function(a){
             var href = a.getAttribute('href'), text = a.textContent.trim();
-            if (href && text && !href.startsWith('#') && !href.startsWith('javascript')) {
-              try { links.push({text:text.substring(0,80), url:new URL(href,url).href}); } catch(e){ links.push({text:text.substring(0,80),url:href}); }
+            if (href && text && text.length > 1 && !href.startsWith('#') && !href.startsWith('javascript')) {
+              try { links.push({text:text.substring(0,80), url:new URL(href,url).href}); } catch(e){ links.push({text:text.substring(0,80), url:href}); }
             }
           });
-          return {success:true, title:title, headings:headings, paragraphs:paragraphs, links:links.slice(0,30)};
-        } catch(e) {}
+          return {ok:true, title:title, headings:headings.slice(0,15), paragraphs:paragraphs.slice(0,40), links:links.slice(0,30)};
+        } catch(e) { continue; }
       }
-      return {success:false};
+      return {ok:false};
     }
 
     // ====== INTENT DETECTION ======
-    var imgWords = ['صورة','صوره','ارسم','رسم','ولد صورة','generate image','image of','draw','paint','ارسمل','صمم','تصميم','صور لي','ارسم لي','ولد لي صور','picture','photo of'];
-    var vidWords = ['فيديو','فديو','مقطع','ولد فيديو','video','clip','animate','حرك'];
+    var imgWords = ['صورة','صوره','ارسم','رسم','ولد صورة','generate image','image of','draw me','paint','ارسمل','صمم','صور لي','ارسم لي','ولد لي صور','picture of','photo of','create image'];
+    var vidWords = ['فيديو','فديو','مقطع','ولد فيديو','video of','clip of','animate','حرك','مشهد فيديو'];
 
     function detectIntent(msg) {
       var m = msg.toLowerCase();
-      if (imgWords.some(function(w){ return m.indexOf(w) !== -1; })) return 'image';
-      if (vidWords.some(function(w){ return m.indexOf(w) !== -1; })) return 'video';
+      for (var i = 0; i < imgWords.length; i++) { if (m.indexOf(imgWords[i]) !== -1) return 'image'; }
+      for (var j = 0; j < vidWords.length; j++) { if (m.indexOf(vidWords[j]) !== -1) return 'video'; }
       return 'chat';
     }
 
-    function extractPrompt(msg, removeWords) {
-      var clean = msg;
-      removeWords.forEach(function(w){ clean = clean.replace(new RegExp(w, 'gi'), ''); });
-      return clean.trim() || msg;
+    function cleanPrompt(msg, words) {
+      var c = msg;
+      for (var i = 0; i < words.length; i++) c = c.replace(new RegExp(words[i], 'gi'), '');
+      return c.replace(/\s+/g, ' ').trim() || msg;
     }
 
     // ====== OFFLINE RESPONSES ======
-    function getOfflineResp(msg) {
+    function offlineReply(msg) {
       var m = msg.toLowerCase();
-      if (m.indexOf('كود') !== -1 || m.indexOf('code') !== -1 || m.indexOf('python') !== -1) return {text:'def fibonacci(n):\n    fib = [0, 1]\n    for i in range(2, n):\n        fib.append(fib[i-1] + fib[i-2])\n    return fib\n\nprint(fibonacci(10))\n# [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]',model:'Offline'};
-      if (m.indexOf('قصة') !== -1 || m.indexOf('اكتب') !== -1) return {text:'في عام 2147، كانت سفينة "النور" تحلق عبر مجرة أندروميدا. القبطانة ليلى نظرت من النافذة ورأت كوكباً أزرق يشبه الأرض.\n\nهبطت بهدوء. ظهرت مخلوقات ضوئية قالت: "كنا ننتظركم منذ آلاف السنين."\n\nعادت تحمل أعظم اكتشاف: نحن لسنا وحدنا أبداً. 🚀',model:'Offline'};
-      if (m.indexOf('مرحب') !== -1 || m.indexOf('هلا') !== -1 || m.indexOf('سلام') !== -1) return {text:'أهلاً وسهلاً! 👋 أنا في وضع أوفلاين. أطفئ وضع الأوفلاين للحصول على ردود ذكاء اصطناعي حقيقية!',model:'Offline'};
-      return {text:'مرحباً! أنا في وضع أوفلاين حالياً. أطفئ وضع الأوفلاين واتصل بالإنترنت للحصول على ردود ذكاء اصطناعي حقيقية.\n\nيمكنني في وضع أوفلاين الرد فقط بردود جاهزة محدودة.',model:'Offline'};
+      if (m.indexOf('كود')!==-1||m.indexOf('code')!==-1||m.indexOf('python')!==-1||m.indexOf('برمج')!==-1)
+        return {t:'def fibonacci(n):\n    fib = [0, 1]\n    for i in range(2, n):\n        fib.append(fib[i-1] + fib[i-2])\n    return fib\n\nprint(fibonacci(10))\n# [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]',m:'Offline'};
+      if (m.indexOf('قصة')!==-1||m.indexOf('اكتب')!==-1||m.indexOf('story')!==-1)
+        return {t:'في عام 2147، حلّقت سفينة "النور" عبر مجرة أندروميدا. القبطانة ليلى رأت كوكباً أزرق يشبه الأرض.\n\nهبطت بهدوء. ظهرت مخلوقات ضوئية: "كنا ننتظركم منذ آلاف السنين."\n\nعادت تحمل أعظم اكتشاف: نحن لسنا وحدنا أبداً. 🚀',m:'Offline'};
+      if (m.indexOf('تحليل')!==-1||m.indexOf('حلل')!==-1)
+        return {t:'📊 تحليل:\n\n✅ المميزات:\n• السرعة العالية في المعالجة\n• الدقة وتقليل الأخطاء\n• العمل 24/7\n• توفير التكاليف\n\n❌ العيوب:\n• قد يحل محل وظائف\n• مخاوف الخصوصية\n• يحتاج استثمار كبير\n\n🎯 الخلاصة: أداة قوية تحتاج استخدام مسؤول.',m:'Offline'};
+      if (m.indexOf('اشرح')!==-1||m.indexOf('شرح')!==-1)
+        return {t:'🔬 شرح مبسط:\n\nتخيل متاهة كبيرة:\n🖥️ الكمبيوتر العادي: يجرب طريق واحد كل مرة\n⚛️ الكمبيوتر الكمي: يجرب كل الطرق في نفس الوقت!\n\nالاستخدامات:\n💊 اكتشاف أدوية\n🔐 تشفير فائق\n🌤️ تنبؤات دقيقة\n🧬 فهم الجينات',m:'Offline'};
+      if (m.indexOf('مرحب')!==-1||m.indexOf('هلا')!==-1||m.indexOf('سلام')!==-1)
+        return {t:'أهلاً وسهلاً! 👋\n\nأنا في وضع أوفلاين. أطفئ وضع الأوفلاين للحصول على ردود AI حقيقية!',m:'Offline'};
+      if (m.indexOf('شكر')!==-1)
+        return {t:'العفو! 😊 سعيد بمساعدتك. هل تحتاج شيء ثاني؟',m:'Offline'};
+      return {t:'مرحباً! أنا في وضع أوفلاين.\n\nللحصول على ردود ذكاء اصطناعي حقيقية:\n1. أطفئ وضع أوفلاين ✅\n2. تأكد من اتصال الإنترنت 🌐\n\nحالياً يمكنني الرد فقط بردود جاهزة محدودة.',m:'Offline'};
     }
 
     // ====== LOGIN ======
@@ -541,16 +617,52 @@
         $('#login-screen').style.display = 'none';
         $('#app-screen').style.display = 'flex';
         $('#disp-name').textContent = $('#username').value;
-        showToast('تم تسجيل الدخول بنجاح!', 'success');
+        toast('تم تسجيل الدخول بنجاح!', 'success');
+        testConnectivity();
       } else {
-        showToast('اسم المستخدم أو كلمة المرور غلط', 'error');
+        toast('اسم المستخدم أو كلمة المرور غلط', 'error');
       }
     });
 
     $('#logout-btn').addEventListener('click', function() {
       $('#app-screen').style.display = 'none';
       $('#login-screen').style.display = 'flex';
+      toast('تم تسجيل الخروج', 'info');
     });
+
+    // ====== CONNECTIVITY TEST ======
+    function testConnectivity() {
+      var bar = $('#conn-status');
+      var dot = $('#conn-dot');
+      var txt = $('#conn-text');
+      bar.classList.remove('hidden');
+      dot.className = 'conn-dot wait';
+      txt.textContent = 'جاري فحص اتصال خدمات AI...';
+
+      var testImg = new Image();
+      var timer = setTimeout(function() {
+        state.imgApiOk = false;
+        dot.className = 'conn-dot off';
+        txt.textContent = 'خدمة الصور بطيئة - الصور قد تستغرق وقت أطول';
+        setTimeout(function(){ bar.classList.add('hidden'); }, 5000);
+      }, 15000);
+
+      testImg.onload = function() {
+        clearTimeout(timer);
+        state.imgApiOk = true;
+        dot.className = 'conn-dot on';
+        txt.textContent = 'متصل بخدمات AI ✓';
+        setTimeout(function(){ bar.classList.add('hidden'); }, 3000);
+      };
+      testImg.onerror = function() {
+        clearTimeout(timer);
+        state.imgApiOk = false;
+        dot.className = 'conn-dot off';
+        txt.textContent = 'خدمة الصور غير متاحة حالياً - سيتم المحاولة عبر بروكسي';
+        setTimeout(function(){ bar.classList.add('hidden'); }, 5000);
+      };
+      testImg.src = 'https://image.pollinations.ai/prompt/test?width=64&height=64&seed=1&nologo=true';
+    }
 
     // ====== NAVIGATION ======
     $$('.nav-item').forEach(function(n) {
@@ -560,9 +672,9 @@
         n.classList.add('active');
         $$('.page').forEach(function(p){ p.style.display = 'none'; p.classList.remove('active'); });
         var el = $('#page-' + page);
-        el.style.display = 'flex'; el.classList.add('active');
-        var t = {chat:'المحادثة',image:'توليد الصور',video:'توليد الفيديو',web:'تصفح الويب',vpn:'حالة VPN'};
-        $('#page-title').textContent = t[page];
+        if (el) { el.style.display = 'flex'; el.classList.add('active'); }
+        var titles = {chat:'المحادثة',image:'توليد الصور',video:'توليد الفيديو',web:'تصفح الويب',vpn:'حالة VPN'};
+        $('#page-title').textContent = titles[page] || '';
         $('#new-chat-btn').style.display = page === 'chat' ? '' : 'none';
         if (page === 'vpn') renderProxies();
         if (window.innerWidth < 769) $('#sidebar').classList.remove('open');
@@ -573,129 +685,183 @@
     $('#close-sidebar').addEventListener('click', function(){ $('#sidebar').classList.remove('open'); });
 
     // ====== CHAT MESSAGES ======
-    function appendMsg(role, content, model, latency, rawHTML) {
+    function addMsg(role, content, model, latency, isHTML) {
       var w = $('#welcome-msg'); if (w) w.remove();
       var c = $('#chat-messages'), d = document.createElement('div');
       d.className = 'message ' + role;
       var av = role === 'user' ? '👤' : '🤖';
-      var meta = model ? '<div class="message-meta">' + model + (latency > 0 ? ' • ' + (latency/1000).toFixed(1) + 's' : '') + '</div>' : '';
-      var body = rawHTML ? content : esc(content);
-      d.innerHTML = '<div class="message-avatar">' + av + '</div><div style="flex:1;min-width:0"><div class="message-bubble">' + body + '</div>' + meta + '</div>';
+      var meta = '';
+      if (model) {
+        meta = '<div class="msg-meta">' + esc(model);
+        if (latency > 0) meta += ' • ' + (latency/1000).toFixed(1) + 's';
+        meta += '</div>';
+      }
+      var body;
+      if (isHTML) {
+        body = sanitize(content);
+      } else {
+        body = esc(content);
+      }
+      d.innerHTML = '<div class="msg-av">' + av + '</div><div class="msg-body"><div class="msg-bbl">' + body + '</div>' + meta + '</div>';
       c.appendChild(d);
       c.scrollTop = c.scrollHeight;
       return d;
     }
 
     function addTyping(text) {
+      removeTyping();
       var c = $('#chat-messages'), d = document.createElement('div');
       d.className = 'message assistant'; d.id = 'typing-msg';
-      d.innerHTML = '<div class="message-avatar">🤖</div><div><div class="message-bubble" style="color:var(--text-muted)" id="typing-text">' + (text || 'جاري التفكير...') + '</div></div>';
+      d.innerHTML = '<div class="msg-av">🤖</div><div class="msg-body"><div class="msg-bbl" style="color:var(--text-muted)" id="typing-text">' + esc(text || 'جاري التفكير...') + '</div></div>';
       c.appendChild(d); c.scrollTop = c.scrollHeight;
     }
 
     function removeTyping() { var t = document.getElementById('typing-msg'); if (t) t.remove(); }
-    function updateTyping(text) { var t = document.getElementById('typing-text'); if (t) t.textContent = text; }
+    function setTyping(text) { var t = document.getElementById('typing-text'); if (t) t.textContent = text; }
+
+    // ====== QUICK BUTTONS (EVENT DELEGATION) ======
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.quick-btn');
+      if (btn && btn.dataset.prompt) {
+        $('#chat-input').value = btn.dataset.prompt;
+        $('#chat-form').dispatchEvent(new Event('submit'));
+      }
+    });
 
     // ====== CHAT SUBMIT ======
     $('#chat-form').addEventListener('submit', async function(e) {
       e.preventDefault();
-      if (busy) return;
+      if (state.busy) return;
       var input = $('#chat-input'), msg = input.value.trim();
       if (!msg) return;
       input.value = ''; input.style.height = 'auto';
-      appendMsg('user', msg);
-      chatCounter++;
-      chatHistory.unshift({id:chatCounter, title:msg.substring(0,40)});
+      addMsg('user', msg);
+      state.chatCounter++;
+      state.chatHistory.unshift({id:state.chatCounter, title:msg.substring(0,40)});
       renderChatList();
-      reqCount++;
-      updateReqCount();
+      state.reqs++;
+      updateReqs();
 
       var intent = detectIntent(msg);
       var isOffline = $('#offline-toggle').checked;
+      state.busy = true;
 
-      busy = true;
+      try {
+        if (intent === 'image') {
+          await handleImageChat(msg);
+        } else if (intent === 'video') {
+          await handleVideoChat(msg);
+        } else if (isOffline) {
+          handleOfflineChat(msg);
+        } else {
+          await handleTextChat(msg);
+        }
+      } catch(err) {
+        removeTyping();
+        addMsg('assistant', 'حدث خطأ غير متوقع. حاول مرة أخرى.', 'خطأ', 0);
+      }
+      state.busy = false;
+    });
 
-      if (intent === 'image') {
-        var imgPrompt = extractPrompt(msg, ['قم ب','ولد لي','ارسم لي','صمم لي','ولد','ارسم','صمم','توليد','generate','صورة','صوره','لي','من فضلك','ارجوك','أرجوك','please','بليز']);
-        var msgEl = appendMsg('assistant', '', 'AI Image', 0, true);
-        var bubble = msgEl.querySelector('.message-bubble');
-        bubble.innerHTML = '🎨 جاري توليد الصورة...<br><br><div id="chat-img-container"></div>';
-        var container = document.getElementById('chat-img-container');
-        showAIImage(container, imgPrompt, '', 1024, 1024, function(elapsed) {
+    async function handleImageChat(msg) {
+      var prompt = cleanPrompt(msg, ['قم ب','ولد لي','ارسم لي','صمم لي','ولد','ارسم','صمم','توليد','generate','صورة','صوره','لي','من فضلك','ارجوك','أرجوك','please','بليز','لو سمحت']);
+      var el = addMsg('assistant', '', 'AI Image', 0, true);
+      var bbl = el.querySelector('.msg-bbl');
+      var cid = 'imgc' + genId();
+      bbl.innerHTML = '🎨 جاري توليد الصورة...<br><br><div id="'+cid+'"></div>';
+      var container = document.getElementById(cid);
+      return new Promise(function(resolve) {
+        loadAIImage(container, prompt, '', 1024, 1024, function(elapsed) {
           if (elapsed > 0) {
-            showToast('تم توليد الصورة بنجاح!', 'success');
-            var metaDiv = msgEl.querySelector('.message-meta');
-            if (metaDiv) metaDiv.textContent = 'AI Image • ' + (elapsed/1000).toFixed(1) + 's';
+            toast('تم توليد الصورة!', 'success');
+            var meta = el.querySelector('.msg-meta');
+            if (meta) meta.textContent = 'AI Image • ' + (elapsed/1000).toFixed(1) + 's';
           }
           $('#model-badge').textContent = 'AI Image';
-          busy = false;
           $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+          resolve();
         });
+      });
+    }
 
-      } else if (intent === 'video') {
-        var vidPrompt = extractPrompt(msg, ['قم ب','ولد لي','صمم لي','ولد','توليد','generate','فيديو','فديو','مقطع','لي','من فضلك','ارجوك','حرك']);
-        var msgEl2 = appendMsg('assistant', '', 'AI Video', 0, true);
-        var bubble2 = msgEl2.querySelector('.message-bubble');
-        bubble2.innerHTML = '🎬 جاري توليد مشهد الفيديو...<br><br><div id="chat-vid-container"></div>';
-        var vcontainer = document.getElementById('chat-vid-container');
-        showAIImage(vcontainer, vidPrompt + ' cinematic scene wide angle', 'cinematic', 1280, 720, function(elapsed) {
-          if (elapsed > 0) showToast('تم توليد مشهد الفيديو!', 'success');
-          busy = false;
+    async function handleVideoChat(msg) {
+      var prompt = cleanPrompt(msg, ['قم ب','ولد لي','صمم لي','ولد','توليد','generate','فيديو','فديو','مقطع','لي','من فضلك','ارجوك','حرك','مشهد']);
+      var el = addMsg('assistant', '', 'AI Video', 0, true);
+      var bbl = el.querySelector('.msg-bbl');
+      var cid = 'vidc' + genId();
+      bbl.innerHTML = '🎬 جاري توليد مشهد الفيديو...<br><br><div id="'+cid+'"></div>';
+      var container = document.getElementById(cid);
+      return new Promise(function(resolve) {
+        loadAIImage(container, prompt + ', cinematic scene, wide angle, dramatic lighting', 'cinematic', 1280, 720, function(elapsed) {
+          if (elapsed > 0) toast('تم توليد المشهد!', 'success');
           $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+          resolve();
         });
+      });
+    }
 
-      } else if (isOffline) {
-        addTyping();
-        setTimeout(function() {
-          removeTyping();
-          var r = getOfflineResp(msg);
-          appendMsg('assistant', r.text, r.model, 0);
-          $('#model-badge').textContent = 'Offline';
-          busy = false;
-        }, 500);
+    function handleOfflineChat(msg) {
+      addTyping();
+      setTimeout(function() {
+        removeTyping();
+        var r = offlineReply(msg);
+        addMsg('assistant', r.t, r.m, 0);
+        $('#model-badge').textContent = 'Offline';
+      }, 400);
+    }
 
-      } else {
-        addTyping('🤖 جاري التفكير...');
-        convoMsgs.push({role:'user', content:msg});
-        var t0 = Date.now();
-        try {
-          var reply = await callAI(convoMsgs, 60000);
-          removeTyping();
-          var elapsed = Date.now() - t0;
-          convoMsgs.push({role:'assistant', content:reply});
-          if (convoMsgs.length > 21) convoMsgs = [convoMsgs[0]].concat(convoMsgs.slice(-20));
-          appendMsg('assistant', reply, 'AI Chat', elapsed);
-          $('#model-badge').textContent = 'AI Online';
-        } catch(err) {
-          removeTyping();
-          convoMsgs.pop();
-          appendMsg('assistant', 'عذراً، حدث خطأ في الاتصال. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.\n\nيمكنك تفعيل وضع أوفلاين للردود المحلية.', 'خطأ', 0);
-          showToast('خطأ في الاتصال', 'error');
-        }
-        busy = false;
+    async function handleTextChat(msg) {
+      addTyping('🤖 جاري التفكير بالذكاء الاصطناعي...');
+      state.convo.push({role:'user', content:msg});
+      var t0 = Date.now();
+      try {
+        var reply = await callAI(state.convo, 60000);
+        removeTyping();
+        state.convo.push({role:'assistant', content:reply});
+        if (state.convo.length > 21) state.convo = [state.convo[0]].concat(state.convo.slice(-20));
+        addMsg('assistant', reply, 'AI Chat', Date.now() - t0);
+        $('#model-badge').textContent = 'AI Online';
+      } catch(err) {
+        removeTyping();
+        state.convo.pop();
+        addMsg('assistant', 'عذراً، فشل الاتصال بالذكاء الاصطناعي.\n\nجرب:\n• تأكد من اتصال الإنترنت\n• فعّل وضع أوفلاين للردود المحلية\n• حاول مرة أخرى بعد قليل', 'خطأ', 0);
+        toast('خطأ في الاتصال', 'error');
       }
+    }
+
+    // ====== CHAT INPUT ======
+    $('#chat-input').addEventListener('input', function(){
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    $('#chat-input').addEventListener('keydown', function(e){
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chat-form').dispatchEvent(new Event('submit')); }
     });
 
-    $('#chat-input').addEventListener('input', function(){ this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; });
-    $('#chat-input').addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chat-form').dispatchEvent(new Event('submit')); } });
-
-    $$('.quick-btn').forEach(function(b) {
-      b.addEventListener('click', function(){ $('#chat-input').value = b.dataset.prompt; $('#chat-form').dispatchEvent(new Event('submit')); });
-    });
-
+    // ====== NEW CHAT ======
     $('#new-chat-btn').addEventListener('click', function() {
-      convoMsgs = [convoMsgs[0]];
-      $('#chat-messages').innerHTML = '<div class="welcome-message" id="welcome-msg"><div class="welcome-icon">🤖</div><h2>مرحبا بك في AI Super App</h2><p>اكتب أي شيء وسأرد عليك</p><div class="quick-actions"><button class="quick-btn" data-prompt="اكتب لي كود Python لحساب الفيبوناتشي">💻 اكتب كود</button><button class="quick-btn" data-prompt="اكتب لي قصة قصيرة عن الفضاء">📝 اكتب قصة</button><button class="quick-btn" data-prompt="ارسم لي صورة قطة لطيفة في الفضاء">🎨 ولد صورة</button><button class="quick-btn" data-prompt="اشرح لي الحوسبة الكمية بطريقة بسيطة">🧠 اشرح مفهوم</button></div></div>';
-      $$('.quick-btn').forEach(function(b){ b.addEventListener('click', function(){ $('#chat-input').value = b.dataset.prompt; $('#chat-form').dispatchEvent(new Event('submit')); }); });
-      showToast('محادثة جديدة', 'info');
+      state.convo = [state.convo[0]];
+      $('#chat-messages').innerHTML =
+        '<div class="welcome-message" id="welcome-msg">' +
+          '<div class="welcome-icon">🤖</div>' +
+          '<h2>مرحبا بك في AI Super App</h2>' +
+          '<p>اكتب أي شيء وسأرد عليك</p>' +
+          '<div class="quick-actions" id="quick-actions">' +
+            '<button class="quick-btn" data-prompt="اكتب لي كود Python لحساب الفيبوناتشي">💻 اكتب كود</button>' +
+            '<button class="quick-btn" data-prompt="اكتب لي قصة قصيرة عن الفضاء">📝 اكتب قصة</button>' +
+            '<button class="quick-btn" data-prompt="ارسم لي صورة قطة لطيفة في الفضاء">🎨 ولد صورة</button>' +
+            '<button class="quick-btn" data-prompt="اشرح لي الحوسبة الكمية بطريقة بسيطة">🧠 اشرح مفهوم</button>' +
+          '</div>' +
+        '</div>';
+      toast('محادثة جديدة', 'info');
     });
 
     function renderChatList() {
       var list = $('#chat-list'); list.innerHTML = '';
-      chatHistory.slice(0,10).forEach(function(ch) {
+      state.chatHistory.slice(0, 10).forEach(function(ch) {
         var el = document.createElement('div');
         el.className = 'chat-list-item';
-        el.innerHTML = '<span>' + esc(ch.title) + '</span>';
+        el.textContent = ch.title;
         list.appendChild(el);
       });
     }
@@ -704,20 +870,19 @@
     $('#image-form').addEventListener('submit', function(e) {
       e.preventDefault();
       var prompt = $('#image-prompt').value.trim();
-      if (!prompt) { showToast('اكتب وصف للصورة', 'error'); return; }
+      if (!prompt) { toast('اكتب وصف للصورة', 'error'); return; }
       var style = $('#image-style').value;
       var parts = $('#image-size').value.split('x');
       var w = parseInt(parts[0]), h = parseInt(parts[1]);
-      var btn = e.target.querySelector('.btn'); btn.disabled = true;
-      reqCount++; updateReqCount();
-
+      $('#img-gen-btn').disabled = true;
+      state.reqs++; updateReqs();
       $('#image-result').classList.remove('hidden');
-      showAIImage($('#image-output'), prompt, style, w, h, function(elapsed) {
-        btn.disabled = false;
+      loadAIImage($('#image-output'), prompt, style, w, h, function(elapsed) {
+        $('#img-gen-btn').disabled = false;
         if (elapsed > 0) {
-          var styleName = $('#image-style').options[$('#image-style').selectedIndex].text;
-          $('#image-meta').innerHTML = '<span>AI Image Generation</span><span>الوقت: '+(elapsed/1000).toFixed(1)+'s</span><span>الحجم: '+$('#image-size').value+'</span><span>الأسلوب: '+styleName+'</span>';
-          showToast('تم توليد الصورة!', 'success');
+          var sn = $('#image-style').options[$('#image-style').selectedIndex].text;
+          $('#image-meta').innerHTML = '<span>AI Image</span><span>الوقت: '+(elapsed/1000).toFixed(1)+'s</span><span>'+$('#image-size').value+'</span><span>'+sn+'</span>';
+          toast('تم توليد الصورة!', 'success');
         } else {
           $('#image-meta').innerHTML = '<span style="color:var(--danger)">فشل - حاول مرة أخرى</span>';
         }
@@ -728,16 +893,15 @@
     $('#video-form').addEventListener('submit', function(e) {
       e.preventDefault();
       var prompt = $('#video-prompt').value.trim();
-      if (!prompt) { showToast('اكتب وصف للمشهد', 'error'); return; }
-      var btn = e.target.querySelector('.btn'); btn.disabled = true;
-      reqCount++; updateReqCount();
-
+      if (!prompt) { toast('اكتب وصف للمشهد', 'error'); return; }
+      $('#vid-gen-btn').disabled = true;
+      state.reqs++; updateReqs();
       $('#video-result').classList.remove('hidden');
-      showAIImage($('#video-output'), prompt + ' cinematic movie scene wide angle dramatic', 'cinematic', 1280, 720, function(elapsed) {
-        btn.disabled = false;
+      loadAIImage($('#video-output'), prompt + ', cinematic movie scene, dramatic lighting, wide angle', 'cinematic', 1280, 720, function(elapsed) {
+        $('#vid-gen-btn').disabled = false;
         if (elapsed > 0) {
-          $('#video-meta').innerHTML = '<span>AI Scene Generation</span><span>الوقت: '+(elapsed/1000).toFixed(1)+'s</span><span>الدقة: '+$('#video-resolution').value+'</span>';
-          showToast('تم توليد المشهد!', 'success');
+          $('#video-meta').innerHTML = '<span>AI Scene</span><span>الوقت: '+(elapsed/1000).toFixed(1)+'s</span><span>'+$('#video-resolution').value+'</span>';
+          toast('تم توليد المشهد!', 'success');
         } else {
           $('#video-meta').innerHTML = '<span style="color:var(--danger)">فشل - حاول مرة أخرى</span>';
         }
@@ -748,64 +912,61 @@
     $('#web-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       var url = $('#web-url').value.trim();
-      if (!url) { showToast('أدخل رابط', 'error'); return; }
+      if (!url) { toast('أدخل رابط', 'error'); return; }
       if (url.indexOf('http') !== 0) url = 'https://' + url;
-      var btn = e.target.querySelector('.btn'); btn.disabled = true;
-      reqCount++; updateReqCount();
-
+      $('#web-btn').disabled = true;
+      state.reqs++; updateReqs();
       $('#web-result').classList.remove('hidden');
-      $('#web-output').innerHTML = '<div class="loading-box"><div class="spinner"></div><div class="loading-text">جاري سحب المحتوى...</div></div>';
+      $('#web-output').innerHTML = '<div class="lbox"><div class="spin"></div><div class="ltxt">جاري سحب المحتوى...</div></div>';
 
       var t0 = Date.now();
-      var result = await scrapeUrl(url);
-      var elapsed = Date.now() - t0;
-
-      if (result.success) {
-        var type = $('#web-type').value;
-        var html = '<div style="color:var(--accent);font-size:16px;font-weight:700;margin-bottom:8px">' + esc(result.title) + '</div>';
-        html += '<div style="margin-bottom:12px"><span style="background:var(--bg-card);padding:4px 10px;border-radius:8px;font-size:12px;color:var(--success)">✓ تم بنجاح • '+(elapsed/1000).toFixed(1)+'s</span></div>';
-
-        if (type !== 'links' && result.headings.length > 0) {
-          html += '<div style="margin-bottom:12px"><strong style="color:var(--primary-light)">العناوين:</strong><br>';
-          result.headings.slice(0,10).forEach(function(h){ html += '• ' + esc(h) + '<br>'; });
-          html += '</div>';
+      try {
+        var res = await scrapeUrl(url);
+        var elapsed = Date.now() - t0;
+        if (res.ok) {
+          var type = $('#web-type').value;
+          var html = '<div style="color:var(--accent);font-weight:700;margin-bottom:8px">' + esc(res.title) + '</div>';
+          html += '<div style="margin-bottom:12px"><span style="background:var(--bg-card);padding:4px 10px;border-radius:8px;font-size:12px;color:var(--success)">✓ '+(elapsed/1000).toFixed(1)+'s</span></div>';
+          if (type !== 'links' && res.headings.length > 0) {
+            html += '<strong style="color:var(--primary-light)">العناوين:</strong><br>';
+            res.headings.forEach(function(h){ html += '• ' + esc(h) + '<br>'; });
+            html += '<br>';
+          }
+          if (type !== 'links' && res.paragraphs.length > 0) {
+            html += '<strong style="color:var(--primary-light)">المحتوى:</strong><br>';
+            var mx = type === 'full' ? 30 : 10;
+            res.paragraphs.slice(0,mx).forEach(function(p){ html += '<p style="margin:4px 0;color:var(--text-light);font-size:13px">' + esc(p) + '</p>'; });
+            if (res.paragraphs.length > mx) html += '<p style="color:var(--text-muted)">...و' + (res.paragraphs.length - mx) + ' فقرة أخرى</p>';
+          }
+          if ((type === 'links' || type === 'full') && res.links.length > 0) {
+            html += '<br><strong style="color:var(--primary-light)">الروابط ('+res.links.length+'):</strong><br>';
+            res.links.slice(0,20).forEach(function(l){ html += '<div style="margin:2px 0;font-size:12px">🔗 ' + esc(l.text) + '</div>'; });
+          }
+          $('#web-output').innerHTML = html;
+          toast('تم سحب المحتوى!', 'success');
+        } else {
+          $('#web-output').innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px">❌ فشل سحب المحتوى<br><small style="color:var(--text-muted)">تأكد من الرابط وحاول مرة أخرى</small></div>';
+          toast('فشل السحب', 'error');
         }
-        if (type !== 'links' && result.paragraphs.length > 0) {
-          html += '<div style="margin-bottom:12px"><strong style="color:var(--primary-light)">المحتوى:</strong><br>';
-          var max = type === 'full' ? 30 : 10;
-          result.paragraphs.slice(0,max).forEach(function(p){ html += '<p style="margin:6px 0;color:var(--text-light)">' + esc(p) + '</p>'; });
-          html += '</div>';
-        }
-        if ((type === 'links' || type === 'full') && result.links.length > 0) {
-          html += '<div><strong style="color:var(--primary-light)">الروابط ('+result.links.length+'):</strong><br>';
-          result.links.slice(0,20).forEach(function(l){ html += '<div style="margin:3px 0;font-size:13px">🔗 ' + esc(l.text) + '</div>'; });
-          html += '</div>';
-        }
-        if (result.headings.length === 0 && result.paragraphs.length === 0 && result.links.length === 0) {
-          html += '<div style="color:var(--text-muted)">لم يتم العثور على محتوى كافٍ</div>';
-        }
-        $('#web-output').innerHTML = html;
-        showToast('تم سحب المحتوى!', 'success');
-      } else {
-        $('#web-output').innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px">❌ فشل سحب المحتوى<br><span style="font-size:12px;color:var(--text-muted)">تأكد من الرابط وحاول مرة أخرى</span></div>';
-        showToast('فشل السحب', 'error');
+      } catch(err) {
+        $('#web-output').innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px">❌ خطأ في الاتصال</div>';
       }
-      btn.disabled = false;
+      $('#web-btn').disabled = false;
     });
 
     // ====== VPN ======
-    function updateReqCount() { var el = $('#vpn-req'); if (el) el.textContent = reqCount; }
+    function updateReqs() { var el = $('#vpn-req'); if (el) el.textContent = state.reqs; }
 
     function renderProxies() {
       var proxies = [
-        {flag:'🇺🇸',host:'us-proxy1.example.com',port:8080,country:'الولايات المتحدة',latency:142,rate:98},
-        {flag:'🇪🇺',host:'eu-proxy1.example.com',port:8080,country:'أوروبا',latency:89,rate:100},
-        {flag:'🇯🇵',host:'asia-proxy1.example.com',port:8080,country:'اليابان',latency:245,rate:95}
+        {flag:'🇺🇸',host:'us-proxy1.example.com',port:8080,country:'الولايات المتحدة',lat:142,rate:98},
+        {flag:'🇪🇺',host:'eu-proxy1.example.com',port:8080,country:'أوروبا',lat:89,rate:100},
+        {flag:'🇯🇵',host:'asia-proxy1.example.com',port:8080,country:'اليابان',lat:245,rate:95}
       ];
       var list = $('#vpn-proxies'); list.innerHTML = '';
       proxies.forEach(function(p){
         var c = document.createElement('div'); c.className = 'proxy-card';
-        c.innerHTML = '<div class="proxy-info"><span class="proxy-flag">'+p.flag+'</span><div><div class="proxy-host">'+p.host+':'+p.port+'</div><div class="proxy-detail">'+p.country+'</div></div></div><div class="proxy-stats"><div class="proxy-stat"><span class="proxy-stat-value">'+p.latency+'ms</span><span class="proxy-stat-label">تأخير</span></div><div class="proxy-stat"><span class="proxy-stat-value">'+p.rate+'%</span><span class="proxy-stat-label">نجاح</span></div></div><span class="proxy-status active">نشط</span>';
+        c.innerHTML = '<div class="proxy-info"><span class="proxy-flag">'+p.flag+'</span><div><div class="proxy-host">'+esc(p.host)+':'+p.port+'</div><div class="proxy-detail">'+esc(p.country)+'</div></div></div><div class="proxy-stats"><div class="proxy-stat"><span class="proxy-stat-value">'+p.lat+'ms</span><span class="proxy-stat-label">تأخير</span></div><div class="proxy-stat"><span class="proxy-stat-value">'+p.rate+'%</span><span class="proxy-stat-label">نجاح</span></div></div><span class="proxy-status active">نشط</span>';
         list.appendChild(c);
       });
     }
@@ -814,6 +975,17 @@
       $('#model-badge').textContent = this.checked ? 'Offline' : 'AI Online';
       $('#model-badge').style.color = this.checked ? 'var(--text-muted)' : 'var(--accent)';
     });
+
+    // ====== PUBLIC API ======
+    window.AI = {
+      toast: toast,
+      testConn: function() {
+        toast('جاري اختبار الاتصال...', 'info');
+        testConnectivity();
+      }
+    };
+
+  })();
   </script>
 </body>
 </html>
