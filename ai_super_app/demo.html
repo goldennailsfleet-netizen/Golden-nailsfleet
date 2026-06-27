@@ -403,6 +403,14 @@
         .replace(/javascript\s*:/gi, '');
     }
 
+    // ====== CORS PROXIES LIST ======
+    var PROXIES = [
+      {name:'allorigins', wrap:function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);}},
+      {name:'corsproxy', wrap:function(u){return 'https://corsproxy.io/?'+encodeURIComponent(u);}},
+      {name:'codetabs', wrap:function(u){return 'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u);}},
+      {name:'allorigins-get', wrap:function(u){return 'https://api.allorigins.win/get?url='+encodeURIComponent(u);}, json:true}
+    ];
+
     // ====== IMAGE URL BUILDER ======
     function buildImgUrl(prompt, style, w, h, seed) {
       var p = prompt;
@@ -426,14 +434,18 @@
       var id = genId();
       var t0 = Date.now();
       var attempt = 0;
-      var maxAttempts = 4;
+      var seed1 = Math.floor(Math.random() * 999999);
+      var seed2 = Math.floor(Math.random() * 999999);
+      var seed3 = Math.floor(Math.random() * 999999);
 
       var urls = [
-        buildImgUrl(prompt, style, w, h),
-        buildImgUrl(prompt, style, w, h),
-        'https://corsproxy.io/?' + encodeURIComponent(buildImgUrl(prompt, style, w, h)),
-        buildImgUrl(prompt, '', Math.min(w, 512), Math.min(h, 512))
+        buildImgUrl(prompt, style, w, h, seed1),
+        buildImgUrl(prompt, style, Math.min(w,512), Math.min(h,512), seed2),
+        PROXIES[0].wrap(buildImgUrl(prompt, style, 512, 512, seed3)),
+        PROXIES[1].wrap(buildImgUrl(prompt, '', 256, 256, seed1)),
+        'https://image.pollinations.ai/prompt/' + encodeURIComponent(hasArabic(prompt)?translateAr(prompt):prompt) + '?width=256&height=256&nologo=true&seed=' + seed2
       ];
+      var maxAttempts = urls.length;
 
       container.innerHTML =
         '<div class="img-wrap">' +
@@ -441,7 +453,7 @@
             '<div class="spin"></div>' +
             '<div class="ltxt" id="st'+id+'">🎨 جاري توليد الصورة...<br><small>قد يستغرق 15-60 ثانية</small></div>' +
           '</div>' +
-          '<img class="ai-img" id="im'+id+'" alt="AI Generated" />' +
+          '<img class="ai-img" id="im'+id+'" alt="AI Generated" crossorigin="anonymous" />' +
         '</div>' +
         '<div class="iact" id="ia'+id+'" style="display:none">' +
           '<a id="dl'+id+'" href="#" target="_blank" download>💾 تحميل</a>' +
@@ -453,7 +465,10 @@
       var acts = document.getElementById('ia'+id);
       var dlnk = document.getElementById('dl'+id);
 
+      var imgTimeout = null;
+
       function success() {
+        if (imgTimeout) clearTimeout(imgTimeout);
         if (!overlay) return;
         overlay.classList.add('ok');
         acts.style.display = 'flex';
@@ -461,35 +476,48 @@
         if (callback) callback(Date.now() - t0);
       }
 
-      function fail() {
+      function tryNext() {
+        if (imgTimeout) clearTimeout(imgTimeout);
         attempt++;
         if (attempt < maxAttempts) {
-          var msgs = ['🔄 محاولة '+(attempt+1)+'/'+maxAttempts+'...', '🌐 جاري المحاولة عبر بروكسي...', '📐 محاولة بحجم أصغر...'];
-          if (stxt) stxt.innerHTML = msgs[attempt-1] || msgs[0];
+          var msgs = [
+            '🔄 محاولة '+(attempt+1)+' بحجم أصغر...',
+            '🌐 محاولة عبر بروكسي 1...',
+            '🌐 محاولة عبر بروكسي 2...',
+            '📐 محاولة أخيرة...'
+          ];
+          if (stxt) stxt.innerHTML = msgs[attempt-1] || ('🔄 محاولة '+(attempt+1)+'...');
+          img.removeAttribute('crossorigin');
           img.src = urls[attempt];
+          imgTimeout = setTimeout(tryNext, 30000);
         } else {
           if (overlay) {
             overlay.innerHTML =
               '<div class="ltxt" style="color:var(--danger)">❌ فشل توليد الصورة<br><br>' +
-              '<small style="color:var(--text-muted)">جرب:<br>' +
-              '• تأكد من اتصال الإنترنت<br>' +
-              '• جرب بالإنجليزي: beautiful cat in space<br>' +
-              '• انتظر دقيقة وحاول مرة أخرى</small></div>';
+              '<small style="color:var(--text-muted)">الأسباب المحتملة:<br>' +
+              '• خدمة Pollinations بطيئة أو متوقفة<br>' +
+              '• الإنترنت بطيء أو مقطوع<br>' +
+              '• حاول مرة أخرى بعد دقيقة<br>' +
+              '• جرب بالإنجليزي: beautiful cat</small></div>';
           }
           if (callback) callback(-1);
         }
       }
 
       img.onload = success;
-      img.onerror = fail;
+      img.onerror = tryNext;
       img.src = urls[0];
+      imgTimeout = setTimeout(tryNext, 30000);
     }
 
     // ====== AI CHAT API WITH FALLBACKS ======
     async function callAI(messages, timeout) {
-      timeout = timeout || 60000;
+      timeout = timeout || 45000;
+      var lastMsg = messages[messages.length - 1].content;
+      var sysMsg = messages.length > 0 ? messages[0].content : '';
+      var errors = [];
 
-      // Method 1: Direct POST
+      // Method 1: Direct POST to Pollinations
       try {
         var c1 = new AbortController();
         var t1 = setTimeout(function(){ c1.abort(); }, timeout);
@@ -504,13 +532,11 @@
           var txt = await r1.text();
           if (txt && txt.length > 0) { state.txtApiOk = true; return txt; }
         }
-      } catch(e) {}
+      } catch(e) { errors.push('POST: '+e.message); }
 
-      // Method 2: GET (single message, no history)
+      // Method 2: GET endpoint (simpler, works from file:// origins better)
       try {
-        var lastMsg = messages[messages.length - 1].content;
-        var sysMsg = messages[0].content;
-        var getUrl = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&system=' + encodeURIComponent(sysMsg) + '&seed=' + Math.floor(Math.random()*999999);
+        var getUrl = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&jsonMode=false&system=' + encodeURIComponent(sysMsg) + '&seed=' + Math.floor(Math.random()*999999);
         var c2 = new AbortController();
         var t2 = setTimeout(function(){ c2.abort(); }, timeout);
         var r2 = await fetch(getUrl, {signal: c2.signal});
@@ -519,39 +545,66 @@
           var txt2 = await r2.text();
           if (txt2 && txt2.length > 0) { state.txtApiOk = true; return txt2; }
         }
-      } catch(e) {}
+      } catch(e) { errors.push('GET: '+e.message); }
 
-      // Method 3: Through CORS proxy (POST)
+      // Method 3: Through allorigins proxy (GET)
       try {
+        var proxyGetUrl = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&seed=' + Math.floor(Math.random()*999999);
+        var proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(proxyGetUrl);
         var c3 = new AbortController();
         var t3 = setTimeout(function(){ c3.abort(); }, timeout);
-        var r3 = await fetch('https://corsproxy.io/?https%3A%2F%2Ftext.pollinations.ai%2F', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({messages:messages, model:'openai', seed:Math.floor(Math.random()*999999)}),
-          signal: c3.signal
-        });
+        var r3 = await fetch(proxyUrl, {signal: c3.signal});
         clearTimeout(t3);
         if (r3.ok) {
           var txt3 = await r3.text();
           if (txt3 && txt3.length > 0) { state.txtApiOk = true; return txt3; }
         }
-      } catch(e) {}
+      } catch(e) { errors.push('allorigins: '+e.message); }
+
+      // Method 4: Through corsproxy (POST)
+      try {
+        var c4 = new AbortController();
+        var t4 = setTimeout(function(){ c4.abort(); }, timeout);
+        var r4 = await fetch('https://corsproxy.io/?https%3A%2F%2Ftext.pollinations.ai%2F', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({messages:messages, model:'openai', seed:Math.floor(Math.random()*999999)}),
+          signal: c4.signal
+        });
+        clearTimeout(t4);
+        if (r4.ok) {
+          var txt4 = await r4.text();
+          if (txt4 && txt4.length > 0) { state.txtApiOk = true; return txt4; }
+        }
+      } catch(e) { errors.push('corsproxy: '+e.message); }
+
+      // Method 5: codetabs proxy (GET)
+      try {
+        var ct5url = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&seed=' + Math.floor(Math.random()*999999);
+        var c5 = new AbortController();
+        var t5 = setTimeout(function(){ c5.abort(); }, timeout);
+        var r5 = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(ct5url), {signal: c5.signal});
+        clearTimeout(t5);
+        if (r5.ok) {
+          var txt5 = await r5.text();
+          if (txt5 && txt5.length > 0) { state.txtApiOk = true; return txt5; }
+        }
+      } catch(e) { errors.push('codetabs: '+e.message); }
 
       state.txtApiOk = false;
+      state.lastErrors = errors;
       throw new Error('جميع طرق الاتصال فشلت');
     }
 
     // ====== WEB SCRAPING ======
     async function scrapeUrl(url) {
       if (url.length > 500) throw new Error('URL too long');
-      var proxies = ['https://api.allorigins.win/get?url=', 'https://corsproxy.io/?'];
-      for (var i = 0; i < proxies.length; i++) {
+      for (var i = 0; i < PROXIES.length; i++) {
         try {
-          var r = await fetch(proxies[i] + encodeURIComponent(url));
+          var r = await fetch(PROXIES[i].wrap(url));
           if (!r.ok) continue;
           var html;
-          if (proxies[i].indexOf('allorigins') !== -1) {
+          if (PROXIES[i].json) {
             var d = await r.json(); html = d.contents;
           } else {
             html = await r.text();
@@ -631,7 +684,7 @@
     });
 
     // ====== CONNECTIVITY TEST ======
-    function testConnectivity() {
+    async function testConnectivity() {
       var bar = $('#conn-status');
       var dot = $('#conn-dot');
       var txt = $('#conn-text');
@@ -639,29 +692,69 @@
       dot.className = 'conn-dot wait';
       txt.textContent = 'جاري فحص اتصال خدمات AI...';
 
-      var testImg = new Image();
-      var timer = setTimeout(function() {
-        state.imgApiOk = false;
-        dot.className = 'conn-dot off';
-        txt.textContent = 'خدمة الصور بطيئة - الصور قد تستغرق وقت أطول';
-        setTimeout(function(){ bar.classList.add('hidden'); }, 5000);
-      }, 15000);
+      var imgOk = false;
+      var txtOk = false;
 
-      testImg.onload = function() {
-        clearTimeout(timer);
-        state.imgApiOk = true;
+      // Test text API first (faster)
+      try {
+        var c = new AbortController();
+        var t = setTimeout(function(){ c.abort(); }, 10000);
+        var r = await fetch('https://text.pollinations.ai/ping?seed=1', {signal: c.signal});
+        clearTimeout(t);
+        if (r.ok) txtOk = true;
+      } catch(e) {}
+
+      if (!txtOk) {
+        try {
+          var c2 = new AbortController();
+          var t2 = setTimeout(function(){ c2.abort(); }, 10000);
+          var r2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://text.pollinations.ai/hello?seed=1'), {signal: c2.signal});
+          clearTimeout(t2);
+          if (r2.ok) txtOk = true;
+        } catch(e) {}
+      }
+
+      // Test image API
+      imgOk = await new Promise(function(resolve) {
+        var testImg = new Image();
+        var timer = setTimeout(function(){ resolve(false); }, 12000);
+        testImg.onload = function(){ clearTimeout(timer); resolve(true); };
+        testImg.onerror = function(){ clearTimeout(timer); resolve(false); };
+        testImg.src = 'https://image.pollinations.ai/prompt/test?width=32&height=32&seed=1&nologo=true';
+      });
+
+      state.imgApiOk = imgOk;
+      state.txtApiOk = txtOk;
+
+      if (imgOk && txtOk) {
         dot.className = 'conn-dot on';
-        txt.textContent = 'متصل بخدمات AI ✓';
+        txt.textContent = 'متصل بخدمات AI بنجاح ✓';
         setTimeout(function(){ bar.classList.add('hidden'); }, 3000);
-      };
-      testImg.onerror = function() {
-        clearTimeout(timer);
-        state.imgApiOk = false;
-        dot.className = 'conn-dot off';
-        txt.textContent = 'خدمة الصور غير متاحة حالياً - سيتم المحاولة عبر بروكسي';
+      } else if (txtOk || imgOk) {
+        dot.className = 'conn-dot on';
+        txt.textContent = 'متصل جزئياً - ' + (txtOk?'الدردشة تعمل':'الصور تعمل') + ' ✓';
         setTimeout(function(){ bar.classList.add('hidden'); }, 5000);
-      };
-      testImg.src = 'https://image.pollinations.ai/prompt/test?width=64&height=64&seed=1&nologo=true';
+      } else {
+        dot.className = 'conn-dot off';
+        txt.textContent = 'جاري المحاولة عبر بروكسي... (قد يكون الإنترنت بطيء)';
+        // Try via proxies
+        try {
+          var c3 = new AbortController();
+          var t3 = setTimeout(function(){ c3.abort(); }, 10000);
+          var r3 = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://text.pollinations.ai/hello'), {signal: c3.signal});
+          clearTimeout(t3);
+          if (r3.ok) {
+            state.txtApiOk = true;
+            dot.className = 'conn-dot on';
+            txt.textContent = 'متصل عبر بروكسي ✓ (قد يكون أبطأ)';
+            setTimeout(function(){ bar.classList.add('hidden'); }, 5000);
+            return;
+          }
+        } catch(e) {}
+        dot.className = 'conn-dot off';
+        txt.textContent = 'تعذر الاتصال - التطبيق سيعمل بوضع ذكي محلي';
+        setTimeout(function(){ bar.classList.add('hidden'); }, 6000);
+      }
     }
 
     // ====== NAVIGATION ======
@@ -812,21 +905,72 @@
 
     async function handleTextChat(msg) {
       addTyping('🤖 جاري التفكير بالذكاء الاصطناعي...');
+      setTyping('🤖 جاري الاتصال بالذكاء الاصطناعي...');
       state.convo.push({role:'user', content:msg});
       var t0 = Date.now();
       try {
-        var reply = await callAI(state.convo, 60000);
+        setTyping('🌐 جاري التواصل مع AI...');
+        var reply = await callAI(state.convo, 45000);
         removeTyping();
         state.convo.push({role:'assistant', content:reply});
         if (state.convo.length > 21) state.convo = [state.convo[0]].concat(state.convo.slice(-20));
-        addMsg('assistant', reply, 'AI Chat', Date.now() - t0);
+        addMsg('assistant', reply, 'AI Online', Date.now() - t0);
         $('#model-badge').textContent = 'AI Online';
       } catch(err) {
         removeTyping();
         state.convo.pop();
-        addMsg('assistant', 'عذراً، فشل الاتصال بالذكاء الاصطناعي.\n\nجرب:\n• تأكد من اتصال الإنترنت\n• فعّل وضع أوفلاين للردود المحلية\n• حاول مرة أخرى بعد قليل', 'خطأ', 0);
-        toast('خطأ في الاتصال', 'error');
+        var smartReply = smartLocalReply(msg);
+        addMsg('assistant', smartReply.text, smartReply.model, Date.now() - t0);
+        $('#model-badge').textContent = smartReply.model;
       }
+    }
+
+    function smartLocalReply(msg) {
+      var m = msg.toLowerCase();
+      var r = '';
+      var model = 'Smart Local';
+
+      if (m.match(/كود|code|برمج|python|java|html|css|script|برنامج/)) {
+        if (m.indexOf('python') !== -1 || m.indexOf('بايثون') !== -1) {
+          if (m.match(/فيبوناتشي|fibonacci/)) {
+            r = '🐍 كود Python لحساب الفيبوناتشي:\n\ndef fibonacci(n):\n    if n <= 0:\n        return []\n    elif n == 1:\n        return [0]\n    \n    fib = [0, 1]\n    for i in range(2, n):\n        fib.append(fib[i-1] + fib[i-2])\n    return fib\n\n# مثال:\nprint(fibonacci(10))\n# النتيجة: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]';
+          } else if (m.match(/حاسب|آلة حاسب|calculator/)) {
+            r = '🐍 آلة حاسبة بسيطة:\n\ndef calc(a, op, b):\n    if op == "+": return a + b\n    if op == "-": return a - b\n    if op == "*": return a * b\n    if op == "/": return a / b if b != 0 else "خطأ: قسمة على صفر"\n    return "عملية غير معروفة"\n\nprint(calc(10, "+", 5))  # 15\nprint(calc(10, "*", 3))  # 30';
+          } else {
+            r = '🐍 مثال كود Python:\n\n# Hello World\nprint("مرحباً بالعالم!")\n\n# دالة بسيطة\ndef greet(name):\n    return f"أهلاً {name}!"\n\nprint(greet("أحمد"))\n\n# قائمة وحلقة\nnumbers = [1, 2, 3, 4, 5]\nfor n in numbers:\n    print(f"{n} × 2 = {n*2}")';
+          }
+        } else if (m.match(/html|موقع|صفح/)) {
+          r = '🌐 كود HTML بسيط:\n\n<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n  <meta charset="UTF-8">\n  <title>صفحتي</title>\n  <style>\n    body { font-family: Arial; text-align: center; padding: 50px; }\n    h1 { color: #6c5ce7; }\n    .btn { background: #00cec9; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; }\n  </style>\n</head>\n<body>\n  <h1>مرحباً!</h1>\n  <p>هذه صفحتي الأولى</p>\n  <button class="btn">اضغط هنا</button>\n</body>\n</html>';
+        } else {
+          r = '💻 أمثلة برمجية:\n\n🐍 Python:\nprint("Hello!")\nfor i in range(5): print(i)\n\n🌐 JavaScript:\nconsole.log("Hello!");\n[1,2,3].forEach(n => console.log(n));\n\n☕ Java:\nSystem.out.println("Hello!");\n\n📝 ملاحظة: فعّل الاتصال بالإنترنت للحصول على أكواد مخصصة أكثر!';
+        }
+      } else if (m.match(/قص[ةه]|حكاي[ةه]|story|احك/)) {
+        r = '📖 قصة قصيرة: النجمة الضائعة\n\nفي ليلة هادئة، لاحظت فتاة صغيرة اسمها نور أن نجمة سقطت من السماء.\n\nركضت نحو الحقل حيث سقطت، ووجدت كرة صغيرة متلألئة.\n\n"أريد العودة للسماء" همست النجمة.\n\nفكرت نور طويلاً، ثم صعدت أعلى تل وقذفت النجمة بكل قوتها.\n\nارتفعت النجمة... أعلى وأعلى... حتى عادت لمكانها بين أخواتها.\n\nمنذ ذلك اليوم، كلما نظرت نور للسماء، وجدت نجمة تلمع لها وحدها. ✨\n\n🔖 النهاية';
+      } else if (m.match(/ترجم|translate|بالإنجليزي|بالعربي/)) {
+        r = '🌍 خدمة الترجمة:\n\nللحصول على ترجمات دقيقة، تحتاج اتصال إنترنت.\n\nبعض العبارات الشائعة:\n• مرحباً = Hello\n• شكراً = Thank you\n• كيف حالك = How are you\n• أنا بخير = I am fine\n• من فضلك = Please\n• نعم/لا = Yes/No\n• صباح الخير = Good morning\n• مع السلامة = Goodbye\n\n💡 فعّل الإنترنت لترجمة نصوص كاملة!';
+      } else if (m.match(/شرح|explain|اشرح|يعني|ما هو|ما هي|what is/)) {
+        if (m.match(/كم|quantum/)) {
+          r = '⚛️ الحوسبة الكمية ببساطة:\n\n🖥️ الكمبيوتر العادي: يستخدم بتات (0 أو 1)\n⚛️ الكمبيوتر الكمي: يستخدم كيوبتات (0 و 1 معاً!)\n\nتخيل متاهة:\n• الكمبيوتر العادي: يجرب طريق واحد كل مرة\n• الكمبيوتر الكمي: يجرب كل الطرق في نفس الوقت!\n\nالاستخدامات:\n💊 اكتشاف أدوية جديدة\n🔐 تشفير فائق الأمان\n🌤️ تنبؤات جوية دقيقة\n🧬 فهم الحمض النووي';
+        } else if (m.match(/ذكاء اصطناعي|ai|artificial/)) {
+          r = '🤖 الذكاء الاصطناعي ببساطة:\n\nهو قدرة الآلات على التعلم والتفكير مثل البشر.\n\n📊 الأنواع:\n1. ذكاء ضيق: متخصص بمهمة واحدة (مثل Siri)\n2. ذكاء عام: يفكر مثل الإنسان (لم يتحقق بعد)\n\n🔧 التطبيقات:\n• ChatGPT - محادثة ذكية\n• DALL-E - توليد صور\n• السيارات ذاتية القيادة\n• تشخيص الأمراض\n• الترجمة الفورية\n\n💡 هذا التطبيق يستخدم AI لتوليد الصور والردود!';
+        } else {
+          r = '📚 أنا في وضع محلي حالياً.\n\nيمكنني شرح:\n• الحوسبة الكمية ⚛️\n• الذكاء الاصطناعي 🤖\n• البرمجة 💻\n\nللحصول على شروحات مفصلة لأي موضوع، تأكد من اتصال الإنترنت وحاول مرة أخرى.';
+        }
+      } else if (m.match(/مرحب|هلا|سلام|اهلا|أهلا|هاي|hi|hello|hey/)) {
+        r = 'أهلاً وسهلاً! 👋\n\nأنا AI Super App، مساعدك الذكي.\n\nيمكنني مساعدتك في:\n💬 محادثة ذكية\n🎨 توليد صور AI\n💻 كتابة أكواد\n📖 كتابة قصص\n🌍 ترجمة\n📚 شرح مفاهيم\n\n⚠️ حالياً أعمل بوضع محلي. تأكد من الإنترنت للحصول على ردود AI كاملة!';
+      } else if (m.match(/شكر|thanks|thank/)) {
+        r = 'العفو! 😊\n\nسعيد بمساعدتك. هل تحتاج شيء ثاني؟';
+      } else if (m.match(/مسائ|مساء/)) {
+        r = 'مساء النور! 🌙\n\nكيف أقدر أساعدك الليلة؟';
+      } else if (m.match(/صباح/)) {
+        r = 'صباح الخير! ☀️\n\nيوم جديد مليء بالإمكانيات. كيف أساعدك؟';
+      } else if (m.match(/كيف حال|شلون|كيفك/)) {
+        r = 'الحمد لله بخير! 😊\n\nجاهز لمساعدتك. ماذا تحتاج؟';
+      } else {
+        r = '💡 أنا أعمل بالوضع المحلي حالياً لأن الاتصال بخوادم AI لم ينجح.\n\nما أقدر أسويه الآن:\n• 💻 اكتب "كود Python" - لأمثلة برمجية\n• 📖 اكتب "قصة" - لقصة قصيرة\n• 🧠 اكتب "اشرح الذكاء الاصطناعي" - لشرح مفهوم\n• 🌍 اكتب "ترجمة" - لعبارات شائعة\n\n🔄 لحل مشكلة الاتصال:\n1. تأكد من اتصال الإنترنت\n2. جرب WiFi بدل البيانات (أو العكس)\n3. انتظر دقيقة وحاول مرة أخرى\n4. اضغط "اختبار الاتصال" في صفحة VPN';
+      }
+
+      return {text: r, model: model};
     }
 
     // ====== CHAT INPUT ======
