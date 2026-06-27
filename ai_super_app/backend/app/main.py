@@ -2,11 +2,16 @@
 AI Super App - Main FastAPI Application
 """
 from datetime import datetime
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.database.models import create_tables, SessionLocal
 from app.auth import create_admin_user
 from app.routers import auth, chat, generate, web_access, vpn
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
 app = FastAPI(
     title="AI Super App",
@@ -62,6 +67,15 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
+
+@app.get("/app")
+@app.get("/app/{rest_of_path:path}")
+async def serve_frontend(rest_of_path: str = ""):
+    return FileResponse(str(FRONTEND_DIR / "index.html"))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Super App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="screen active">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="app-icon">🤖</div>
+          <h1>AI Super App</h1>
+          <p>تطبيق الذكاء الاصطناعي الشامل</p>
+        </div>
+        <form id="login-form">
+          <div class="input-group">
+            <label for="username">اسم المستخدم</label>
+            <input type="text" id="username" placeholder="admin@1234" required />
+          </div>
+          <div class="input-group">
+            <label for="password">كلمة المرور</label>
+            <input type="password" id="password" placeholder="••••••••" required />
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+            <span class="btn-text">تسجيل الدخول</span>
+            <span class="btn-loader hidden">⏳</span>
+          </button>
+          <div id="login-error" class="error-msg hidden"></div>
+        </form>
+        <div class="login-features">
+          <div class="feature-chip">💬 محادثة ذكية</div>
+          <div class="feature-chip">🎨 توليد صور</div>
+          <div class="feature-chip">🎬 توليد فيديو</div>
+          <div class="feature-chip">🌐 تصفح VPN</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app-screen" class="screen hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="user-info">
+          <div class="user-avatar">👤</div>
+          <div class="user-details">
+            <span class="user-name" id="user-display-name">Admin</span>
+            <span class="user-role" id="user-display-role">مدير</span>
+          </div>
+        </div>
+        <button class="btn-icon" id="close-sidebar" title="إغلاق">✕</button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="chat">
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">المحادثة</span>
+        </button>
+        <button class="nav-item" data-page="image">
+          <span class="nav-icon">🎨</span>
+          <span class="nav-label">توليد الصور</span>
+        </button>
+        <button class="nav-item" data-page="video">
+          <span class="nav-icon">🎬</span>
+          <span class="nav-label">توليد الفيديو</span>
+        </button>
+        <button class="nav-item" data-page="web">
+          <span class="nav-icon">🌐</span>
+          <span class="nav-label">تصفح الويب</span>
+        </button>
+        <button class="nav-item" data-page="vpn">
+          <span class="nav-icon">🔒</span>
+          <span class="nav-label">حالة VPN</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-chats" id="sidebar-chats">
+        <div class="sidebar-section-title">المحادثات السابقة</div>
+        <div id="chat-list" class="chat-list"></div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-outline btn-full" id="logout-btn">🚪 تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <button class="btn-icon" id="menu-btn" title="القائمة">☰</button>
+        <h2 class="topbar-title" id="page-title">المحادثة</h2>
+        <button class="btn btn-sm btn-accent" id="new-chat-btn">+ محادثة جديدة</button>
+      </header>
+
+      <!-- Chat Page -->
+      <div id="page-chat" class="page active">
+        <div class="chat-container" id="chat-messages">
+          <div class="welcome-message">
+            <div class="welcome-icon">🤖</div>
+            <h2>مرحبا بك في AI Super App</h2>
+            <p>اختر أي شيء تريده وسأساعدك</p>
+            <div class="quick-actions">
+              <button class="quick-btn" data-prompt="اكتب لي كود Python لحساب الفيبوناتشي">💻 اكتب كود</button>
+              <button class="quick-btn" data-prompt="اكتب لي قصة قصيرة عن الفضاء">📝 اكتب قصة</button>
+              <button class="quick-btn" data-prompt="حلل لي مميزات وعيوب الذكاء الاصطناعي">🔍 تحليل</button>
+              <button class="quick-btn" data-prompt="اشرح لي الحوسبة الكمية بطريقة بسيطة">🧠 اشرح مفهوم</button>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <div class="chat-options">
+            <label class="toggle-option">
+              <input type="checkbox" id="offline-toggle" />
+              <span>وضع أوفلاين</span>
+            </label>
+            <span class="model-badge" id="model-badge">تلقائي</span>
+          </div>
+          <form id="chat-form" class="chat-form">
+            <textarea id="chat-input" placeholder="اكتب رسالتك هنا..." rows="1"></textarea>
+            <button type="submit" class="btn btn-primary btn-send" id="send-btn">
+              <span class="send-icon">➤</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Image Generation Page -->
+      <div id="page-image" class="page hidden">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🎨 توليد الصور بالذكاء الاصطناعي</h3>
+            <form id="image-form">
+              <div class="input-group">
+                <label>وصف الصورة</label>
+                <textarea id="image-prompt" placeholder="صف الصورة التي تريد إنشائها..." rows="3"></textarea>
+              </div>
+              <div class="form-row">
+                <div class="input-group">
+                  <label>الحجم</label>
+                  <select id="image-size">
+                    <option value="1024x1024">1024x1024</option>
+                    <option value="512x512">512x512</option>
+                    <option value="1792x1024">1792x1024 (عريض)</option>
+                    <option value="1024x1792">1024x1792 (طولي)</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label>الأسلوب</label>
+                  <select id="image-style">
+                    <option value="">افتراضي</option>
+                    <option value="photorealistic">واقعي</option>
+                    <option value="anime">أنمي</option>
+                    <option value="oil_painting">لوحة زيتية</option>
+                    <option value="digital_art">فن رقمي</option>
+                    <option value="cinematic">سينمائي</option>
+                    <option value="3d">ثلاثي الأبعاد</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full">
+                <span class="btn-text">🎨 توليد الصورة</span>
+                <span class="btn-loader hidden">⏳ جاري التوليد...</span>
+              </button>
+            </form>
+          </div>
+          <div id="image-result" class="gen-result hidden">
+            <h4>النتيجة:</h4>
+            <div id="image-output" class="image-output"></div>
+            <div id="image-meta" class="gen-meta"></div>
+          </div>
+          <div id="image-history" class="gen-history"></div>
+        </div>
+      </div>
+
+      <!-- Video Generation Page -->
+      <div id="page-video" class="page hidden">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🎬 توليد الفيديو بالذكاء الاصطناعي</h3>
+            <form id="video-form">
+              <div class="input-group">
+                <label>وصف الفيديو</label>
+                <textarea id="video-prompt" placeholder="صف الفيديو الذي تريد إنشائه..." rows="3"></textarea>
+              </div>
+              <div class="form-row">
+                <div class="input-group">
+                  <label>المدة (ثوان)</label>
+                  <select id="video-duration">
+                    <option value="2">2 ثانية</option>
+                    <option value="4" selected>4 ثواني</option>
+                    <option value="8">8 ثواني</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label>الدقة</label>
+                  <select id="video-resolution">
+                    <option value="720p">720p HD</option>
+                    <option value="1080p">1080p Full HD</option>
+                  </select>
+                </div>
+              </div>
+              <div class="input-group">
+                <label>الأسلوب</label>
+                <select id="video-style">
+                  <option value="">افتراضي</option>
+                  <option value="cinematic">سينمائي</option>
+                  <option value="anime">أنمي</option>
+                  <option value="realistic">واقعي</option>
+                  <option value="3d">ثلاثي الأبعاد</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full">
+                <span class="btn-text">🎬 توليد الفيديو</span>
+                <span class="btn-loader hidden">⏳ جاري التوليد...</span>
+              </button>
+            </form>
+          </div>
+          <div id="video-result" class="gen-result hidden">
+            <h4>النتيجة:</h4>
+            <div id="video-output" class="video-output"></div>
+            <div id="video-meta" class="gen-meta"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Web Scraper Page -->
+      <div id="page-web" class="page hidden">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🌐 تصفح وسحب محتوى المواقع</h3>
+            <form id="web-form">
+              <div class="input-group">
+                <label>رابط الموقع</label>
+                <input type="url" id="web-url" placeholder="https://example.com" required />
+              </div>
+              <div class="form-row">
+                <div class="input-group">
+                  <label>نوع المحتوى</label>
+                  <select id="web-type">
+                    <option value="article">مقال</option>
+                    <option value="product">منتج</option>
+                    <option value="markdown">Markdown</option>
+                  </select>
+                </div>
+                <div class="input-group checkbox-group">
+                  <label><input type="checkbox" id="web-images" checked /> استخراج الصور</label>
+                  <label><input type="checkbox" id="web-links" /> استخراج الروابط</label>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full">
+                <span class="btn-text">🌐 سحب المحتوى</span>
+                <span class="btn-loader hidden">⏳ جاري السحب...</span>
+              </button>
+            </form>
+          </div>
+          <div id="web-result" class="gen-result hidden">
+            <h4>المحتوى المستخرج:</h4>
+            <div id="web-output" class="web-output"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VPN Status Page -->
+      <div id="page-vpn" class="page hidden">
+        <div class="gen-container">
+          <div class="vpn-header-card">
+            <h3>🔒 حالة VPN والبروكسي</h3>
+            <div class="vpn-stats" id="vpn-stats">
+              <div class="stat-card">
+                <span class="stat-value" id="vpn-total">-</span>
+                <span class="stat-label">إجمالي البروكسيات</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-value" id="vpn-active">-</span>
+                <span class="stat-label">نشط</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-value" id="vpn-failed">-</span>
+                <span class="stat-label">فاشل</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-value" id="vpn-requests">-</span>
+                <span class="stat-label">الطلبات</span>
+              </div>
+            </div>
+          </div>
+          <div class="vpn-actions">
+            <button class="btn btn-accent" id="vpn-refresh-btn">🔄 تحديث</button>
+            <button class="btn btn-outline" id="vpn-rotate-btn">🔀 تدوير البروكسي</button>
+            <button class="btn btn-outline" id="vpn-test-btn">🧪 اختبار الاتصال</button>
+          </div>
+          <div id="vpn-proxies" class="proxy-list"></div>
+          <div id="vpn-test-result" class="gen-result hidden">
+            <h4>نتيجة الاختبار:</h4>
+            <div id="vpn-test-output"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
