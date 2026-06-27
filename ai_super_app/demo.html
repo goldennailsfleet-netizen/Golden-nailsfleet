@@ -429,10 +429,21 @@ print(result)
 
     function getAIResponse(msg) {
       const m = msg.toLowerCase();
+      const imgWords = ['صورة','صوره','ارسم','رسم','ولد صورة','توليد صورة','generate','image','draw','paint','ارسمل','ولد لي','صمم','تصميم'];
+      const vidWords = ['فيديو','فديو','مقطع','ولد فيديو','video','clip','animate'];
+      if (imgWords.some(w => m.includes(w))) {
+        const desc = msg.replace(/قم ب|ولد لي|ارسم لي|صمم لي|ولد|ارسم|صمم|توليد|generate|صورة|صوره|لي|من فضلك/gi, '').trim() || msg;
+        return { text: `__IMAGE__${desc}`, model: 'DALL-E 3', isImage: true };
+      }
+      if (vidWords.some(w => m.includes(w))) {
+        const desc = msg.replace(/قم ب|ولد لي|صمم لي|ولد|توليد|generate|فيديو|فديو|مقطع|لي|من فضلك/gi, '').trim() || msg;
+        return { text: `__VIDEO__${desc}`, model: 'Runway Gen-2', isVideo: true };
+      }
       if (m.includes('كود') || m.includes('code') || m.includes('python') || m.includes('برمج') || m.includes('فيبوناتشي')) return { text: demoResponses['code'], model: 'GPT-4' };
-      if (m.includes('قصة') || m.includes('story') || m.includes('اكتب') || m.includes('فضاء')) return { text: demoResponses['قصة'], model: 'Claude-3' };
+      if (m.includes('قصة') || m.includes('story') || m.includes('فضاء')) return { text: demoResponses['قصة'], model: 'Claude-3' };
       if (m.includes('تحليل') || m.includes('حلل') || m.includes('مميزات') || m.includes('عيوب')) return { text: demoResponses['تحليل'], model: 'Gemini-Pro' };
       if (m.includes('اشرح') || m.includes('بسيط') || m.includes('كمي')) return { text: demoResponses['اشرح'], model: 'GPT-4' };
+      if (m.includes('اكتب')) return { text: demoResponses['قصة'], model: 'Claude-3' };
       if (m.includes('مرحب') || m.includes('هلا') || m.includes('السلام')) return { text: 'أهلاً وسهلاً! 👋 كيف يمكنني مساعدتك اليوم؟', model: 'Auto' };
       if (m.includes('شكر')) return { text: 'العفو! سعيد بمساعدتك 😊 هل تحتاج شيء ثاني؟', model: 'Auto' };
       return { text: demoResponses['default'], model: 'Auto Router' };
@@ -477,13 +488,14 @@ print(result)
     $('#close-sidebar').addEventListener('click', () => $('#sidebar').classList.remove('open'));
 
     // CHAT
-    function appendMsg(role, content, model='', latency=0) {
+    function appendMsg(role, content, model='', latency=0, rawHTML=false) {
       const w = $('#welcome-msg'); if (w) w.remove();
       const c = $('#chat-messages'), d = document.createElement('div');
       d.className = `message ${role}`;
       const av = role==='user'?'👤':'🤖';
       let meta = model ? `<div class="message-meta">${model} • ${latency}ms</div>` : '';
-      d.innerHTML = `<div class="message-avatar">${av}</div><div><div class="message-bubble">${escapeHtml(content)}</div>${meta}</div>`;
+      const body = rawHTML ? content : escapeHtml(content);
+      d.innerHTML = `<div class="message-avatar">${av}</div><div><div class="message-bubble">${body}</div>${meta}</div>`;
       c.appendChild(d); c.scrollTop = c.scrollHeight;
     }
 
@@ -492,6 +504,71 @@ print(result)
       d.className = 'message assistant'; d.id = 'typing-indicator';
       d.innerHTML = `<div class="message-avatar">🤖</div><div><div class="message-bubble" style="color:var(--text-muted)">جاري التفكير...</div></div>`;
       c.appendChild(d); c.scrollTop = c.scrollHeight;
+    }
+
+    function generateDemoImage(prompt) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512; canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      const colors = [
+        ['#6c5ce7','#a29bfe','#dfe6e9'],
+        ['#00cec9','#81ecec','#dfe6e9'],
+        ['#fd79a8','#fab1a0','#ffeaa7'],
+        ['#0984e3','#74b9ff','#dfe6e9'],
+        ['#e17055','#fdcb6e','#ffeaa7'],
+        ['#6c5ce7','#e84393','#fd79a8'],
+      ];
+      const palette = colors[Math.floor(Math.random()*colors.length)];
+      const grd = ctx.createLinearGradient(0,0,512,512);
+      grd.addColorStop(0, palette[0]); grd.addColorStop(0.5, palette[1]); grd.addColorStop(1, palette[2]);
+      ctx.fillStyle = grd; ctx.fillRect(0,0,512,512);
+      for (let i=0; i<15; i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random()*512, Math.random()*512, 20+Math.random()*80, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,255,${0.03+Math.random()*0.08})`;
+        ctx.fill();
+      }
+      for (let i=0; i<8; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random()*512, Math.random()*512);
+        ctx.bezierCurveTo(Math.random()*512,Math.random()*512,Math.random()*512,Math.random()*512,Math.random()*512,Math.random()*512);
+        ctx.strokeStyle = `rgba(255,255,255,${0.05+Math.random()*0.1})`;
+        ctx.lineWidth = 1+Math.random()*3;
+        ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(0, 370, 512, 142);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 18px Cairo, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🎨 AI Generated Image', 256, 410);
+      ctx.font = '14px Cairo, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      const lines = prompt.length > 45 ? [prompt.substring(0,45)+'...'] : [prompt];
+      lines.forEach((line,i) => ctx.fillText(line, 256, 440+i*22));
+      ctx.font = '12px Cairo, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText('DALL-E 3 • 512x512 • AI Super App', 256, 490);
+      return canvas.toDataURL('image/png');
+    }
+
+    function generateDemoVideo(prompt) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 640; canvas.height = 360;
+      const ctx = canvas.getContext('2d');
+      const grd = ctx.createLinearGradient(0,0,640,360);
+      grd.addColorStop(0,'#0f0f1a'); grd.addColorStop(0.5,'#1a1a2e'); grd.addColorStop(1,'#16213e');
+      ctx.fillStyle = grd; ctx.fillRect(0,0,640,360);
+      ctx.fillStyle = 'rgba(108,92,231,0.3)';
+      ctx.beginPath(); ctx.arc(320,180,80,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '48px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('▶', 325, 198);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0,280,640,80);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Cairo, sans-serif';
+      ctx.fillText('🎬 AI Generated Video', 320, 310);
+      ctx.font = '12px Cairo, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(prompt.substring(0,50), 320, 340);
+      return canvas.toDataURL('image/png');
     }
 
     $('#chat-form').addEventListener('submit', e => {
@@ -506,14 +583,43 @@ print(result)
       chatHistory.unshift({ id: chatCounter, title: chatTitle });
       renderChatList();
 
-      const delay = 800 + Math.random() * 1200;
-      setTimeout(() => {
-        const t = document.getElementById('typing-indicator'); if (t) t.remove();
-        const resp = getAIResponse(msg);
-        const lat = Math.floor(200 + Math.random() * 600);
-        appendMsg('assistant', resp.text, resp.model, lat);
-        $('#model-badge').textContent = resp.model;
-      }, delay);
+      const resp = getAIResponse(msg);
+
+      if (resp.isImage) {
+        const delay = 1500 + Math.random() * 2000;
+        const typEl = document.getElementById('typing-indicator');
+        if (typEl) typEl.querySelector('.message-bubble').textContent = '🎨 جاري توليد الصورة...';
+        setTimeout(() => {
+          const t = document.getElementById('typing-indicator'); if (t) t.remove();
+          const imgSrc = generateDemoImage(resp.text.replace('__IMAGE__',''));
+          const lat = Math.floor(1200 + Math.random() * 2000);
+          const html = `تم توليد الصورة بنجاح! 🎨<br><br><img src="${imgSrc}" style="max-width:100%;border-radius:12px;border:1px solid var(--border)" /><br><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><span style="background:var(--bg2);padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text-muted)">المزود: DALL-E 3</span><span style="background:var(--bg2);padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text-muted)">الحجم: 512x512</span><span style="background:var(--bg2);padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text-muted)">الوقت: ${(lat/1000).toFixed(1)}s</span></div>`;
+          appendMsg('assistant', html, resp.model, lat, true);
+          $('#model-badge').textContent = resp.model;
+          showToast('تم توليد الصورة بنجاح!', 'success');
+        }, delay);
+      } else if (resp.isVideo) {
+        const delay = 2000 + Math.random() * 2500;
+        const typEl = document.getElementById('typing-indicator');
+        if (typEl) typEl.querySelector('.message-bubble').textContent = '🎬 جاري توليد الفيديو...';
+        setTimeout(() => {
+          const t = document.getElementById('typing-indicator'); if (t) t.remove();
+          const vidSrc = generateDemoVideo(resp.text.replace('__VIDEO__',''));
+          const lat = Math.floor(3000 + Math.random() * 5000);
+          const html = `تم توليد الفيديو بنجاح! 🎬<br><br><img src="${vidSrc}" style="max-width:100%;border-radius:12px;border:1px solid var(--border);cursor:pointer" onclick="showToast('هذا عرض تجريبي - الفيديو الحقيقي يحتاج API مفعل','info')" /><br><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><span style="background:var(--bg2);padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text-muted)">المزود: Runway Gen-2</span><span style="background:var(--bg2);padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text-muted)">المدة: 4s</span><span style="background:var(--bg2);padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text-muted)">الوقت: ${(lat/1000).toFixed(1)}s</span></div>`;
+          appendMsg('assistant', html, resp.model, lat, true);
+          $('#model-badge').textContent = resp.model;
+          showToast('تم توليد الفيديو بنجاح!', 'success');
+        }, delay);
+      } else {
+        const delay = 800 + Math.random() * 1200;
+        setTimeout(() => {
+          const t = document.getElementById('typing-indicator'); if (t) t.remove();
+          const lat = Math.floor(200 + Math.random() * 600);
+          appendMsg('assistant', resp.text, resp.model, lat);
+          $('#model-badge').textContent = resp.model;
+        }, delay);
+      }
     });
 
     $('#chat-input').addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; });
@@ -542,17 +648,20 @@ print(result)
       e.preventDefault();
       const prompt = $('#image-prompt').value.trim();
       if (!prompt) { showToast('اكتب وصف للصورة', 'error'); return; }
-      showToast('جاري توليد الصورة...', 'info');
+      showToast('🎨 جاري توليد الصورة...', 'info');
+      const btn = e.target.querySelector('.btn'); btn.disabled = true;
       setTimeout(() => {
+        const imgSrc = generateDemoImage(prompt);
         $('#image-result').classList.remove('hidden');
-        $('#image-output').innerHTML = `<div class="placeholder-img">🎨<br><span style="font-size:14px;margin-top:12px;display:block;color:var(--text-muted)">تم توليد الصورة بنجاح!<br>"${escapeHtml(prompt.substring(0,60))}"</span></div>`;
-        const style = $('#image-style').value || 'default';
+        $('#image-output').innerHTML = `<img src="${imgSrc}" style="max-width:100%;border-radius:12px;border:1px solid var(--border)" />`;
+        const style = $('#image-style').value || 'افتراضي';
         const providers = ['DALL-E 3', 'Stability AI', 'Replicate'];
         const provider = providers[Math.floor(Math.random() * providers.length)];
         const time = (1 + Math.random() * 4).toFixed(2);
         $('#image-meta').innerHTML = `<span>المزود: ${provider}</span><span>الوقت: ${time}s</span><span>الحجم: ${$('#image-size').value}</span><span>الأسلوب: ${style}</span>`;
         showToast('تم توليد الصورة بنجاح!', 'success');
-      }, 1500);
+        btn.disabled = false;
+      }, 1500 + Math.random() * 1500);
     });
 
     // VIDEO
@@ -560,16 +669,19 @@ print(result)
       e.preventDefault();
       const prompt = $('#video-prompt').value.trim();
       if (!prompt) { showToast('اكتب وصف للفيديو', 'error'); return; }
-      showToast('جاري توليد الفيديو...', 'info');
+      showToast('🎬 جاري توليد الفيديو...', 'info');
+      const btn = e.target.querySelector('.btn'); btn.disabled = true;
       setTimeout(() => {
+        const vidSrc = generateDemoVideo(prompt);
         $('#video-result').classList.remove('hidden');
-        $('#video-output').innerHTML = `<div class="placeholder-img">🎬<br><span style="font-size:14px;margin-top:12px;display:block;color:var(--text-muted)">تم توليد الفيديو!<br>"${escapeHtml(prompt.substring(0,60))}"</span></div>`;
+        $('#video-output').innerHTML = `<img src="${vidSrc}" style="max-width:100%;border-radius:12px;border:1px solid var(--border);cursor:pointer" onclick="showToast('عرض تجريبي - الفيديو الحقيقي يحتاج API','info')" />`;
         const providers = ['Runway Gen-2', 'Stable Video', 'Replicate'];
         const provider = providers[Math.floor(Math.random() * providers.length)];
         const time = (5 + Math.random() * 15).toFixed(2);
         $('#video-meta').innerHTML = `<span>المزود: ${provider}</span><span>الوقت: ${time}s</span><span>المدة: ${$('#video-duration').value}s</span><span>الدقة: ${$('#video-resolution').value}</span>`;
         showToast('تم توليد الفيديو بنجاح!', 'success');
-      }, 2000);
+        btn.disabled = false;
+      }, 2000 + Math.random() * 2000);
     });
 
     // WEB
