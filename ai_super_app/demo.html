@@ -324,6 +324,27 @@
   (function() {
     'use strict';
 
+    // Polyfill Promise.any for older browsers
+    if (!Promise.any) {
+      Promise.any = function(promises) {
+        return new Promise(function(resolve, reject) {
+          var errors = [];
+          var remaining = 0;
+          var arr = [];
+          promises.forEach(function(p){ arr.push(p); });
+          remaining = arr.length;
+          if (remaining === 0) { reject(new Error('All promises rejected')); return; }
+          arr.forEach(function(p, i) {
+            Promise.resolve(p).then(resolve).catch(function(e) {
+              errors[i] = e;
+              remaining--;
+              if (remaining === 0) reject(new Error('All promises rejected'));
+            });
+          });
+        });
+      };
+    }
+
     var $ = function(s){ return document.querySelector(s); };
     var $$ = function(s){ return document.querySelectorAll(s); };
     var _uid = 0;
@@ -513,18 +534,52 @@
     // ====== AI CHAT API - ALL METHODS IN PARALLEL ======
     function tryFetch(url, opts, timeoutMs) {
       return new Promise(function(resolve, reject) {
-        var c = new AbortController();
-        var t = setTimeout(function(){ c.abort(); }, timeoutMs || 10000);
+        var done = false;
+        var timer = setTimeout(function() {
+          if (!done) { done = true; reject(new Error('timeout')); }
+        }, timeoutMs || 10000);
+
         opts = opts || {};
-        opts.signal = c.signal;
+        try {
+          if (typeof AbortController !== 'undefined') {
+            var ac = new AbortController();
+            opts.signal = ac.signal;
+            setTimeout(function(){ try{ac.abort();}catch(e){} }, timeoutMs || 10000);
+          }
+        } catch(e) {}
+
         fetch(url, opts).then(function(r) {
-          clearTimeout(t);
-          if (!r.ok) { reject(new Error('HTTP ' + r.status)); return; }
-          r.text().then(function(txt) {
-            if (txt && txt.length > 2) resolve(txt);
-            else reject(new Error('empty'));
-          }).catch(reject);
-        }).catch(function(e) { clearTimeout(t); reject(e); });
+          if (done) return;
+          clearTimeout(timer);
+          if (!r.ok) { done = true; reject(new Error('HTTP ' + r.status)); return; }
+          return r.text();
+        }).then(function(txt) {
+          if (done) return;
+          clearTimeout(timer);
+          done = true;
+          if (txt && txt.length > 2) resolve(txt);
+          else reject(new Error('empty'));
+        }).catch(function(e) {
+          if (!done) { done = true; clearTimeout(timer); reject(e); }
+        });
+      });
+    }
+
+    function tryXHR(url, timeoutMs) {
+      return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.timeout = timeoutMs || 10000;
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText && xhr.responseText.length > 2) {
+            resolve(xhr.responseText);
+          } else {
+            reject(new Error('xhr fail'));
+          }
+        };
+        xhr.onerror = function(){ reject(new Error('xhr error')); };
+        xhr.ontimeout = function(){ reject(new Error('xhr timeout')); };
+        try { xhr.send(); } catch(e) { reject(e); }
       });
     }
 
@@ -539,17 +594,19 @@
       var attempts = [
         tryFetch(directGetUrl, {}, timeout),
 
-        tryFetch('https://text.pollinations.ai/', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({messages:messages, model:'openai', seed:seed})
-        }, timeout),
+        tryXHR(directGetUrl, timeout),
 
         tryFetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(directGetUrl), {}, timeout),
 
         tryFetch('https://corsproxy.io/?' + encodeURIComponent(directGetUrl), {}, timeout),
 
-        tryFetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(directGetUrl), {}, timeout)
+        tryFetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(directGetUrl), {}, timeout),
+
+        tryFetch('https://text.pollinations.ai/', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({messages:messages, model:'openai', seed:seed})
+        }, timeout)
       ];
 
       try {
@@ -658,19 +715,20 @@
       dot.className = 'conn-dot wait';
       txt.textContent = 'جاري فحص الاتصال...';
 
-      // Test all in parallel - whoever responds first wins
       var txtOk = false;
       var imgOk = false;
 
+      // Test text API - try fetch and XHR in parallel
       var txtTest = Promise.any([
-        tryFetch('https://text.pollinations.ai/hi?seed=1', {}, 8000),
-        tryFetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://text.pollinations.ai/hi?seed=1'), {}, 8000),
-        tryFetch('https://corsproxy.io/?' + encodeURIComponent('https://text.pollinations.ai/hi?seed=1'), {}, 8000)
+        tryFetch('https://text.pollinations.ai/hi?seed=1', {}, 6000),
+        tryXHR('https://text.pollinations.ai/hi?seed=1', 6000),
+        tryXHR('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://text.pollinations.ai/hi?seed=1'), 6000)
       ]).then(function(){ txtOk = true; }).catch(function(){});
 
+      // Test image API
       var imgTest = new Promise(function(resolve) {
         var testImg = new Image();
-        var timer = setTimeout(function(){ resolve(); }, 8000);
+        var timer = setTimeout(function(){ resolve(); }, 6000);
         testImg.onload = function(){ clearTimeout(timer); imgOk = true; resolve(); };
         testImg.onerror = function(){ clearTimeout(timer); resolve(); };
         testImg.src = 'https://image.pollinations.ai/prompt/test?width=32&height=32&seed=1&nologo=true';
@@ -692,7 +750,7 @@
         txt.textContent = 'توليد الصور يعمل ✓';
       } else {
         dot.className = 'conn-dot off';
-        txt.textContent = 'وضع ذكي محلي - الدردشة تعمل بدون إنترنت';
+        txt.textContent = 'وضع محلي ذكي - جاهز للاستخدام';
       }
       setTimeout(function(){ bar.classList.add('hidden'); }, 4000);
     }
