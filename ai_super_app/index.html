@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Super App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary:#6c5ce7;--primary-dark:#5a4bd1;--primary-light:#a29bfe;
+      --accent:#00cec9;--accent-dark:#00b5b0;
+      --bg:#0f0f1a;--bg2:#1a1a2e;--bg-card:#16213e;--bg-input:#1a1a2e;
+      --text:#e8e8f0;--text-muted:#8888a0;--text-light:#b0b0c8;
+      --border:#2a2a40;--success:#00b894;--danger:#ff6b6b;--warning:#fdcb6e;
+      --shadow:0 4px 20px rgba(0,0,0,0.3);--radius:12px;--radius-lg:16px;--radius-xl:24px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+    .hidden{display:none!important}
+    .screen{display:none}.screen.active{display:flex}
+
+    /* LOGIN */
+    #login-screen{min-height:100vh;background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
+    #login-screen::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(108,92,231,.15),transparent 70%);top:-200px;left:-200px;border-radius:50%}
+    #login-screen::after{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(0,206,201,.1),transparent 70%);bottom:-150px;right:-150px;border-radius:50%}
+    .login-container{position:relative;z-index:1}
+    .login-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:40px 32px;width:100%;max-width:400px;box-shadow:var(--shadow);animation:slideUp .6s ease}
+    @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    .login-header{text-align:center;margin-bottom:32px}
+    .app-icon{font-size:56px;margin-bottom:12px}
+    .login-header h1{font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .login-header p{color:var(--text-muted);margin-top:4px;font-size:14px}
+    .input-group{margin-bottom:16px}
+    .input-group label{display:block;font-size:13px;font-weight:600;color:var(--text-light);margin-bottom:6px}
+    input,textarea,select{width:100%;padding:12px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:14px;transition:.3s;outline:none}
+    input:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,92,231,.2)}
+    input::placeholder,textarea::placeholder{color:var(--text-muted)}
+
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border:none;border-radius:var(--radius);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:.3s}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(108,92,231,.4)}
+    .btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff}
+    .btn-accent:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(0,206,201,.4)}
+    .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+    .btn-outline:hover{background:var(--bg2);border-color:var(--primary)}
+    .btn-full{width:100%}
+    .btn-sm{padding:8px 16px;font-size:13px}
+    .btn-icon{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:8px;border-radius:8px;transition:.3s}
+    .btn-icon:hover{background:var(--bg2);color:var(--text)}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .error-msg{background:rgba(255,107,107,.1);border:1px solid var(--danger);color:var(--danger);padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-top:12px;text-align:center}
+    .login-features{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
+    .feature-chip{background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text-light)}
+
+    /* APP LAYOUT */
+    #app-screen{min-height:100vh;display:flex}
+    .sidebar{width:280px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100vh;z-index:100;transition:transform .3s}
+    .sidebar.collapsed{transform:translateX(100%)}
+    .sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border)}
+    .user-info{display:flex;align-items:center;gap:10px}
+    .user-avatar{width:40px;height:40px;background:var(--bg-card);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px}
+    .user-details{display:flex;flex-direction:column}
+    .user-name{font-weight:700;font-size:14px}
+    .user-role{font-size:11px;color:var(--text-muted)}
+    .sidebar-nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:none;border:none;border-radius:var(--radius);color:var(--text-light);font-family:inherit;font-size:14px;cursor:pointer;transition:.3s;text-align:right;width:100%}
+    .nav-item:hover{background:var(--bg-card);color:var(--text)}
+    .nav-item.active{background:linear-gradient(135deg,rgba(108,92,231,.2),rgba(0,206,201,.1));color:var(--primary-light);font-weight:600}
+    .nav-icon{font-size:18px}
+    .sidebar-chats{flex:1;overflow-y:auto;padding:8px;border-top:1px solid var(--border)}
+    .sidebar-section-title{font-size:11px;color:var(--text-muted);text-transform:uppercase;padding:8px 10px;font-weight:700}
+    .chat-list{display:flex;flex-direction:column;gap:2px}
+    .chat-list-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;cursor:pointer;transition:.3s;font-size:13px;color:var(--text-light)}
+    .chat-list-item:hover{background:var(--bg-card)}
+    .chat-list-item .chat-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .chat-list-item .chat-delete{background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;opacity:0;transition:.2s;padding:2px 6px;border-radius:4px}
+    .chat-list-item:hover .chat-delete{opacity:1}
+    .sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+
+    /* MAIN */
+    .main-content{flex:1;margin-right:280px;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{display:flex;align-items:center;gap:12px;padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+    .topbar-title{flex:1;font-size:16px;font-weight:700}
+    #menu-btn{display:none}
+    .page{display:none;flex:1;flex-direction:column}.page.active{display:flex}
+
+    /* CHAT */
+    .chat-container{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+    .welcome-message{text-align:center;padding:60px 20px;animation:fadeIn .5s ease}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .welcome-icon{font-size:64px;margin-bottom:16px}
+    .welcome-message h2{font-size:24px;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .welcome-message p{color:var(--text-muted);margin-top:8px}
+    .quick-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
+    .quick-btn{background:var(--bg-card);border:1px solid var(--border);padding:10px 18px;border-radius:var(--radius);color:var(--text-light);font-family:inherit;font-size:13px;cursor:pointer;transition:.3s}
+    .quick-btn:hover{border-color:var(--primary);background:rgba(108,92,231,.1);color:var(--text)}
+    .message{display:flex;gap:12px;max-width:85%;animation:msgIn .3s ease}
+    @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .message.user{align-self:flex-start;flex-direction:row}
+    .message.assistant{align-self:flex-end;flex-direction:row-reverse}
+    .message-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .message.user .message-avatar{background:var(--primary)}
+    .message.assistant .message-avatar{background:var(--accent)}
+    .message-bubble{padding:12px 16px;border-radius:var(--radius-lg);font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+    .message.user .message-bubble{background:var(--bg-card);border:1px solid var(--border)}
+    .message.assistant .message-bubble{background:linear-gradient(135deg,rgba(108,92,231,.15),rgba(0,206,201,.1));border:1px solid rgba(108,92,231,.2)}
+    .message-meta{font-size:11px;color:var(--text-muted);margin-top:4px;text-align:left}
+    .message.typing .message-bubble::after{content:'●●●';animation:typing 1s infinite;letter-spacing:4px}
+    @keyframes typing{0%,100%{opacity:.3}50%{opacity:1}}
+    .chat-input-area{padding:12px 20px 20px;background:var(--bg2);border-top:1px solid var(--border)}
+    .chat-options{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px}
+    .toggle-option{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer}
+    .toggle-option input[type="checkbox"]{width:auto;accent-color:var(--primary)}
+    .model-badge{background:var(--bg-card);border:1px solid var(--border);padding:4px 10px;border-radius:20px;font-size:11px;color:var(--accent)}
+    .chat-form{display:flex;gap:8px;align-items:flex-end}
+    .chat-form textarea{flex:1;resize:none;min-height:44px;max-height:120px;padding:12px 16px;border-radius:var(--radius-lg)}
+    .btn-send{width:44px;height:44px;padding:0;border-radius:50%;flex-shrink:0}
+    .send-icon{font-size:18px;transform:scaleX(-1)}
+
+    /* GEN PAGES */
+    .gen-container{padding:20px;max-width:800px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:20px}
+    .gen-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px}
+    .gen-card h3{font-size:18px;margin-bottom:20px}
+    .form-row{display:flex;gap:12px}.form-row .input-group{flex:1}
+    select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238888a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 12px center;padding-left:32px}
+    .gen-result{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;animation:fadeIn .4s}
+    .gen-result h4{margin-bottom:12px;font-size:14px;color:var(--accent)}
+    .gen-meta{display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--text-muted);flex-wrap:wrap}
+    .gen-meta span{background:var(--bg2);padding:4px 10px;border-radius:8px}
+    .image-output img{max-width:100%;border-radius:var(--radius);border:1px solid var(--border)}
+    .placeholder-img{width:100%;height:300px;background:linear-gradient(135deg,var(--bg2),var(--bg-card));border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:48px;border:1px dashed var(--border)}
+    .web-output{background:var(--bg2);border-radius:var(--radius);padding:16px;max-height:500px;overflow-y:auto;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+    .web-title{font-size:18px;font-weight:700;color:var(--accent);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .web-meta-info{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+    .web-meta-tag{background:var(--bg-card);padding:4px 10px;border-radius:8px;font-size:12px;color:var(--text-muted)}
+    .checkbox-group{display:flex;flex-direction:column;gap:8px;padding-top:24px}
+    .checkbox-group label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+    .checkbox-group input[type="checkbox"]{width:auto;accent-color:var(--primary)}
+
+    /* VPN */
+    .vpn-header-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px}
+    .vpn-header-card h3{margin-bottom:20px}
+    .vpn-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+    .stat-value{display:block;font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .stat-label{font-size:12px;color:var(--text-muted);margin-top:4px;display:block}
+    .vpn-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .proxy-list{display:flex;flex-direction:column;gap:8px}
+    .proxy-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+    .proxy-info{display:flex;align-items:center;gap:12px}
+    .proxy-flag{font-size:24px}
+    .proxy-host{font-weight:600;font-size:14px}
+    .proxy-detail{font-size:12px;color:var(--text-muted)}
+    .proxy-stats{display:flex;gap:16px}
+    .proxy-stat{text-align:center}
+    .proxy-stat-value{font-weight:700;font-size:14px;display:block}
+    .proxy-stat-label{font-size:11px;color:var(--text-muted)}
+    .proxy-status{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+    .proxy-status.active{background:rgba(0,184,148,.15);color:var(--success)}
+    .proxy-status.inactive{background:rgba(255,107,107,.15);color:var(--danger)}
+
+    /* TOAST */
+    .toast-container{position:fixed;bottom:24px;left:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 20px;font-size:14px;box-shadow:var(--shadow);animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;display:flex;align-items:center;gap:8px;max-width:350px}
+    .toast.success{border-color:var(--success)}.toast.error{border-color:var(--danger)}.toast.info{border-color:var(--primary)}
+    @keyframes toastIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes toastOut{to{opacity:0;transform:translateX(-20px)}}
+
+    /* CONFIG MODAL */
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:32px;width:100%;max-width:450px;box-shadow:var(--shadow);animation:slideUp .3s ease}
+    .modal-card h3{margin-bottom:20px;font-size:18px}
+    .modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+
+    /* RESPONSIVE */
+    @media(max-width:768px){
+      .sidebar{transform:translateX(100%)}.sidebar.open{transform:translateX(0)}
+      .main-content{margin-right:0}#menu-btn{display:block}#close-sidebar{display:block}
+      .vpn-stats{grid-template-columns:repeat(2,1fr)}.form-row{flex-direction:column}
+      .message{max-width:95%}.quick-actions{flex-direction:column;align-items:center}
+      .quick-btn{width:100%;max-width:250px}.login-card{padding:28px 20px}
+    }
+    @media(min-width:769px){#close-sidebar{display:none}}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="login-screen" class="screen active">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="app-icon">🤖</div>
+          <h1>AI Super App</h1>
+          <p>تطبيق الذكاء الاصطناعي الشامل</p>
+        </div>
+
+        <!-- API Config -->
+        <div id="api-config" style="margin-bottom:20px">
+          <div class="input-group">
+            <label>رابط السيرفر (API URL)</label>
+            <input type="url" id="api-url" placeholder="http://localhost:8000" />
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:-10px;margin-bottom:10px">
+            اتركه فارغ للاستخدام الافتراضي
+          </div>
+        </div>
+
+        <form id="login-form">
+          <div class="input-group">
+            <label>اسم المستخدم</label>
+            <input type="text" id="username" value="admin@1234" required />
+          </div>
+          <div class="input-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="password" value="asd12345" required />
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+            <span class="btn-text">تسجيل الدخول</span>
+            <span class="btn-loader hidden">⏳ جاري الاتصال...</span>
+          </button>
+          <div id="login-error" class="error-msg hidden"></div>
+        </form>
+        <div class="login-features">
+          <div class="feature-chip">💬 محادثة ذكية</div>
+          <div class="feature-chip">🎨 توليد صور</div>
+          <div class="feature-chip">🎬 توليد فيديو</div>
+          <div class="feature-chip">🌐 تصفح VPN</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app-screen" class="screen hidden">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="user-info">
+          <div class="user-avatar">👤</div>
+          <div class="user-details">
+            <span class="user-name" id="user-display-name">Admin</span>
+            <span class="user-role" id="user-display-role">مدير</span>
+          </div>
+        </div>
+        <button class="btn-icon" id="close-sidebar">✕</button>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="chat"><span class="nav-icon">💬</span><span>المحادثة</span></button>
+        <button class="nav-item" data-page="image"><span class="nav-icon">🎨</span><span>توليد الصور</span></button>
+        <button class="nav-item" data-page="video"><span class="nav-icon">🎬</span><span>توليد الفيديو</span></button>
+        <button class="nav-item" data-page="web"><span class="nav-icon">🌐</span><span>تصفح الويب</span></button>
+        <button class="nav-item" data-page="vpn"><span class="nav-icon">🔒</span><span>حالة VPN</span></button>
+      </nav>
+      <div class="sidebar-chats">
+        <div class="sidebar-section-title">المحادثات السابقة</div>
+        <div id="chat-list" class="chat-list"></div>
+      </div>
+      <div class="sidebar-footer">
+        <button class="btn btn-outline btn-full" id="logout-btn">🚪 تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="btn-icon" id="menu-btn">☰</button>
+        <h2 class="topbar-title" id="page-title">المحادثة</h2>
+        <button class="btn btn-sm btn-accent" id="new-chat-btn">+ محادثة جديدة</button>
+      </header>
+
+      <!-- Chat -->
+      <div id="page-chat" class="page active">
+        <div class="chat-container" id="chat-messages">
+          <div class="welcome-message">
+            <div class="welcome-icon">🤖</div>
+            <h2>مرحبا بك في AI Super App</h2>
+            <p>اختر أي شيء تريده وسأساعدك</p>
+            <div class="quick-actions">
+              <button class="quick-btn" data-prompt="اكتب لي كود Python لحساب الفيبوناتشي">💻 اكتب كود</button>
+              <button class="quick-btn" data-prompt="اكتب لي قصة قصيرة عن الفضاء">📝 اكتب قصة</button>
+              <button class="quick-btn" data-prompt="حلل لي مميزات وعيوب الذكاء الاصطناعي">🔍 تحليل</button>
+              <button class="quick-btn" data-prompt="اشرح لي الحوسبة الكمية بطريقة بسيطة">🧠 اشرح مفهوم</button>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <div class="chat-options">
+            <label class="toggle-option"><input type="checkbox" id="offline-toggle" /><span>وضع أوفلاين</span></label>
+            <span class="model-badge" id="model-badge">تلقائي</span>
+          </div>
+          <form id="chat-form" class="chat-form">
+            <textarea id="chat-input" placeholder="اكتب رسالتك هنا..." rows="1"></textarea>
+            <button type="submit" class="btn btn-primary btn-send"><span class="send-icon">➤</span></button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Image -->
+      <div id="page-image" class="page hidden">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🎨 توليد الصور بالذكاء الاصطناعي</h3>
+            <form id="image-form">
+              <div class="input-group"><label>وصف الصورة</label><textarea id="image-prompt" placeholder="صف الصورة التي تريد إنشائها..." rows="3"></textarea></div>
+              <div class="form-row">
+                <div class="input-group"><label>الحجم</label><select id="image-size"><option value="1024x1024">1024x1024</option><option value="512x512">512x512</option><option value="1792x1024">1792x1024</option></select></div>
+                <div class="input-group"><label>الأسلوب</label><select id="image-style"><option value="">افتراضي</option><option value="photorealistic">واقعي</option><option value="anime">أنمي</option><option value="oil_painting">لوحة زيتية</option><option value="digital_art">فن رقمي</option><option value="cinematic">سينمائي</option><option value="3d">ثلاثي الأبعاد</option></select></div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full"><span class="btn-text">🎨 توليد الصورة</span><span class="btn-loader hidden">⏳ جاري التوليد...</span></button>
+            </form>
+          </div>
+          <div id="image-result" class="gen-result hidden"><h4>النتيجة:</h4><div id="image-output" class="image-output"></div><div id="image-meta" class="gen-meta"></div></div>
+        </div>
+      </div>
+
+      <!-- Video -->
+      <div id="page-video" class="page hidden">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🎬 توليد الفيديو بالذكاء الاصطناعي</h3>
+            <form id="video-form">
+              <div class="input-group"><label>وصف الفيديو</label><textarea id="video-prompt" placeholder="صف الفيديو الذي تريد إنشائه..." rows="3"></textarea></div>
+              <div class="form-row">
+                <div class="input-group"><label>المدة</label><select id="video-duration"><option value="2">2 ثانية</option><option value="4" selected>4 ثواني</option><option value="8">8 ثواني</option></select></div>
+                <div class="input-group"><label>الدقة</label><select id="video-resolution"><option value="720p">720p HD</option><option value="1080p">1080p Full HD</option></select></div>
+              </div>
+              <div class="input-group"><label>الأسلوب</label><select id="video-style"><option value="">افتراضي</option><option value="cinematic">سينمائي</option><option value="anime">أنمي</option><option value="realistic">واقعي</option><option value="3d">ثلاثي الأبعاد</option></select></div>
+              <button type="submit" class="btn btn-primary btn-full"><span class="btn-text">🎬 توليد الفيديو</span><span class="btn-loader hidden">⏳ جاري التوليد...</span></button>
+            </form>
+          </div>
+          <div id="video-result" class="gen-result hidden"><h4>النتيجة:</h4><div id="video-output"></div><div id="video-meta" class="gen-meta"></div></div>
+        </div>
+      </div>
+
+      <!-- Web -->
+      <div id="page-web" class="page hidden">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🌐 تصفح وسحب محتوى المواقع</h3>
+            <form id="web-form">
+              <div class="input-group"><label>رابط الموقع</label><input type="url" id="web-url" placeholder="https://example.com" required /></div>
+              <div class="form-row">
+                <div class="input-group"><label>نوع المحتوى</label><select id="web-type"><option value="article">مقال</option><option value="product">منتج</option><option value="markdown">Markdown</option></select></div>
+                <div class="input-group checkbox-group">
+                  <label><input type="checkbox" id="web-images" checked /> استخراج الصور</label>
+                  <label><input type="checkbox" id="web-links" /> استخراج الروابط</label>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full"><span class="btn-text">🌐 سحب المحتوى</span><span class="btn-loader hidden">⏳ جاري السحب...</span></button>
+            </form>
+          </div>
+          <div id="web-result" class="gen-result hidden"><h4>المحتوى المستخرج:</h4><div id="web-output" class="web-output"></div></div>
+        </div>
+      </div>
+
+      <!-- VPN -->
+      <div id="page-vpn" class="page hidden">
+        <div class="gen-container">
+          <div class="vpn-header-card">
+            <h3>🔒 حالة VPN والبروكسي</h3>
+            <div class="vpn-stats">
+              <div class="stat-card"><span class="stat-value" id="vpn-total">-</span><span class="stat-label">إجمالي البروكسيات</span></div>
+              <div class="stat-card"><span class="stat-value" id="vpn-active">-</span><span class="stat-label">نشط</span></div>
+              <div class="stat-card"><span class="stat-value" id="vpn-failed">-</span><span class="stat-label">فاشل</span></div>
+              <div class="stat-card"><span class="stat-value" id="vpn-requests">-</span><span class="stat-label">الطلبات</span></div>
+            </div>
+          </div>
+          <div class="vpn-actions">
+            <button class="btn btn-accent" id="vpn-refresh-btn">🔄 تحديث</button>
+            <button class="btn btn-outline" id="vpn-rotate-btn">🔀 تدوير البروكسي</button>
+            <button class="btn btn-outline" id="vpn-test-btn">🧪 اختبار الاتصال</button>
+          </div>
+          <div id="vpn-proxies" class="proxy-list"></div>
+          <div id="vpn-test-result" class="gen-result hidden"><h4>نتيجة الاختبار:</h4><div id="vpn-test-output"></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script>
+    let API_BASE = localStorage.getItem('ai_api_url') || 'http://localhost:8000';
+    const state = { token: localStorage.getItem('ai_token'), username: localStorage.getItem('ai_username'), currentChatId: null, currentPage: 'chat' };
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+
+    function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    function showToast(msg, type='info') {
+      const c = $('#toast-container'), t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> ${msg}`;
+      c.appendChild(t); setTimeout(() => t.remove(), 3000);
+    }
+
+    async function api(path, opts={}) {
+      const h = { 'Content-Type': 'application/json', ...opts.headers };
+      if (state.token) h['Authorization'] = `Bearer ${state.token}`;
+      const res = await fetch(`${API_BASE}${path}`, { ...opts, headers: h });
+      if (res.status === 401) { logout(); throw new Error('انتهت الجلسة'); }
+      if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.detail || `خطأ ${res.status}`); }
+      return res.json();
+    }
+
+    // AUTH
+    $('#login-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = $('#login-btn'), errEl = $('#login-error');
+      const customUrl = $('#api-url').value.trim();
+      if (customUrl) { API_BASE = customUrl.replace(/\/+$/, ''); localStorage.setItem('ai_api_url', API_BASE); }
+
+      btn.disabled = true;
+      btn.querySelector('.btn-text').classList.add('hidden');
+      btn.querySelector('.btn-loader').classList.remove('hidden');
+      errEl.classList.add('hidden');
+
+      try {
+        const fd = new URLSearchParams();
+        fd.append('username', $('#username').value);
+        fd.append('password', $('#password').value);
+        const res = await fetch(`${API_BASE}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd });
+        if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.detail || 'فشل تسجيل الدخول'); }
+        const data = await res.json();
+        state.token = data.access_token; state.username = data.username;
+        localStorage.setItem('ai_token', data.access_token);
+        localStorage.setItem('ai_username', data.username);
+        $('#user-display-name').textContent = data.username;
+        $('#user-display-role').textContent = data.is_admin ? 'مدير' : 'مستخدم';
+        showScreen('app'); showToast('تم تسجيل الدخول بنجاح', 'success'); loadChats();
+      } catch (err) {
+        errEl.textContent = err.message.includes('fetch') ? 'لا يمكن الاتصال بالسيرفر. تأكد من الرابط وأن السيرفر شغال.' : err.message;
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.querySelector('.btn-text').classList.remove('hidden');
+        btn.querySelector('.btn-loader').classList.add('hidden');
+      }
+    });
+
+    function logout() {
+      state.token = null; state.username = null; state.currentChatId = null;
+      localStorage.removeItem('ai_token'); localStorage.removeItem('ai_username');
+      showScreen('login'); showToast('تم تسجيل الخروج', 'info');
+    }
+    $('#logout-btn').addEventListener('click', logout);
+
+    function showScreen(name) {
+      if (name === 'login') { $('#login-screen').className = 'screen active'; $('#login-screen').style.display = 'flex'; $('#app-screen').className = 'screen hidden'; $('#app-screen').style.display = 'none'; }
+      else { $('#login-screen').className = 'screen hidden'; $('#login-screen').style.display = 'none'; $('#app-screen').className = 'screen active'; $('#app-screen').style.display = 'flex'; }
+    }
+
+    // NAV
+    $$('.nav-item').forEach(n => n.addEventListener('click', () => switchPage(n.dataset.page)));
+    function switchPage(page) {
+      state.currentPage = page;
+      $$('.nav-item').forEach(n => n.classList.remove('active'));
+      $(`.nav-item[data-page="${page}"]`).classList.add('active');
+      $$('.page').forEach(p => p.classList.remove('active'));
+      $(`#page-${page}`).classList.add('active');
+      const t = { chat:'المحادثة', image:'توليد الصور', video:'توليد الفيديو', web:'تصفح الويب', vpn:'حالة VPN' };
+      $('#page-title').textContent = t[page];
+      $('#new-chat-btn').style.display = page === 'chat' ? '' : 'none';
+      if (page === 'vpn') loadVPNStatus();
+      if (window.innerWidth < 769) $('#sidebar').classList.remove('open');
+    }
+
+    $('#menu-btn').addEventListener('click', () => $('#sidebar').classList.add('open'));
+    $('#close-sidebar').addEventListener('click', () => $('#sidebar').classList.remove('open'));
+
+    // CHAT
+    const welcomeHTML = `<div class="welcome-message"><div class="welcome-icon">🤖</div><h2>مرحبا بك في AI Super App</h2><p>اختر أي شيء تريده وسأساعدك</p><div class="quick-actions"><button class="quick-btn" data-prompt="اكتب لي كود Python لحساب الفيبوناتشي">💻 اكتب كود</button><button class="quick-btn" data-prompt="اكتب لي قصة قصيرة عن الفضاء">📝 اكتب قصة</button><button class="quick-btn" data-prompt="حلل لي مميزات وعيوب الذكاء الاصطناعي">🔍 تحليل</button><button class="quick-btn" data-prompt="اشرح لي الحوسبة الكمية بطريقة بسيطة">🧠 اشرح مفهوم</button></div></div>`;
+
+    $('#new-chat-btn').addEventListener('click', () => { state.currentChatId = null; $('#chat-messages').innerHTML = welcomeHTML; bindQuick(); switchPage('chat'); });
+
+    function bindQuick() { $$('.quick-btn').forEach(b => b.addEventListener('click', () => { $('#chat-input').value = b.dataset.prompt; $('#chat-form').dispatchEvent(new Event('submit')); })); }
+    bindQuick();
+
+    $('#chat-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const input = $('#chat-input'), msg = input.value.trim();
+      if (!msg) return;
+      input.value = ''; input.style.height = 'auto';
+      const c = $('#chat-messages'), w = c.querySelector('.welcome-message');
+      if (w) w.remove();
+      appendMsg('user', msg);
+      const typing = appendMsg('assistant', '', true);
+      try {
+        const r = await api('/chat/send', { method: 'POST', body: JSON.stringify({ message: msg, chat_id: state.currentChatId, prefer_offline: $('#offline-toggle').checked }) });
+        state.currentChatId = r.chat_id;
+        typing.remove();
+        appendMsg('assistant', r.response, false, r.model_used, r.latency_ms);
+        $('#model-badge').textContent = r.model_used;
+        loadChats();
+      } catch (err) { typing.remove(); appendMsg('assistant', `خطأ: ${err.message}`); showToast(err.message, 'error'); }
+    });
+
+    function appendMsg(role, content, isTyping=false, model='', latency=0) {
+      const c = $('#chat-messages'), d = document.createElement('div');
+      d.className = `message ${role}${isTyping?' typing':''}`;
+      const av = role==='user'?'👤':'🤖';
+      let meta = model ? `<div class="message-meta">${model} • ${Math.round(latency)}ms</div>` : '';
+      d.innerHTML = `<div class="message-avatar">${av}</div><div><div class="message-bubble">${isTyping?'':escapeHtml(content)}</div>${meta}</div>`;
+      c.appendChild(d); c.scrollTop = c.scrollHeight; return d;
+    }
+
+    $('#chat-input').addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; });
+    $('#chat-input').addEventListener('keydown', function(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); $('#chat-form').dispatchEvent(new Event('submit')); } });
+
+    async function loadChats() {
+      try {
+        const d = await api('/chat/chats'), list = $('#chat-list');
+        list.innerHTML = '';
+        d.chats.forEach(ch => {
+          const el = document.createElement('div');
+          el.className = 'chat-list-item';
+          el.innerHTML = `<span class="chat-title">${escapeHtml(ch.title)}</span><button class="chat-delete" data-id="${ch.id}">🗑</button>`;
+          el.addEventListener('click', e => { if (!e.target.classList.contains('chat-delete')) loadChatHistory(ch.id); });
+          el.querySelector('.chat-delete').addEventListener('click', e => { e.stopPropagation(); deleteChat(ch.id); });
+          list.appendChild(el);
+        });
+      } catch(e) {}
+    }
+
+    async function loadChatHistory(id) {
+      try {
+        state.currentChatId = id;
+        const d = await api(`/chat/history/${id}`), c = $('#chat-messages');
+        c.innerHTML = '';
+        d.messages.forEach(m => appendMsg(m.role, m.content, false, m.model_used || ''));
+        switchPage('chat');
+      } catch(e) { showToast('فشل تحميل المحادثة', 'error'); }
+    }
+
+    async function deleteChat(id) {
+      try {
+        await api(`/chat/${id}`, { method: 'DELETE' });
+        if (state.currentChatId === id) { state.currentChatId = null; $('#new-chat-btn').click(); }
+        loadChats(); showToast('تم حذف المحادثة', 'success');
+      } catch(e) { showToast('فشل الحذف', 'error'); }
+    }
+
+    // IMAGE
+    $('#image-form').addEventListener('submit', async e => {
+      e.preventDefault(); const btn = e.target.querySelector('.btn');
+      btn.disabled = true; btn.querySelector('.btn-text').classList.add('hidden'); btn.querySelector('.btn-loader').classList.remove('hidden');
+      try {
+        const r = await api('/generate/image', { method: 'POST', body: JSON.stringify({ prompt: $('#image-prompt').value, size: $('#image-size').value, style: $('#image-style').value || null }) });
+        $('#image-result').classList.remove('hidden');
+        $('#image-output').innerHTML = r.result_data && r.result_data !== 'placeholder_local_generation' ? `<img src="data:image/png;base64,${r.result_data}" />` : '<div class="placeholder-img">🎨</div>';
+        $('#image-meta').innerHTML = `<span>المزود: ${r.provider}</span><span>الوقت: ${r.generation_time.toFixed(2)}s</span>`;
+        showToast('تم توليد الصورة', 'success');
+      } catch(e) { showToast(e.message, 'error'); }
+      finally { btn.disabled = false; btn.querySelector('.btn-text').classList.remove('hidden'); btn.querySelector('.btn-loader').classList.add('hidden'); }
+    });
+
+    // VIDEO
+    $('#video-form').addEventListener('submit', async e => {
+      e.preventDefault(); const btn = e.target.querySelector('.btn');
+      btn.disabled = true; btn.querySelector('.btn-text').classList.add('hidden'); btn.querySelector('.btn-loader').classList.remove('hidden');
+      try {
+        const r = await api('/generate/video', { method: 'POST', body: JSON.stringify({ prompt: $('#video-prompt').value, duration: parseInt($('#video-duration').value), resolution: $('#video-resolution').value, style: $('#video-style').value || null }) });
+        $('#video-result').classList.remove('hidden');
+        $('#video-output').innerHTML = r.result_url && r.result_url !== 'placeholder_local_video_generation' ? `<video src="${r.result_url}" controls style="width:100%;border-radius:12px"></video>` : '<div class="placeholder-img">🎬</div>';
+        $('#video-meta').innerHTML = `<span>المزود: ${r.provider}</span><span>الوقت: ${r.generation_time.toFixed(2)}s</span>`;
+        showToast('تم توليد الفيديو', 'success');
+      } catch(e) { showToast(e.message, 'error'); }
+      finally { btn.disabled = false; btn.querySelector('.btn-text').classList.remove('hidden'); btn.querySelector('.btn-loader').classList.add('hidden'); }
+    });
+
+    // WEB
+    $('#web-form').addEventListener('submit', async e => {
+      e.preventDefault(); const btn = e.target.querySelector('.btn');
+      btn.disabled = true; btn.querySelector('.btn-text').classList.add('hidden'); btn.querySelector('.btn-loader').classList.remove('hidden');
+      try {
+        const r = await api('/web/scrape', { method: 'POST', body: JSON.stringify({ url: $('#web-url').value, type: $('#web-type').value, extract_images: $('#web-images').checked, extract_links: $('#web-links').checked }) });
+        $('#web-result').classList.remove('hidden');
+        let h = '';
+        if (r.title) h += `<div class="web-title">${escapeHtml(r.title)}</div>`;
+        h += '<div class="web-meta-info">';
+        if (r.proxy_used) h += `<span class="web-meta-tag">بروكسي: ${r.proxy_used}</span>`;
+        if (r.latency_ms) h += `<span class="web-meta-tag">الوقت: ${Math.round(r.latency_ms)}ms</span>`;
+        if (r.reading_time) h += `<span class="web-meta-tag">قراءة: ${r.reading_time} دقيقة</span>`;
+        h += '</div>';
+        if (r.content) h += `<div>${escapeHtml(r.content).substring(0,3000)}</div>`;
+        if (r.markdown) h += `<div>${escapeHtml(r.markdown).substring(0,3000)}</div>`;
+        if (r.price) h += `<div><strong>السعر:</strong> ${escapeHtml(r.price)} ${r.currency||''}</div>`;
+        $('#web-output').innerHTML = h;
+        showToast('تم سحب المحتوى', 'success');
+      } catch(e) { showToast(e.message, 'error'); }
+      finally { btn.disabled = false; btn.querySelector('.btn-text').classList.remove('hidden'); btn.querySelector('.btn-loader').classList.add('hidden'); }
+    });
+
+    // VPN
+    async function loadVPNStatus() {
+      try {
+        const d = await api('/vpn/status');
+        $('#vpn-total').textContent = d.total_proxies;
+        $('#vpn-active').textContent = d.active_proxies;
+        $('#vpn-failed').textContent = d.failed_proxies;
+        $('#vpn-requests').textContent = d.total_requests;
+        const flags = { US:'🇺🇸', EU:'🇪🇺', JP:'🇯🇵', UK:'🇬🇧' };
+        const list = $('#vpn-proxies'); list.innerHTML = '';
+        d.proxies.forEach(p => {
+          const c = document.createElement('div'); c.className = 'proxy-card';
+          c.innerHTML = `<div class="proxy-info"><span class="proxy-flag">${flags[p.country]||'🌍'}</span><div><div class="proxy-host">${p.host}:${p.port}</div><div class="proxy-detail">${p.country}</div></div></div><div class="proxy-stats"><div class="proxy-stat"><span class="proxy-stat-value">${Math.round(p.latency_ms)}ms</span><span class="proxy-stat-label">التأخير</span></div><div class="proxy-stat"><span class="proxy-stat-value">${(p.success_rate*100).toFixed(0)}%</span><span class="proxy-stat-label">النجاح</span></div></div><span class="proxy-status ${p.is_active?'active':'inactive'}">${p.is_active?'نشط':'متوقف'}</span>`;
+          list.appendChild(c);
+        });
+      } catch(e) { showToast('فشل تحميل VPN', 'error'); }
+    }
+
+    $('#vpn-refresh-btn').addEventListener('click', loadVPNStatus);
+    $('#vpn-rotate-btn').addEventListener('click', async () => {
+      try { const d = await api('/vpn/rotate', { method:'POST' }); if(d.success) { showToast(`تم التدوير: ${d.proxy.host}`, 'success'); loadVPNStatus(); } } catch(e) { showToast(e.message, 'error'); }
+    });
+    $('#vpn-test-btn').addEventListener('click', async () => {
+      showToast('جاري الاختبار...', 'info');
+      try {
+        const d = await api('/vpn/test', { method:'POST' });
+        $('#vpn-test-result').classList.remove('hidden');
+        $('#vpn-test-output').innerHTML = `<div style="padding:12px"><div><strong>الحالة:</strong> ${d.success?'✅ ناجح':'❌ فاشل'}</div><div><strong>البروكسي:</strong> ${d.proxy_used||'N/A'}</div><div><strong>التأخير:</strong> ${d.latency_ms?Math.round(d.latency_ms)+'ms':'N/A'}</div></div>`;
+      } catch(e) { showToast(e.message, 'error'); }
+    });
+
+    // INIT
+    if ($('#api-url')) $('#api-url').value = localStorage.getItem('ai_api_url') || '';
+    if (state.token) { showScreen('app'); $('#user-display-name').textContent = state.username || 'User'; loadChats(); }
+    else showScreen('login');
+  </script>
+</body>
+</html>
