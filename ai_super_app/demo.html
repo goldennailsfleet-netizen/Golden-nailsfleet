@@ -510,90 +510,56 @@
       imgTimeout = setTimeout(tryNext, 30000);
     }
 
-    // ====== AI CHAT API WITH FALLBACKS ======
+    // ====== AI CHAT API - ALL METHODS IN PARALLEL ======
+    function tryFetch(url, opts, timeoutMs) {
+      return new Promise(function(resolve, reject) {
+        var c = new AbortController();
+        var t = setTimeout(function(){ c.abort(); }, timeoutMs || 10000);
+        opts = opts || {};
+        opts.signal = c.signal;
+        fetch(url, opts).then(function(r) {
+          clearTimeout(t);
+          if (!r.ok) { reject(new Error('HTTP ' + r.status)); return; }
+          r.text().then(function(txt) {
+            if (txt && txt.length > 2) resolve(txt);
+            else reject(new Error('empty'));
+          }).catch(reject);
+        }).catch(function(e) { clearTimeout(t); reject(e); });
+      });
+    }
+
     async function callAI(messages, timeout) {
-      timeout = timeout || 45000;
+      timeout = timeout || 12000;
       var lastMsg = messages[messages.length - 1].content;
       var sysMsg = messages.length > 0 ? messages[0].content : '';
-      var errors = [];
+      var seed = Math.floor(Math.random() * 999999);
 
-      // Method 1: Direct POST to Pollinations
-      try {
-        var c1 = new AbortController();
-        var t1 = setTimeout(function(){ c1.abort(); }, timeout);
-        var r1 = await fetch('https://text.pollinations.ai/', {
+      var directGetUrl = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&jsonMode=false&system=' + encodeURIComponent(sysMsg) + '&seed=' + seed;
+
+      var attempts = [
+        tryFetch(directGetUrl, {}, timeout),
+
+        tryFetch('https://text.pollinations.ai/', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({messages:messages, model:'openai', seed:Math.floor(Math.random()*999999)}),
-          signal: c1.signal
-        });
-        clearTimeout(t1);
-        if (r1.ok) {
-          var txt = await r1.text();
-          if (txt && txt.length > 0) { state.txtApiOk = true; return txt; }
-        }
-      } catch(e) { errors.push('POST: '+e.message); }
+          body: JSON.stringify({messages:messages, model:'openai', seed:seed})
+        }, timeout),
 
-      // Method 2: GET endpoint (simpler, works from file:// origins better)
+        tryFetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(directGetUrl), {}, timeout),
+
+        tryFetch('https://corsproxy.io/?' + encodeURIComponent(directGetUrl), {}, timeout),
+
+        tryFetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(directGetUrl), {}, timeout)
+      ];
+
       try {
-        var getUrl = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&jsonMode=false&system=' + encodeURIComponent(sysMsg) + '&seed=' + Math.floor(Math.random()*999999);
-        var c2 = new AbortController();
-        var t2 = setTimeout(function(){ c2.abort(); }, timeout);
-        var r2 = await fetch(getUrl, {signal: c2.signal});
-        clearTimeout(t2);
-        if (r2.ok) {
-          var txt2 = await r2.text();
-          if (txt2 && txt2.length > 0) { state.txtApiOk = true; return txt2; }
-        }
-      } catch(e) { errors.push('GET: '+e.message); }
-
-      // Method 3: Through allorigins proxy (GET)
-      try {
-        var proxyGetUrl = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&seed=' + Math.floor(Math.random()*999999);
-        var proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(proxyGetUrl);
-        var c3 = new AbortController();
-        var t3 = setTimeout(function(){ c3.abort(); }, timeout);
-        var r3 = await fetch(proxyUrl, {signal: c3.signal});
-        clearTimeout(t3);
-        if (r3.ok) {
-          var txt3 = await r3.text();
-          if (txt3 && txt3.length > 0) { state.txtApiOk = true; return txt3; }
-        }
-      } catch(e) { errors.push('allorigins: '+e.message); }
-
-      // Method 4: Through corsproxy (POST)
-      try {
-        var c4 = new AbortController();
-        var t4 = setTimeout(function(){ c4.abort(); }, timeout);
-        var r4 = await fetch('https://corsproxy.io/?https%3A%2F%2Ftext.pollinations.ai%2F', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({messages:messages, model:'openai', seed:Math.floor(Math.random()*999999)}),
-          signal: c4.signal
-        });
-        clearTimeout(t4);
-        if (r4.ok) {
-          var txt4 = await r4.text();
-          if (txt4 && txt4.length > 0) { state.txtApiOk = true; return txt4; }
-        }
-      } catch(e) { errors.push('corsproxy: '+e.message); }
-
-      // Method 5: codetabs proxy (GET)
-      try {
-        var ct5url = 'https://text.pollinations.ai/' + encodeURIComponent(lastMsg) + '?model=openai&seed=' + Math.floor(Math.random()*999999);
-        var c5 = new AbortController();
-        var t5 = setTimeout(function(){ c5.abort(); }, timeout);
-        var r5 = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(ct5url), {signal: c5.signal});
-        clearTimeout(t5);
-        if (r5.ok) {
-          var txt5 = await r5.text();
-          if (txt5 && txt5.length > 0) { state.txtApiOk = true; return txt5; }
-        }
-      } catch(e) { errors.push('codetabs: '+e.message); }
-
-      state.txtApiOk = false;
-      state.lastErrors = errors;
-      throw new Error('جميع طرق الاتصال فشلت');
+        var result = await Promise.any(attempts);
+        state.txtApiOk = true;
+        return result;
+      } catch(e) {
+        state.txtApiOk = false;
+        throw new Error('all_failed');
+      }
     }
 
     // ====== WEB SCRAPING ======
@@ -690,71 +656,45 @@
       var txt = $('#conn-text');
       bar.classList.remove('hidden');
       dot.className = 'conn-dot wait';
-      txt.textContent = 'جاري فحص اتصال خدمات AI...';
+      txt.textContent = 'جاري فحص الاتصال...';
 
-      var imgOk = false;
+      // Test all in parallel - whoever responds first wins
       var txtOk = false;
+      var imgOk = false;
 
-      // Test text API first (faster)
-      try {
-        var c = new AbortController();
-        var t = setTimeout(function(){ c.abort(); }, 10000);
-        var r = await fetch('https://text.pollinations.ai/ping?seed=1', {signal: c.signal});
-        clearTimeout(t);
-        if (r.ok) txtOk = true;
-      } catch(e) {}
+      var txtTest = Promise.any([
+        tryFetch('https://text.pollinations.ai/hi?seed=1', {}, 8000),
+        tryFetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://text.pollinations.ai/hi?seed=1'), {}, 8000),
+        tryFetch('https://corsproxy.io/?' + encodeURIComponent('https://text.pollinations.ai/hi?seed=1'), {}, 8000)
+      ]).then(function(){ txtOk = true; }).catch(function(){});
 
-      if (!txtOk) {
-        try {
-          var c2 = new AbortController();
-          var t2 = setTimeout(function(){ c2.abort(); }, 10000);
-          var r2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://text.pollinations.ai/hello?seed=1'), {signal: c2.signal});
-          clearTimeout(t2);
-          if (r2.ok) txtOk = true;
-        } catch(e) {}
-      }
-
-      // Test image API
-      imgOk = await new Promise(function(resolve) {
+      var imgTest = new Promise(function(resolve) {
         var testImg = new Image();
-        var timer = setTimeout(function(){ resolve(false); }, 12000);
-        testImg.onload = function(){ clearTimeout(timer); resolve(true); };
-        testImg.onerror = function(){ clearTimeout(timer); resolve(false); };
+        var timer = setTimeout(function(){ resolve(); }, 8000);
+        testImg.onload = function(){ clearTimeout(timer); imgOk = true; resolve(); };
+        testImg.onerror = function(){ clearTimeout(timer); resolve(); };
         testImg.src = 'https://image.pollinations.ai/prompt/test?width=32&height=32&seed=1&nologo=true';
       });
+
+      await Promise.all([txtTest, imgTest]);
 
       state.imgApiOk = imgOk;
       state.txtApiOk = txtOk;
 
       if (imgOk && txtOk) {
         dot.className = 'conn-dot on';
-        txt.textContent = 'متصل بخدمات AI بنجاح ✓';
-        setTimeout(function(){ bar.classList.add('hidden'); }, 3000);
-      } else if (txtOk || imgOk) {
+        txt.textContent = 'متصل بخدمات AI ✓';
+      } else if (txtOk) {
         dot.className = 'conn-dot on';
-        txt.textContent = 'متصل جزئياً - ' + (txtOk?'الدردشة تعمل':'الصور تعمل') + ' ✓';
-        setTimeout(function(){ bar.classList.add('hidden'); }, 5000);
+        txt.textContent = 'الدردشة AI تعمل ✓';
+      } else if (imgOk) {
+        dot.className = 'conn-dot on';
+        txt.textContent = 'توليد الصور يعمل ✓';
       } else {
         dot.className = 'conn-dot off';
-        txt.textContent = 'جاري المحاولة عبر بروكسي... (قد يكون الإنترنت بطيء)';
-        // Try via proxies
-        try {
-          var c3 = new AbortController();
-          var t3 = setTimeout(function(){ c3.abort(); }, 10000);
-          var r3 = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://text.pollinations.ai/hello'), {signal: c3.signal});
-          clearTimeout(t3);
-          if (r3.ok) {
-            state.txtApiOk = true;
-            dot.className = 'conn-dot on';
-            txt.textContent = 'متصل عبر بروكسي ✓ (قد يكون أبطأ)';
-            setTimeout(function(){ bar.classList.add('hidden'); }, 5000);
-            return;
-          }
-        } catch(e) {}
-        dot.className = 'conn-dot off';
-        txt.textContent = 'تعذر الاتصال - التطبيق سيعمل بوضع ذكي محلي';
-        setTimeout(function(){ bar.classList.add('hidden'); }, 6000);
+        txt.textContent = 'وضع ذكي محلي - الدردشة تعمل بدون إنترنت';
       }
+      setTimeout(function(){ bar.classList.add('hidden'); }, 4000);
     }
 
     // ====== NAVIGATION ======
@@ -904,24 +844,24 @@
     }
 
     async function handleTextChat(msg) {
-      addTyping('🤖 جاري التفكير بالذكاء الاصطناعي...');
-      setTyping('🤖 جاري الاتصال بالذكاء الاصطناعي...');
+      addTyping('🤖 جاري التفكير...');
       state.convo.push({role:'user', content:msg});
       var t0 = Date.now();
       try {
-        setTyping('🌐 جاري التواصل مع AI...');
-        var reply = await callAI(state.convo, 45000);
+        var reply = await callAI(state.convo, 12000);
         removeTyping();
         state.convo.push({role:'assistant', content:reply});
         if (state.convo.length > 21) state.convo = [state.convo[0]].concat(state.convo.slice(-20));
         addMsg('assistant', reply, 'AI Online', Date.now() - t0);
         $('#model-badge').textContent = 'AI Online';
+        $('#model-badge').style.color = 'var(--accent)';
       } catch(err) {
         removeTyping();
         state.convo.pop();
         var smartReply = smartLocalReply(msg);
         addMsg('assistant', smartReply.text, smartReply.model, Date.now() - t0);
         $('#model-badge').textContent = smartReply.model;
+        $('#model-badge').style.color = 'var(--text-muted)';
       }
     }
 
