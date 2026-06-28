@@ -792,110 +792,119 @@
     function removeTyping() { var t = document.getElementById('typing-msg'); if (t) t.remove(); }
     function setTyping(text) { var t = document.getElementById('typing-text'); if (t) t.textContent = text; }
 
-    // ====== QUICK BUTTONS (EVENT DELEGATION) ======
+    // ====== QUICK BUTTONS ======
     document.addEventListener('click', function(e) {
-      var btn = e.target.closest('.quick-btn');
-      if (btn && btn.dataset.prompt) {
-        $('#chat-input').value = btn.dataset.prompt;
-        $('#chat-form').dispatchEvent(new Event('submit'));
+      var t = e.target;
+      while (t && t !== document) {
+        if (t.className && t.className.indexOf('quick-btn') !== -1 && t.getAttribute('data-prompt')) {
+          $('#chat-input').value = t.getAttribute('data-prompt');
+          $('#chat-form').dispatchEvent(new Event('submit'));
+          return;
+        }
+        t = t.parentElement;
       }
     });
 
     // ====== CHAT SUBMIT ======
     $('#chat-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      if (state.busy) return;
-      var input = $('#chat-input'), msg = input.value.trim();
-      if (!msg) return;
-      input.value = ''; input.style.height = 'auto';
-      addMsg('user', msg);
-      state.chatCounter++;
-      state.chatHistory.unshift({id:state.chatCounter, title:msg.substring(0,40)});
-      renderChatList();
-      state.reqs++;
-      updateReqs();
+      try {
+        if (state.busy) return;
+        var input = $('#chat-input'), msg = input.value.trim();
+        if (!msg) return;
+        input.value = ''; input.style.height = 'auto';
+        addMsg('user', msg);
+        state.chatCounter++;
+        state.chatHistory.unshift({id:state.chatCounter, title:msg.substring(0,40)});
+        renderChatList();
+        state.reqs++;
+        updateReqs();
 
-      var intent = detectIntent(msg);
-      var isOffline = $('#offline-toggle').checked;
-      state.busy = true;
+        var intent = detectIntent(msg);
+        state.busy = true;
 
-      if (intent === 'image') {
-        handleImageChat(msg);
-      } else if (intent === 'video') {
-        handleVideoChat(msg);
-      } else if (isOffline) {
-        handleOfflineChat(msg);
-      } else {
-        handleTextChat(msg);
+        if (intent === 'image') {
+          handleImageChat(msg);
+        } else if (intent === 'video') {
+          handleVideoChat(msg);
+        } else {
+          handleTextChat(msg);
+        }
+      } catch(err) {
+        state.busy = false;
+        addMsg('assistant', 'خطأ: ' + (err.message || err), 'Error', 0);
       }
     });
 
     function handleImageChat(msg) {
-      var prompt = cleanPrompt(msg, ['قم ب','ولد لي','ارسم لي','صمم لي','ولد','ارسم','صمم','توليد','generate','صورة','صوره','لي','من فضلك','ارجوك','أرجوك','please','بليز','لو سمحت']);
-      var el = addMsg('assistant', '', 'AI Image', 0, true);
-      var bbl = el.querySelector('.msg-bbl');
-      var cid = 'imgc' + genId();
-      bbl.innerHTML = '🎨 جاري توليد الصورة...<br><br><div id="'+cid+'"></div>';
-      var container = document.getElementById(cid);
-      loadAIImage(container, prompt, '', 1024, 1024, function(elapsed) {
-        if (elapsed > 0) {
-          toast('تم توليد الصورة!', 'success');
-          var meta = el.querySelector('.msg-meta');
-          if (meta) meta.textContent = 'AI Image - ' + (elapsed/1000).toFixed(1) + 's';
-        }
-        $('#model-badge').textContent = 'AI Image';
-        $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
-        state.busy = false;
-      });
+      try {
+        var prompt = cleanPrompt(msg, ['قم ب','ولد لي','ارسم لي','صمم لي','ولد','ارسم','صمم','توليد','generate','صورة','صوره','لي','من فضلك','ارجوك','أرجوك','please','بليز','لو سمحت']);
+        var el = addMsg('assistant', '', 'AI Image', 0, true);
+        var bbl = el.querySelector('.msg-bbl');
+        var cid = 'imgc' + genId();
+        bbl.innerHTML = '🎨 جاري توليد الصورة...<br><br><div id="'+cid+'"></div>';
+        var container = document.getElementById(cid);
+        loadAIImage(container, prompt, '', 512, 512, function(elapsed) {
+          if (elapsed > 0) toast('تم توليد الصورة!', 'success');
+          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+          state.busy = false;
+        });
+      } catch(err) { state.busy = false; addMsg('assistant', 'خطأ في توليد الصورة: ' + err.message, 'Error', 0); }
     }
 
     function handleVideoChat(msg) {
-      var prompt = cleanPrompt(msg, ['قم ب','ولد لي','صمم لي','ولد','توليد','generate','فيديو','فديو','مقطع','لي','من فضلك','ارجوك','حرك','مشهد']);
-      var el = addMsg('assistant', '', 'AI Video', 0, true);
-      var bbl = el.querySelector('.msg-bbl');
-      var cid = 'vidc' + genId();
-      bbl.innerHTML = '🎬 جاري توليد مشهد الفيديو...<br><br><div id="'+cid+'"></div>';
-      var container = document.getElementById(cid);
-      loadAIImage(container, prompt + ', cinematic scene, wide angle, dramatic lighting', 'cinematic', 1280, 720, function(elapsed) {
-        if (elapsed > 0) toast('تم توليد المشهد!', 'success');
-        $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
-        state.busy = false;
-      });
-    }
-
-    function handleOfflineChat(msg) {
-      addTyping();
-      setTimeout(function() {
-        removeTyping();
-        var r = offlineReply(msg);
-        addMsg('assistant', r.t, r.m, 0);
-        $('#model-badge').textContent = 'Offline';
-        state.busy = false;
-      }, 400);
+      try {
+        var prompt = cleanPrompt(msg, ['قم ب','ولد لي','صمم لي','ولد','توليد','generate','فيديو','فديو','مقطع','لي','من فضلك','ارجوك','حرك','مشهد']);
+        var el = addMsg('assistant', '', 'AI Video', 0, true);
+        var bbl = el.querySelector('.msg-bbl');
+        var cid = 'vidc' + genId();
+        bbl.innerHTML = '🎬 جاري توليد مشهد الفيديو...<br><br><div id="'+cid+'"></div>';
+        var container = document.getElementById(cid);
+        loadAIImage(container, prompt + ', cinematic scene, wide angle', 'cinematic', 720, 480, function(elapsed) {
+          if (elapsed > 0) toast('تم توليد المشهد!', 'success');
+          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+          state.busy = false;
+        });
+      } catch(err) { state.busy = false; addMsg('assistant', 'خطأ في توليد الفيديو: ' + err.message, 'Error', 0); }
     }
 
     function handleTextChat(msg) {
-      addTyping('جاري التفكير...');
-      var t0 = Date.now();
-      state.convo.push({role:'user', content:msg});
-
-      callAI(msg, function(reply, err) {
-        removeTyping();
-        if (reply && !err) {
-          state.convo.push({role:'assistant', content:reply});
-          if (state.convo.length > 21) state.convo = [state.convo[0]].concat(state.convo.slice(-20));
-          addMsg('assistant', reply, 'AI Online', Date.now() - t0);
-          $('#model-badge').textContent = 'AI Online';
-          $('#model-badge').style.color = 'var(--accent)';
-        } else {
-          state.convo.pop();
-          var sr = smartLocalReply(msg);
-          addMsg('assistant', sr.text, sr.model, Date.now() - t0);
-          $('#model-badge').textContent = sr.model;
-          $('#model-badge').style.color = 'var(--text-muted)';
-        }
+      try {
+        // RESPOND INSTANTLY with smart local reply - no waiting
+        var sr = smartLocalReply(msg);
+        var el = addMsg('assistant', sr.text, sr.model, 0);
         state.busy = false;
-      });
+
+        // Then try API in background - if it works, add AI response below
+        tryAIInBackground(msg, el);
+      } catch(err) {
+        state.busy = false;
+        addMsg('assistant', 'خطأ: ' + (err.message || 'unknown'), 'Error', 0);
+      }
+    }
+
+    function tryAIInBackground(msg, localMsgEl) {
+      try {
+        var seed = Math.floor(Math.random() * 999999);
+        var url = 'https://text.pollinations.ai/' + encodeURIComponent(msg) + '?model=openai&seed=' + seed;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+          try {
+            if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText && xhr.responseText.length > 5) {
+              addMsg('assistant', xhr.responseText, 'AI Online', 0);
+              $('#model-badge').textContent = 'AI Online';
+              $('#model-badge').style.color = 'var(--accent)';
+              $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+              state.txtApiOk = true;
+            }
+          } catch(e) {}
+        };
+        xhr.onerror = function() {};
+        xhr.ontimeout = function() {};
+        xhr.send();
+      } catch(e) {}
     }
 
     function smartLocalReply(msg) {
