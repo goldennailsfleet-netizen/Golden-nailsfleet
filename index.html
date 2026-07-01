@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AI Super App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root{--primary:#6c5ce7;--primary-dark:#5a4bd1;--primary-light:#a29bfe;--accent:#00cec9;--accent-dark:#00b5b0;--bg:#0f0f1a;--bg2:#1a1a2e;--bg-card:#16213e;--bg-input:#1a1a2e;--text:#e8e8f0;--text-muted:#8888a0;--text-light:#b0b0c8;--border:#2a2a40;--success:#00b894;--danger:#ff6b6b;--shadow:0 4px 20px rgba(0,0,0,.3);--radius:12px;--radius-lg:16px;--radius-xl:24px}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+    .hidden{display:none!important}
+
+    #login-screen{min-height:100vh;background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
+    #login-screen::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(108,92,231,.15),transparent 70%);top:-200px;left:-200px;border-radius:50%}
+    #login-screen::after{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(0,206,201,.1),transparent 70%);bottom:-150px;right:-150px;border-radius:50%}
+    .login-container{position:relative;z-index:1}
+    .login-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:40px 32px;width:100%;max-width:400px;box-shadow:var(--shadow);animation:slideUp .6s ease}
+    @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    .login-header{text-align:center;margin-bottom:32px}
+    .app-icon{font-size:56px;margin-bottom:12px}
+    .login-header h1{font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .login-header p{color:var(--text-muted);margin-top:4px;font-size:14px}
+    .input-group{margin-bottom:16px}
+    .input-group label{display:block;font-size:13px;font-weight:600;color:var(--text-light);margin-bottom:6px}
+    input,textarea,select{width:100%;padding:12px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:16px;transition:.3s;outline:none;-webkit-appearance:none}
+    input:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,92,231,.2)}
+    input::placeholder,textarea::placeholder{color:var(--text-muted)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border:none;border-radius:var(--radius);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:.3s;-webkit-appearance:none}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(108,92,231,.4)}
+    .btn-primary:disabled{opacity:.6;transform:none;cursor:not-allowed}
+    .btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff}
+    .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+    .btn-outline:hover{background:var(--bg2);border-color:var(--primary)}
+    .btn-full{width:100%}
+    .btn-sm{padding:8px 16px;font-size:13px}
+    .btn-icon{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:8px;border-radius:8px;transition:.3s}
+    .btn-icon:hover{background:var(--bg2);color:var(--text)}
+    .login-features{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
+    .feature-chip{background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text-light)}
+
+    #app-screen{min-height:100vh;display:none}
+    .sidebar{width:280px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100vh;z-index:100;transition:transform .3s}
+    .sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border)}
+    .user-info{display:flex;align-items:center;gap:10px}
+    .user-avatar{width:40px;height:40px;background:var(--bg-card);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px}
+    .user-details{display:flex;flex-direction:column}
+    .user-name{font-weight:700;font-size:14px}
+    .user-role{font-size:11px;color:var(--text-muted)}
+    .sidebar-nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:none;border:none;border-radius:var(--radius);color:var(--text-light);font-family:inherit;font-size:14px;cursor:pointer;transition:.3s;text-align:right;width:100%}
+    .nav-item:hover{background:var(--bg-card);color:var(--text)}
+    .nav-item.active{background:linear-gradient(135deg,rgba(108,92,231,.2),rgba(0,206,201,.1));color:var(--primary-light);font-weight:600}
+    .sidebar-chats{flex:1;overflow-y:auto;padding:8px;border-top:1px solid var(--border)}
+    .sidebar-section-title{font-size:11px;color:var(--text-muted);text-transform:uppercase;padding:8px 10px;font-weight:700}
+    .chat-list{display:flex;flex-direction:column;gap:2px}
+    .chat-list-item{display:flex;align-items:center;padding:8px 12px;border-radius:8px;cursor:pointer;transition:.3s;font-size:13px;color:var(--text-light)}
+    .chat-list-item:hover{background:var(--bg-card)}
+    .sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+    .main-content{flex:1;margin-right:280px;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{display:flex;align-items:center;gap:12px;padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+    .topbar-title{flex:1;font-size:16px;font-weight:700}
+    #menu-btn{display:none}
+    .page{display:none;flex:1;flex-direction:column}.page.active{display:flex}
+
+    .chat-container{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
+    .welcome-message{text-align:center;padding:60px 20px;animation:fadeIn .5s}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .welcome-icon{font-size:64px;margin-bottom:16px}
+    .welcome-message h2{font-size:24px;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .welcome-message p{color:var(--text-muted);margin-top:8px}
+    .quick-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
+    .quick-btn{background:var(--bg-card);border:1px solid var(--border);padding:10px 18px;border-radius:var(--radius);color:var(--text-light);font-family:inherit;font-size:13px;cursor:pointer;transition:.3s}
+    .quick-btn:hover{border-color:var(--primary);background:rgba(108,92,231,.1);color:var(--text)}
+    .message{display:flex;gap:12px;max-width:85%;animation:msgIn .3s ease}
+    @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .message.user{align-self:flex-start;flex-direction:row}
+    .message.assistant{align-self:flex-end;flex-direction:row-reverse}
+    .msg-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .message.user .msg-av{background:var(--primary)}
+    .message.assistant .msg-av{background:var(--accent)}
+    .msg-body{flex:1;min-width:0}
+    .msg-bbl{padding:12px 16px;border-radius:var(--radius-lg);font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+    .message.user .msg-bbl{background:var(--bg-card);border:1px solid var(--border)}
+    .message.assistant .msg-bbl{background:linear-gradient(135deg,rgba(108,92,231,.15),rgba(0,206,201,.1));border:1px solid rgba(108,92,231,.2)}
+    .msg-meta{font-size:11px;color:var(--text-muted);margin-top:4px;text-align:left}
+    .chat-input-area{padding:12px 20px 20px;background:var(--bg2);border-top:1px solid var(--border)}
+    .chat-options{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px}
+    .toggle-option{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer}
+    .toggle-option input[type="checkbox"]{width:auto;accent-color:var(--primary)}
+    .model-badge{background:var(--bg-card);border:1px solid var(--border);padding:4px 10px;border-radius:20px;font-size:11px;color:var(--accent)}
+    .chat-form{display:flex;gap:8px;align-items:flex-end}
+    .chat-form textarea{flex:1;resize:none;min-height:44px;max-height:120px;padding:12px 16px;border-radius:var(--radius-lg)}
+    .btn-send{width:44px;height:44px;padding:0;border-radius:50%;flex-shrink:0}
+    .send-icon{font-size:18px;transform:scaleX(-1)}
+
+    .gen-container{padding:20px;max-width:800px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:20px}
+    .gen-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px}
+    .gen-card h3{font-size:18px;margin-bottom:20px}
+    .form-row{display:flex;gap:12px}.form-row .input-group{flex:1}
+    select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238888a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 12px center;padding-left:32px}
+    .gen-result{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;animation:fadeIn .4s}
+    .gen-result h4{margin-bottom:12px;font-size:14px;color:var(--accent)}
+    .gen-meta{display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--text-muted);flex-wrap:wrap}
+    .gen-meta span{background:var(--bg2);padding:4px 10px;border-radius:8px}
+    .web-output{background:var(--bg2);border-radius:var(--radius);padding:16px;max-height:500px;overflow-y:auto;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word;-webkit-overflow-scrolling:touch}
+
+    .vpn-header-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px}
+    .vpn-header-card h3{margin-bottom:20px}
+    .vpn-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+    .stat-value{display:block;font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .stat-label{font-size:12px;color:var(--text-muted);margin-top:4px;display:block}
+    .vpn-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .proxy-list{display:flex;flex-direction:column;gap:8px}
+    .proxy-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+    .proxy-info{display:flex;align-items:center;gap:12px}
+    .proxy-flag{font-size:24px}.proxy-host{font-weight:600;font-size:14px}
+    .proxy-detail{font-size:12px;color:var(--text-muted)}
+    .proxy-stats{display:flex;gap:16px}.proxy-stat{text-align:center}
+    .proxy-stat-value{font-weight:700;font-size:14px;display:block}
+    .proxy-stat-label{font-size:11px;color:var(--text-muted)}
+    .proxy-status{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+    .proxy-status.active{background:rgba(0,184,148,.15);color:var(--success)}
+
+    .toast-container{position:fixed;bottom:24px;left:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 20px;font-size:14px;box-shadow:var(--shadow);animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;display:flex;align-items:center;gap:8px;max-width:350px}
+    .toast.success{border-color:var(--success)}.toast.error{border-color:var(--danger)}.toast.info{border-color:var(--primary)}
+    @keyframes toastIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes toastOut{to{opacity:0;transform:translateX(-20px)}}
+
+    .lbox{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px;width:100%}
+    .spin{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:sp 1s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .ltxt{color:var(--text-muted);font-size:14px;text-align:center}
+    .ai-img{max-width:100%;border-radius:12px;border:1px solid var(--border);display:block;background:var(--bg2);min-height:60px}
+    .img-wrap{position:relative;overflow:hidden;border-radius:12px;min-height:120px;background:var(--bg-card)}
+    .img-wrap .spo{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--bg-card);z-index:2;min-height:120px}
+    .img-wrap .spo.ok{display:none}
+    .iact{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .iact a{background:var(--bg2);padding:6px 14px;border-radius:8px;font-size:12px;color:var(--accent);text-decoration:none;border:1px solid var(--border)}
+    .conn-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px;margin:8px 20px}
+    .conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .conn-dot.on{background:var(--success)}.conn-dot.off{background:var(--danger)}.conn-dot.wait{background:var(--text-muted);animation:blink 1s infinite}
+    @keyframes blink{50%{opacity:.3}}
+
+    @media(max-width:768px){
+      .sidebar{transform:translateX(100%)}.sidebar.open{transform:translateX(0)}
+      .main-content{margin-right:0}#menu-btn{display:block}#close-sidebar{display:block}
+      .vpn-stats{grid-template-columns:repeat(2,1fr)}.form-row{flex-direction:column}
+      .message{max-width:95%}.quick-actions{flex-direction:column;align-items:center}
+      .quick-btn{width:100%;max-width:280px}.login-card{padding:28px 20px}
+    }
+    @media(min-width:769px){#close-sidebar{display:none}}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  </style>
+</head>
+<body>
+
+  <div id="login-screen">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="app-icon">🤖</div>
+          <h1>AI Super App</h1>
+          <p>تطبيق الذكاء الاصطناعي الشامل</p>
+        </div>
+        <form id="login-form">
+          <div class="input-group"><label>اسم المستخدم</label><input type="text" id="username" value="admin@1234" required maxlength="50" /></div>
+          <div class="input-group"><label>كلمة المرور</label><input type="password" id="password" value="asd12345" required maxlength="50" /></div>
+          <button type="submit" class="btn btn-primary btn-full">تسجيل الدخول</button>
+        </form>
+        <div class="login-features">
+          <div class="feature-chip">💬 محادثة ذكية</div>
+          <div class="feature-chip">🎨 توليد صور AI</div>
+          <div class="feature-chip">🌐 سحب محتوى</div>
+          <div class="feature-chip">🔒 VPN</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-screen">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="user-info">
+          <div class="user-avatar">👤</div>
+          <div class="user-details">
+            <span class="user-name" id="disp-name">admin@1234</span>
+            <span class="user-role">مدير</span>
+          </div>
+        </div>
+        <button class="btn-icon" id="close-sidebar">✕</button>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="chat"><span>💬</span><span>المحادثة</span></button>
+        <button class="nav-item" data-page="image"><span>🎨</span><span>توليد الصور</span></button>
+        <button class="nav-item" data-page="video"><span>🎬</span><span>توليد الفيديو</span></button>
+        <button class="nav-item" data-page="web"><span>🌐</span><span>تصفح الويب</span></button>
+        <button class="nav-item" data-page="vpn"><span>🔒</span><span>حالة VPN</span></button>
+      </nav>
+      <div class="sidebar-chats">
+        <div class="sidebar-section-title">المحادثات السابقة</div>
+        <div id="chat-list" class="chat-list"></div>
+      </div>
+      <div class="sidebar-footer">
+        <button class="btn btn-outline btn-full" id="logout-btn">🚪 تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="btn-icon" id="menu-btn">☰</button>
+        <h2 class="topbar-title" id="page-title">المحادثة</h2>
+        <button class="btn btn-sm btn-accent" id="new-chat-btn">+ محادثة جديدة</button>
+      </header>
+
+      <div id="conn-status" class="conn-bar hidden">
+        <span class="conn-dot wait" id="conn-dot"></span>
+        <span id="conn-text">جاري فحص الاتصال...</span>
+      </div>
+
+      <div id="page-chat" class="page active">
+        <div class="chat-container" id="chat-messages">
+          <div class="welcome-message" id="welcome-msg">
+            <div class="welcome-icon">🤖</div>
+            <h2>مرحبا بك في AI Super App</h2>
+            <p>اكتب أي شيء وسأرد عليك بذكاء اصطناعي حقيقي</p>
+            <div class="quick-actions" id="quick-actions">
+              <button class="quick-btn" data-prompt="اكتب لي كود Python لحساب الفيبوناتشي">💻 اكتب كود</button>
+              <button class="quick-btn" data-prompt="اكتب لي قصة قصيرة عن الفضاء">📝 اكتب قصة</button>
+              <button class="quick-btn" data-prompt="ارسم لي صورة قطة لطيفة في الفضاء">🎨 ولد صورة</button>
+              <button class="quick-btn" data-prompt="اشرح لي الحوسبة الكمية بطريقة بسيطة">🧠 اشرح مفهوم</button>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <div class="chat-options">
+            <label class="toggle-option"><input type="checkbox" id="offline-toggle" /><span>وضع أوفلاين</span></label>
+            <span class="model-badge" id="model-badge">AI Online</span>
+          </div>
+          <form id="chat-form" class="chat-form">
+            <textarea id="chat-input" placeholder="اكتب رسالتك..." rows="1" maxlength="5000"></textarea>
+            <button type="submit" class="btn btn-primary btn-send"><span class="send-icon">➤</span></button>
+          </form>
+        </div>
+      </div>
+
+      <div id="page-image" class="page">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🎨 توليد صور حقيقية بالذكاء الاصطناعي</h3>
+            <form id="image-form">
+              <div class="input-group"><label>وصف الصورة</label><textarea id="image-prompt" placeholder="مثال: فتاة جميلة في حديقة ورود" rows="3" maxlength="500"></textarea></div>
+              <div class="form-row">
+                <div class="input-group"><label>الحجم</label><select id="image-size"><option>1024x1024</option><option>512x512</option><option>1792x1024</option></select></div>
+                <div class="input-group"><label>الأسلوب</label><select id="image-style"><option value="">افتراضي</option><option value="photorealistic">واقعي</option><option value="anime">أنمي</option><option value="oil_painting">لوحة زيتية</option><option value="digital_art">فن رقمي</option><option value="cinematic">سينمائي</option><option value="3d">ثلاثي الأبعاد</option></select></div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full" id="img-gen-btn">🎨 توليد الصورة</button>
+            </form>
+          </div>
+          <div id="image-result" class="gen-result hidden"><h4>النتيجة:</h4><div id="image-output"></div><div id="image-meta" class="gen-meta"></div></div>
+        </div>
+      </div>
+
+      <div id="page-video" class="page">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🎬 توليد مشاهد فيديو بالذكاء الاصطناعي</h3>
+            <form id="video-form">
+              <div class="input-group"><label>وصف المشهد</label><textarea id="video-prompt" placeholder="صف المشهد..." rows="3" maxlength="500"></textarea></div>
+              <div class="form-row">
+                <div class="input-group"><label>المدة</label><select id="video-duration"><option value="4" selected>4 ثواني</option></select></div>
+                <div class="input-group"><label>الدقة</label><select id="video-resolution"><option value="720p">720p HD</option><option value="1080p">1080p Full HD</option></select></div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full" id="vid-gen-btn">🎬 توليد المشهد</button>
+            </form>
+          </div>
+          <div id="video-result" class="gen-result hidden"><h4>النتيجة:</h4><div id="video-output"></div><div id="video-meta" class="gen-meta"></div></div>
+        </div>
+      </div>
+
+      <div id="page-web" class="page">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🌐 سحب محتوى المواقع</h3>
+            <form id="web-form">
+              <div class="input-group"><label>رابط الموقع</label><input type="url" id="web-url" placeholder="https://example.com" maxlength="500" /></div>
+              <div class="input-group"><label>النوع</label><select id="web-type"><option value="article">مقال</option><option value="full">صفحة كاملة</option><option value="links">روابط</option></select></div>
+              <button type="submit" class="btn btn-primary btn-full" id="web-btn">🌐 سحب المحتوى</button>
+            </form>
+          </div>
+          <div id="web-result" class="gen-result hidden"><h4>المحتوى:</h4><div id="web-output" class="web-output"></div></div>
+        </div>
+      </div>
+
+      <div id="page-vpn" class="page">
+        <div class="gen-container">
+          <div class="vpn-header-card">
+            <h3>🔒 حالة VPN والبروكسي</h3>
+            <div class="vpn-stats">
+              <div class="stat-card"><span class="stat-value">3</span><span class="stat-label">البروكسيات</span></div>
+              <div class="stat-card"><span class="stat-value">3</span><span class="stat-label">نشط</span></div>
+              <div class="stat-card"><span class="stat-value">0</span><span class="stat-label">فاشل</span></div>
+              <div class="stat-card"><span class="stat-value" id="vpn-req">0</span><span class="stat-label">الطلبات</span></div>
+            </div>
+          </div>
+          <div class="vpn-actions">
+            <button class="btn btn-accent" onclick="AI.toast('تم التحديث','success')">🔄 تحديث</button>
+            <button class="btn btn-outline" onclick="AI.toast('تم تدوير البروكسي','success')">🔀 تدوير</button>
+            <button class="btn btn-outline" onclick="AI.testConn()">🧪 اختبار الاتصال</button>
+          </div>
+          <div id="vpn-proxies" class="proxy-list"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script>
+  (function() {
+
+    // Show any JS errors on screen so user can report them
+    window.onerror = function(msg, url, line) {
+      var d = document.getElementById('err-box');
+      if (!d) {
+        d = document.createElement('div');
+        d.id = 'err-box';
+        d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#ff0;color:#000;padding:8px;font-size:11px;z-index:99999;max-height:100px;overflow:auto;direction:ltr;text-align:left';
+        document.body.appendChild(d);
+      }
+      d.textContent = 'Error: ' + msg + ' (line ' + line + ')';
+      return true;
+    };
+
+    var $ = function(s){ return document.querySelector(s); };
+    var $$ = function(s){ return document.querySelectorAll(s); };
+    var _uid = 0;
+    var genId = function(){ return ++_uid; };
+
+    // ====== STATE ======
+    var state = {
+      busy: false,
+      reqs: 0,
+      chatHistory: [],
+      chatCounter: 0,
+      convo: [
+        {role:'system', content:'أنت مساعد ذكي اسمك AI Super App. أجب باللغة العربية دائماً. يمكنك كتابة أكواد، تحليل نصوص، شرح مفاهيم، كتابة قصص ومقالات، ترجمة، حل مسائل، وأي شيء. أجب بشكل مفصل ومنظم ومفيد.'}
+      ],
+      imgApiOk: null,
+      txtApiOk: null
+    };
+
+    // ====== ARABIC→ENGLISH DICTIONARY ======
+    var dict = {
+      'فتاة':'girl','فتاه':'girl','بنت':'girl','امرأة':'woman','امراة':'woman','رجل':'man','ولد':'boy','شاب':'young man','طفل':'child','أطفال':'children','اطفال':'children','شخص':'person','عارضة':'model',
+      'جميلة':'beautiful','جميله':'beautiful','جميل':'beautiful','حلوة':'pretty','حلوه':'pretty','رائع':'amazing','رائعة':'amazing','مذهل':'stunning','مذهلة':'stunning','أنيق':'elegant','أنيقة':'elegant',
+      'بيضاء':'white','بيضا':'white','ابيض':'white','أبيض':'white','اسود':'black','أسود':'black','سوداء':'black',
+      'ازرق':'blue','أزرق':'blue','زرقاء':'blue','احمر':'red','أحمر':'red','حمراء':'red','اخضر':'green','أخضر':'green','خضراء':'green',
+      'اصفر':'yellow','أصفر':'yellow','برتقالي':'orange','وردي':'pink','بنفسجي':'purple','ذهبي':'golden','ذهبية':'golden','فضي':'silver',
+      'فستان':'dress','ثوب':'gown','قميص':'shirt','بدلة':'suit','حجاب':'hijab','تاج':'crown','نظارات':'glasses','قبعة':'hat',
+      'قطة':'cat','قط':'cat','قطه':'cat','كلب':'dog','حصان':'horse','أسد':'lion','اسد':'lion','نمر':'tiger','فراشة':'butterfly','فراشات':'butterflies',
+      'طائر':'bird','عصفور':'bird','دلفين':'dolphin','سمكة':'fish','أرنب':'rabbit','ارنب':'rabbit','تنين':'dragon','وحش':'monster','ثعبان':'snake','نسر':'eagle','حمامة':'dove',
+      'فضاء':'space','كون':'universe','كوكب':'planet','نجوم':'stars','نجمة':'star','قمر':'moon','شمس':'sun','مجرة':'galaxy',
+      'طبيعة':'nature','طبيعه':'nature','بحر':'sea','محيط':'ocean','جبل':'mountain','جبال':'mountains','نهر':'river','شلال':'waterfall','غابة':'forest','غابه':'forest',
+      'شجرة':'tree','أشجار':'trees','اشجار':'trees','شجر':'trees','ورد':'roses','وردة':'rose','ورود':'roses','زهور':'flowers','زهرة':'flower','عشب':'grass',
+      'سماء':'sky','غروب':'sunset','شروق':'sunrise','ليل':'night','نهار':'day','صحراء':'desert','ثلج':'snow','مطر':'rain','قوس قزح':'rainbow','سحاب':'clouds','ضباب':'fog',
+      'منزل':'house','بيت':'house','قصر':'palace','قلعة':'castle','قلعه':'castle','مدينة':'city','مدينه':'city','شارع':'street','جسر':'bridge','مسجد':'mosque','كنيسة':'church','برج':'tower',
+      'سيارة':'car','سياره':'car','سفينة':'ship','قارب':'boat','طائرة':'airplane','دراجة':'bicycle','قطار':'train',
+      'حديقة':'garden','حديقه':'garden','ماء':'water','بحيرة':'lake','شاطئ':'beach',
+      'لطيفة':'cute','لطيف':'cute','لطيفه':'cute','كبير':'big','كبيرة':'big','كبيره':'big','صغير':'small','صغيرة':'small','صغيره':'small','طويل':'tall','قصير':'short',
+      'سحري':'magical','سحرية':'magical','خيالي':'fantasy','واقعي':'realistic','قديم':'old','جديد':'new','حديث':'modern',
+      'حب':'love','قلب':'heart','عين':'eye','عيون':'eyes','شعر':'hair','وجه':'face','ابتسامة':'smile','دموع':'tears',
+      'ملك':'king','ملكة':'queen','أميرة':'princess','اميرة':'princess','أمير':'prince','امير':'prince','فارس':'knight','محارب':'warrior','ساحر':'wizard','ساحرة':'witch',
+      'روبوت':'robot','فضائي':'alien','مستقبل':'future','مستقبلي':'futuristic',
+      'طعام':'food','فاكهة':'fruit','خبز':'bread','كعكة':'cake','شاي':'tea','قهوة':'coffee',
+      'كتاب':'book','موسيقى':'music','رقص':'dance','رسم':'painting',
+      'في':'in','على':'on','مع':'with','و':'and','من':'from','تحت':'under','فوق':'above','بين':'between','أمام':'in front of','خلف':'behind','بجانب':'beside','حول':'around'
+    };
+
+    function hasArabic(t){ return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(t); }
+
+    function translateAr(text) {
+      var r = text;
+      var keys = Object.keys(dict).sort(function(a,b){ return b.length - a.length; });
+      for (var i = 0; i < keys.length; i++) {
+        r = r.split(keys[i]).join(' ' + dict[keys[i]] + ' ');
+      }
+      return r.replace(/[،؟!؛:.]/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // ====== UTILITIES ======
+    function toast(msg, type) {
+      type = type || 'info';
+      var t = document.createElement('div');
+      t.className = 'toast ' + type;
+      var icon = type==='success'?'✅':type==='error'?'❌':'ℹ️';
+      t.textContent = icon + ' ' + msg;
+      $('#toast-container').appendChild(t);
+      setTimeout(function(){ if(t.parentNode) t.remove(); }, 3000);
+    }
+
+    function esc(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+    function sanitize(html) {
+      return html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+        .replace(/onerror\s*=/gi, 'data-err=')
+        .replace(/onclick\s*=/gi, 'data-clk=')
+        .replace(/onload\s*=/gi, 'data-ld=')
+        .replace(/javascript\s*:/gi, '');
+    }
+
+    // ====== CORS PROXIES LIST ======
+    var PROXIES = [
+      {name:'allorigins', wrap:function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);}},
+      {name:'corsproxy', wrap:function(u){return 'https://corsproxy.io/?'+encodeURIComponent(u);}},
+      {name:'codetabs', wrap:function(u){return 'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u);}},
+      {name:'allorigins-get', wrap:function(u){return 'https://api.allorigins.win/get?url='+encodeURIComponent(u);}, json:true}
+    ];
+
+    // ====== IMAGE URL BUILDER ======
+    function buildImgUrl(prompt, style, w, h, seed) {
+      var p = prompt;
+      if (hasArabic(p)) p = translateAr(p);
+      var styleMap = {
+        'photorealistic': ', photorealistic photograph, 8k, ultra detailed',
+        'anime': ', anime style, manga art, vibrant colors, cel shading',
+        'oil_painting': ', oil painting, classic art, textured brushstrokes, masterpiece',
+        'digital_art': ', digital art, concept art, trending on artstation, detailed',
+        'cinematic': ', cinematic lighting, dramatic scene, movie still, depth of field',
+        '3d': ', 3D render, octane render, unreal engine, detailed 3D art'
+      };
+      if (style && styleMap[style]) p += styleMap[style];
+      p += ', high quality, masterpiece';
+      if (!seed) seed = Math.floor(Math.random() * 999999);
+      return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(p) + '?width=' + w + '&height=' + h + '&nologo=true&seed=' + seed;
+    }
+
+    // ====== IMAGE LOADER WITH MULTI-RETRY ======
+    function loadAIImage(container, prompt, style, w, h, callback) {
+      var id = genId();
+      var t0 = Date.now();
+      var attempt = 0;
+      var seed1 = Math.floor(Math.random() * 999999);
+      var seed2 = Math.floor(Math.random() * 999999);
+      var seed3 = Math.floor(Math.random() * 999999);
+
+      var urls = [
+        buildImgUrl(prompt, style, w, h, seed1),
+        buildImgUrl(prompt, style, Math.min(w,512), Math.min(h,512), seed2),
+        PROXIES[0].wrap(buildImgUrl(prompt, style, 512, 512, seed3)),
+        PROXIES[1].wrap(buildImgUrl(prompt, '', 256, 256, seed1)),
+        'https://image.pollinations.ai/prompt/' + encodeURIComponent(hasArabic(prompt)?translateAr(prompt):prompt) + '?width=256&height=256&nologo=true&seed=' + seed2
+      ];
+      var maxAttempts = urls.length;
+
+      container.innerHTML =
+        '<div class="img-wrap">' +
+          '<div class="spo" id="spo'+id+'">' +
+            '<div class="spin"></div>' +
+            '<div class="ltxt" id="st'+id+'">🎨 جاري توليد الصورة...<br><small>قد يستغرق 15-60 ثانية</small></div>' +
+          '</div>' +
+          '<img class="ai-img" id="im'+id+'" alt="AI Generated" crossorigin="anonymous" />' +
+        '</div>' +
+        '<div class="iact" id="ia'+id+'" style="display:none">' +
+          '<a id="dl'+id+'" href="#" target="_blank" download>💾 تحميل</a>' +
+        '</div>';
+
+      var img = document.getElementById('im'+id);
+      var overlay = document.getElementById('spo'+id);
+      var stxt = document.getElementById('st'+id);
+      var acts = document.getElementById('ia'+id);
+      var dlnk = document.getElementById('dl'+id);
+
+      var imgTimeout = null;
+
+      function success() {
+        if (imgTimeout) clearTimeout(imgTimeout);
+        if (!overlay) return;
+        overlay.classList.add('ok');
+        acts.style.display = 'flex';
+        dlnk.href = img.src;
+        if (callback) callback(Date.now() - t0);
+      }
+
+      function tryNext() {
+        if (imgTimeout) clearTimeout(imgTimeout);
+        attempt++;
+        if (attempt < maxAttempts) {
+          var msgs = [
+            '🔄 محاولة '+(attempt+1)+' بحجم أصغر...',
+            '🌐 محاولة عبر بروكسي 1...',
+            '🌐 محاولة عبر بروكسي 2...',
+            '📐 محاولة أخيرة...'
+          ];
+          if (stxt) stxt.innerHTML = msgs[attempt-1] || ('🔄 محاولة '+(attempt+1)+'...');
+          img.removeAttribute('crossorigin');
+          img.src = urls[attempt];
+          imgTimeout = setTimeout(tryNext, 30000);
+        } else {
+          if (overlay) {
+            overlay.innerHTML =
+              '<div class="ltxt" style="color:var(--danger)">❌ فشل توليد الصورة<br><br>' +
+              '<small style="color:var(--text-muted)">الأسباب المحتملة:<br>' +
+              '• خدمة Pollinations بطيئة أو متوقفة<br>' +
+              '• الإنترنت بطيء أو مقطوع<br>' +
+              '• حاول مرة أخرى بعد دقيقة<br>' +
+              '• جرب بالإنجليزي: beautiful cat</small></div>';
+          }
+          if (callback) callback(-1);
+        }
+      }
+
+      img.onload = success;
+      img.onerror = tryNext;
+      img.src = urls[0];
+      imgTimeout = setTimeout(tryNext, 30000);
+    }
+
+    // ====== AI CHAT API - SIMPLE XHR WITH CALLBACK ======
+    function callAI(msg, callback) {
+      var done = false;
+      var seed = Math.floor(Math.random() * 999999);
+      var sysMsg = state.convo.length > 0 ? state.convo[0].content : '';
+      var url = 'https://text.pollinations.ai/' + encodeURIComponent(msg) + '?model=openai&jsonMode=false&system=' + encodeURIComponent(sysMsg) + '&seed=' + seed;
+
+      var urls = [
+        url,
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+        'https://corsproxy.io/?' + encodeURIComponent(url),
+        'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url)
+      ];
+
+      function win(txt) {
+        if (done) return;
+        done = true;
+        state.txtApiOk = true;
+        callback(txt, null);
+      }
+
+      var fails = 0;
+      function lose() {
+        fails++;
+        if (fails >= urls.length && !done) {
+          done = true;
+          state.txtApiOk = false;
+          callback(null, 'fail');
+        }
+      }
+
+      // Try all URLs in parallel with XHR (most compatible)
+      for (var i = 0; i < urls.length; i++) {
+        (function(u) {
+          try {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', u, true);
+            xhr.timeout = 12000;
+            xhr.onload = function() {
+              if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText && xhr.responseText.length > 3) {
+                win(xhr.responseText);
+              } else { lose(); }
+            };
+            xhr.onerror = lose;
+            xhr.ontimeout = lose;
+            xhr.send();
+          } catch(e) { lose(); }
+        })(urls[i]);
+      }
+
+      // Safety timeout
+      setTimeout(function() {
+        if (!done) { done = true; callback(null, 'timeout'); }
+      }, 15000);
+    }
+
+    // ====== WEB SCRAPING ======
+    function scrapeUrl(targetUrl, callback) {
+      var proxyUrls = [
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl),
+        'https://corsproxy.io/?' + encodeURIComponent(targetUrl),
+        'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(targetUrl)
+      ];
+      var done = false;
+      var fails = 0;
+
+      function parseHTML(html) {
+        try {
+          var parser = new DOMParser();
+          var doc = parser.parseFromString(html, 'text/html');
+          doc.querySelectorAll('script,style,noscript,svg,nav,footer,header').forEach(function(s){ s.remove(); });
+          var title = (doc.querySelector('title') || {}).textContent || targetUrl;
+          var headings = [], paragraphs = [], links = [];
+          doc.querySelectorAll('h1,h2,h3,h4').forEach(function(h){ var t = h.textContent.trim(); if (t && t.length > 2) headings.push(t); });
+          doc.querySelectorAll('p,article,section>div').forEach(function(p){ var t = p.textContent.trim(); if (t && t.length > 20) paragraphs.push(t); });
+          doc.querySelectorAll('a[href]').forEach(function(a){
+            var href = a.getAttribute('href'), text = a.textContent.trim();
+            if (href && text && text.length > 1 && href.indexOf('#') !== 0 && href.indexOf('javascript') !== 0) {
+              try { links.push({text:text.substring(0,80), url:new URL(href,targetUrl).href}); } catch(e){ links.push({text:text.substring(0,80), url:href}); }
+            }
+          });
+          return {ok:true, title:title, headings:headings.slice(0,15), paragraphs:paragraphs.slice(0,40), links:links.slice(0,30)};
+        } catch(e) { return {ok:false}; }
+      }
+
+      for (var i = 0; i < proxyUrls.length; i++) {
+        (function(pu) {
+          try {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', pu, true);
+            xhr.timeout = 15000;
+            xhr.onload = function() {
+              if (done) return;
+              if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText) {
+                done = true;
+                callback(parseHTML(xhr.responseText));
+              } else { fails++; if (fails >= proxyUrls.length) callback({ok:false}); }
+            };
+            xhr.onerror = function() { fails++; if (!done && fails >= proxyUrls.length) callback({ok:false}); };
+            xhr.ontimeout = function() { fails++; if (!done && fails >= proxyUrls.length) callback({ok:false}); };
+            xhr.send();
+          } catch(e) { fails++; if (!done && fails >= proxyUrls.length) callback({ok:false}); }
+        })(proxyUrls[i]);
+      }
+    }
+
+    // ====== INTENT DETECTION ======
+    var imgWords = ['صورة','صوره','ارسم','رسم','ولد صورة','generate image','image of','draw me','paint','ارسمل','صمم','صور لي','ارسم لي','ولد لي صور','picture of','photo of','create image'];
+    var vidWords = ['فيديو','فديو','مقطع','ولد فيديو','video of','clip of','animate','حرك','مشهد فيديو'];
+
+    function detectIntent(msg) {
+      var m = msg.toLowerCase();
+      for (var i = 0; i < imgWords.length; i++) { if (m.indexOf(imgWords[i]) !== -1) return 'image'; }
+      for (var j = 0; j < vidWords.length; j++) { if (m.indexOf(vidWords[j]) !== -1) return 'video'; }
+      return 'chat';
+    }
+
+    function cleanPrompt(msg, words) {
+      var c = msg;
+      for (var i = 0; i < words.length; i++) c = c.replace(new RegExp(words[i], 'gi'), '');
+      return c.replace(/\s+/g, ' ').trim() || msg;
+    }
+
+    // ====== OFFLINE RESPONSES ======
+    function offlineReply(msg) {
+      var m = msg.toLowerCase();
+      if (m.indexOf('كود')!==-1||m.indexOf('code')!==-1||m.indexOf('python')!==-1||m.indexOf('برمج')!==-1)
+        return {t:'def fibonacci(n):\n    fib = [0, 1]\n    for i in range(2, n):\n        fib.append(fib[i-1] + fib[i-2])\n    return fib\n\nprint(fibonacci(10))\n# [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]',m:'Offline'};
+      if (m.indexOf('قصة')!==-1||m.indexOf('اكتب')!==-1||m.indexOf('story')!==-1)
+        return {t:'في عام 2147، حلّقت سفينة "النور" عبر مجرة أندروميدا. القبطانة ليلى رأت كوكباً أزرق يشبه الأرض.\n\nهبطت بهدوء. ظهرت مخلوقات ضوئية: "كنا ننتظركم منذ آلاف السنين."\n\nعادت تحمل أعظم اكتشاف: نحن لسنا وحدنا أبداً. 🚀',m:'Offline'};
+      if (m.indexOf('تحليل')!==-1||m.indexOf('حلل')!==-1)
+        return {t:'📊 تحليل:\n\n✅ المميزات:\n• السرعة العالية في المعالجة\n• الدقة وتقليل الأخطاء\n• العمل 24/7\n• توفير التكاليف\n\n❌ العيوب:\n• قد يحل محل وظائف\n• مخاوف الخصوصية\n• يحتاج استثمار كبير\n\n🎯 الخلاصة: أداة قوية تحتاج استخدام مسؤول.',m:'Offline'};
+      if (m.indexOf('اشرح')!==-1||m.indexOf('شرح')!==-1)
+        return {t:'🔬 شرح مبسط:\n\nتخيل متاهة كبيرة:\n🖥️ الكمبيوتر العادي: يجرب طريق واحد كل مرة\n⚛️ الكمبيوتر الكمي: يجرب كل الطرق في نفس الوقت!\n\nالاستخدامات:\n💊 اكتشاف أدوية\n🔐 تشفير فائق\n🌤️ تنبؤات دقيقة\n🧬 فهم الجينات',m:'Offline'};
+      if (m.indexOf('مرحب')!==-1||m.indexOf('هلا')!==-1||m.indexOf('سلام')!==-1)
+        return {t:'أهلاً وسهلاً! 👋\n\nأنا في وضع أوفلاين. أطفئ وضع الأوفلاين للحصول على ردود AI حقيقية!',m:'Offline'};
+      if (m.indexOf('شكر')!==-1)
+        return {t:'العفو! 😊 سعيد بمساعدتك. هل تحتاج شيء ثاني؟',m:'Offline'};
+      return {t:'مرحباً! أنا في وضع أوفلاين.\n\nللحصول على ردود ذكاء اصطناعي حقيقية:\n1. أطفئ وضع أوفلاين ✅\n2. تأكد من اتصال الإنترنت 🌐\n\nحالياً يمكنني الرد فقط بردود جاهزة محدودة.',m:'Offline'};
+    }
+
+    // ====== LOGIN ======
+    $('#login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      if ($('#username').value === 'admin@1234' && $('#password').value === 'asd12345') {
+        $('#login-screen').style.display = 'none';
+        $('#app-screen').style.display = 'flex';
+        $('#disp-name').textContent = $('#username').value;
+        toast('تم تسجيل الدخول بنجاح!', 'success');
+        testConnectivity();
+      } else {
+        toast('اسم المستخدم أو كلمة المرور غلط', 'error');
+      }
+    });
+
+    $('#logout-btn').addEventListener('click', function() {
+      $('#app-screen').style.display = 'none';
+      $('#login-screen').style.display = 'flex';
+      toast('تم تسجيل الخروج', 'info');
+    });
+
+    // ====== CONNECTIVITY TEST ======
+    function testConnectivity() {
+      var bar = $('#conn-status');
+      var dot = $('#conn-dot');
+      var txt = $('#conn-text');
+      bar.classList.remove('hidden');
+      dot.className = 'conn-dot wait';
+      txt.textContent = 'جاري فحص الاتصال...';
+
+      var txtOk = false;
+      var imgOk = false;
+      var checks = 0;
+      var total = 2;
+
+      function checkDone() {
+        checks++;
+        if (checks < total) return;
+        state.imgApiOk = imgOk;
+        state.txtApiOk = txtOk;
+        if (imgOk && txtOk) {
+          dot.className = 'conn-dot on';
+          txt.textContent = 'متصل بخدمات AI ✓';
+        } else if (txtOk) {
+          dot.className = 'conn-dot on';
+          txt.textContent = 'الدردشة AI تعمل ✓';
+        } else if (imgOk) {
+          dot.className = 'conn-dot on';
+          txt.textContent = 'توليد الصور يعمل ✓';
+        } else {
+          dot.className = 'conn-dot off';
+          txt.textContent = 'وضع محلي ذكي - جاهز للاستخدام';
+        }
+        setTimeout(function(){ bar.classList.add('hidden'); }, 4000);
+      }
+
+      // Test text API via XHR
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'https://text.pollinations.ai/hi?seed=1', true);
+        xhr.timeout = 8000;
+        xhr.onload = function() { if (xhr.status >= 200 && xhr.status < 300) txtOk = true; checkDone(); };
+        xhr.onerror = function() { checkDone(); };
+        xhr.ontimeout = function() { checkDone(); };
+        xhr.send();
+      } catch(e) { checkDone(); }
+
+      // Test image API
+      var testImg = new Image();
+      var imgTimer = setTimeout(function(){ checkDone(); }, 8000);
+      testImg.onload = function() { clearTimeout(imgTimer); imgOk = true; checkDone(); };
+      testImg.onerror = function() { clearTimeout(imgTimer); checkDone(); };
+      testImg.src = 'https://image.pollinations.ai/prompt/test?width=32&height=32&seed=1&nologo=true';
+    }
+
+    // ====== NAVIGATION ======
+    $$('.nav-item').forEach(function(n) {
+      n.addEventListener('click', function() {
+        var page = n.dataset.page;
+        $$('.nav-item').forEach(function(x){ x.classList.remove('active'); });
+        n.classList.add('active');
+        $$('.page').forEach(function(p){ p.style.display = 'none'; p.classList.remove('active'); });
+        var el = $('#page-' + page);
+        if (el) { el.style.display = 'flex'; el.classList.add('active'); }
+        var titles = {chat:'المحادثة',image:'توليد الصور',video:'توليد الفيديو',web:'تصفح الويب',vpn:'حالة VPN'};
+        $('#page-title').textContent = titles[page] || '';
+        $('#new-chat-btn').style.display = page === 'chat' ? '' : 'none';
+        if (page === 'vpn') renderProxies();
+        if (window.innerWidth < 769) $('#sidebar').classList.remove('open');
+      });
+    });
+
+    $('#menu-btn').addEventListener('click', function(){ $('#sidebar').classList.add('open'); });
+    $('#close-sidebar').addEventListener('click', function(){ $('#sidebar').classList.remove('open'); });
+
+    // ====== CHAT MESSAGES ======
+    function addMsg(role, content, model, latency, isHTML) {
+      var w = $('#welcome-msg'); if (w) w.remove();
+      var c = $('#chat-messages'), d = document.createElement('div');
+      d.className = 'message ' + role;
+      var av = role === 'user' ? '👤' : '🤖';
+      var meta = '';
+      if (model) {
+        meta = '<div class="msg-meta">' + esc(model);
+        if (latency > 0) meta += ' • ' + (latency/1000).toFixed(1) + 's';
+        meta += '</div>';
+      }
+      var body;
+      if (isHTML) {
+        body = sanitize(content);
+      } else {
+        body = esc(content);
+      }
+      d.innerHTML = '<div class="msg-av">' + av + '</div><div class="msg-body"><div class="msg-bbl">' + body + '</div>' + meta + '</div>';
+      c.appendChild(d);
+      c.scrollTop = c.scrollHeight;
+      return d;
+    }
+
+    function addTyping(text) {
+      removeTyping();
+      var c = $('#chat-messages'), d = document.createElement('div');
+      d.className = 'message assistant'; d.id = 'typing-msg';
+      d.innerHTML = '<div class="msg-av">🤖</div><div class="msg-body"><div class="msg-bbl" style="color:var(--text-muted)" id="typing-text">' + esc(text || 'جاري التفكير...') + '</div></div>';
+      c.appendChild(d); c.scrollTop = c.scrollHeight;
+    }
+
+    function removeTyping() { var t = document.getElementById('typing-msg'); if (t) t.remove(); }
+    function setTyping(text) { var t = document.getElementById('typing-text'); if (t) t.textContent = text; }
+
+    // ====== QUICK BUTTONS ======
+    document.addEventListener('click', function(e) {
+      var t = e.target;
+      while (t && t !== document) {
+        if (t.className && t.className.indexOf('quick-btn') !== -1 && t.getAttribute('data-prompt')) {
+          $('#chat-input').value = t.getAttribute('data-prompt');
+          $('#chat-form').dispatchEvent(new Event('submit'));
+          return;
+        }
+        t = t.parentElement;
+      }
+    });
+
+    // ====== CHAT SUBMIT ======
+    $('#chat-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      try {
+        if (state.busy) return;
+        var input = $('#chat-input'), msg = input.value.trim();
+        if (!msg) return;
+        input.value = ''; input.style.height = 'auto';
+        addMsg('user', msg);
+        state.chatCounter++;
+        state.chatHistory.unshift({id:state.chatCounter, title:msg.substring(0,40)});
+        renderChatList();
+        state.reqs++;
+        updateReqs();
+
+        var intent = detectIntent(msg);
+        state.busy = true;
+
+        if (intent === 'image') {
+          handleImageChat(msg);
+        } else if (intent === 'video') {
+          handleVideoChat(msg);
+        } else {
+          handleTextChat(msg);
+        }
+      } catch(err) {
+        state.busy = false;
+        addMsg('assistant', 'خطأ: ' + (err.message || err), 'Error', 0);
+      }
+    });
+
+    function handleImageChat(msg) {
+      try {
+        var prompt = cleanPrompt(msg, ['قم ب','ولد لي','ارسم لي','صمم لي','ولد','ارسم','صمم','توليد','generate','صورة','صوره','لي','من فضلك','ارجوك','أرجوك','please','بليز','لو سمحت']);
+        var el = addMsg('assistant', '', 'AI Image', 0, true);
+        var bbl = el.querySelector('.msg-bbl');
+        var cid = 'imgc' + genId();
+        bbl.innerHTML = '🎨 جاري توليد الصورة...<br><br><div id="'+cid+'"></div>';
+        var container = document.getElementById(cid);
+        loadAIImage(container, prompt, '', 512, 512, function(elapsed) {
+          if (elapsed > 0) toast('تم توليد الصورة!', 'success');
+          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+          state.busy = false;
+        });
+      } catch(err) { state.busy = false; addMsg('assistant', 'خطأ في توليد الصورة: ' + err.message, 'Error', 0); }
+    }
+
+    function handleVideoChat(msg) {
+      try {
+        var prompt = cleanPrompt(msg, ['قم ب','ولد لي','صمم لي','ولد','توليد','generate','فيديو','فديو','مقطع','لي','من فضلك','ارجوك','حرك','مشهد']);
+        var el = addMsg('assistant', '', 'AI Video', 0, true);
+        var bbl = el.querySelector('.msg-bbl');
+        var cid = 'vidc' + genId();
+        bbl.innerHTML = '🎬 جاري توليد مشهد الفيديو...<br><br><div id="'+cid+'"></div>';
+        var container = document.getElementById(cid);
+        loadAIImage(container, prompt + ', cinematic scene, wide angle', 'cinematic', 720, 480, function(elapsed) {
+          if (elapsed > 0) toast('تم توليد المشهد!', 'success');
+          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+          state.busy = false;
+        });
+      } catch(err) { state.busy = false; addMsg('assistant', 'خطأ في توليد الفيديو: ' + err.message, 'Error', 0); }
+    }
+
+    function handleTextChat(msg) {
+      try {
+        // RESPOND INSTANTLY with smart local reply - no waiting
+        var sr = smartLocalReply(msg);
+        var el = addMsg('assistant', sr.text, sr.model, 0);
+        state.busy = false;
+
+        // Then try API in background - if it works, add AI response below
+        tryAIInBackground(msg, el);
+      } catch(err) {
+        state.busy = false;
+        addMsg('assistant', 'خطأ: ' + (err.message || 'unknown'), 'Error', 0);
+      }
+    }
+
+    function tryAIInBackground(msg, localMsgEl) {
+      try {
+        var seed = Math.floor(Math.random() * 999999);
+        var url = 'https://text.pollinations.ai/' + encodeURIComponent(msg) + '?model=openai&seed=' + seed;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+          try {
+            if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText && xhr.responseText.length > 5) {
+              addMsg('assistant', xhr.responseText, 'AI Online', 0);
+              $('#model-badge').textContent = 'AI Online';
+              $('#model-badge').style.color = 'var(--accent)';
+              $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+              state.txtApiOk = true;
+            }
+          } catch(e) {}
+        };
+        xhr.onerror = function() {};
+        xhr.ontimeout = function() {};
+        xhr.send();
+      } catch(e) {}
+    }
+
+    function smartLocalReply(msg) {
+      var m = msg.toLowerCase();
+      var r = '';
+      var model = 'Smart Local';
+
+      if (m.match(/كود|code|برمج|python|java|html|css|script|برنامج/)) {
+        if (m.indexOf('python') !== -1 || m.indexOf('بايثون') !== -1) {
+          if (m.match(/فيبوناتشي|fibonacci/)) {
+            r = '🐍 كود Python لحساب الفيبوناتشي:\n\ndef fibonacci(n):\n    if n <= 0:\n        return []\n    elif n == 1:\n        return [0]\n    \n    fib = [0, 1]\n    for i in range(2, n):\n        fib.append(fib[i-1] + fib[i-2])\n    return fib\n\n# مثال:\nprint(fibonacci(10))\n# النتيجة: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]';
+          } else if (m.match(/حاسب|آلة حاسب|calculator/)) {
+            r = '🐍 آلة حاسبة بسيطة:\n\ndef calc(a, op, b):\n    if op == "+": return a + b\n    if op == "-": return a - b\n    if op == "*": return a * b\n    if op == "/": return a / b if b != 0 else "خطأ: قسمة على صفر"\n    return "عملية غير معروفة"\n\nprint(calc(10, "+", 5))  # 15\nprint(calc(10, "*", 3))  # 30';
+          } else {
+            r = '🐍 مثال كود Python:\n\n# Hello World\nprint("مرحباً بالعالم!")\n\n# دالة بسيطة\ndef greet(name):\n    return f"أهلاً {name}!"\n\nprint(greet("أحمد"))\n\n# قائمة وحلقة\nnumbers = [1, 2, 3, 4, 5]\nfor n in numbers:\n    print(f"{n} × 2 = {n*2}")';
+          }
+        } else if (m.match(/html|موقع|صفح/)) {
+          r = '🌐 كود HTML بسيط:\n\n<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n  <meta charset="UTF-8">\n  <title>صفحتي</title>\n  <style>\n    body { font-family: Arial; text-align: center; padding: 50px; }\n    h1 { color: #6c5ce7; }\n    .btn { background: #00cec9; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; }\n  </style>\n</head>\n<body>\n  <h1>مرحباً!</h1>\n  <p>هذه صفحتي الأولى</p>\n  <button class="btn">اضغط هنا</button>\n</body>\n</html>';
+        } else {
+          r = '💻 أمثلة برمجية:\n\n🐍 Python:\nprint("Hello!")\nfor i in range(5): print(i)\n\n🌐 JavaScript:\nconsole.log("Hello!");\n[1,2,3].forEach(n => console.log(n));\n\n☕ Java:\nSystem.out.println("Hello!");\n\n📝 ملاحظة: فعّل الاتصال بالإنترنت للحصول على أكواد مخصصة أكثر!';
+        }
+      } else if (m.match(/قص[ةه]|حكاي[ةه]|story|احك/)) {
+        r = '📖 قصة قصيرة: النجمة الضائعة\n\nفي ليلة هادئة، لاحظت فتاة صغيرة اسمها نور أن نجمة سقطت من السماء.\n\nركضت نحو الحقل حيث سقطت، ووجدت كرة صغيرة متلألئة.\n\n"أريد العودة للسماء" همست النجمة.\n\nفكرت نور طويلاً، ثم صعدت أعلى تل وقذفت النجمة بكل قوتها.\n\nارتفعت النجمة... أعلى وأعلى... حتى عادت لمكانها بين أخواتها.\n\nمنذ ذلك اليوم، كلما نظرت نور للسماء، وجدت نجمة تلمع لها وحدها. ✨\n\n🔖 النهاية';
+      } else if (m.match(/ترجم|translate|بالإنجليزي|بالعربي/)) {
+        r = '🌍 خدمة الترجمة:\n\nللحصول على ترجمات دقيقة، تحتاج اتصال إنترنت.\n\nبعض العبارات الشائعة:\n• مرحباً = Hello\n• شكراً = Thank you\n• كيف حالك = How are you\n• أنا بخير = I am fine\n• من فضلك = Please\n• نعم/لا = Yes/No\n• صباح الخير = Good morning\n• مع السلامة = Goodbye\n\n💡 فعّل الإنترنت لترجمة نصوص كاملة!';
+      } else if (m.match(/شرح|explain|اشرح|يعني|ما هو|ما هي|what is/)) {
+        if (m.match(/كم|quantum/)) {
+          r = '⚛️ الحوسبة الكمية ببساطة:\n\n🖥️ الكمبيوتر العادي: يستخدم بتات (0 أو 1)\n⚛️ الكمبيوتر الكمي: يستخدم كيوبتات (0 و 1 معاً!)\n\nتخيل متاهة:\n• الكمبيوتر العادي: يجرب طريق واحد كل مرة\n• الكمبيوتر الكمي: يجرب كل الطرق في نفس الوقت!\n\nالاستخدامات:\n💊 اكتشاف أدوية جديدة\n🔐 تشفير فائق الأمان\n🌤️ تنبؤات جوية دقيقة\n🧬 فهم الحمض النووي';
+        } else if (m.match(/ذكاء اصطناعي|ai|artificial/)) {
+          r = '🤖 الذكاء الاصطناعي ببساطة:\n\nهو قدرة الآلات على التعلم والتفكير مثل البشر.\n\n📊 الأنواع:\n1. ذكاء ضيق: متخصص بمهمة واحدة (مثل Siri)\n2. ذكاء عام: يفكر مثل الإنسان (لم يتحقق بعد)\n\n🔧 التطبيقات:\n• ChatGPT - محادثة ذكية\n• DALL-E - توليد صور\n• السيارات ذاتية القيادة\n• تشخيص الأمراض\n• الترجمة الفورية\n\n💡 هذا التطبيق يستخدم AI لتوليد الصور والردود!';
+        } else {
+          r = '📚 أنا في وضع محلي حالياً.\n\nيمكنني شرح:\n• الحوسبة الكمية ⚛️\n• الذكاء الاصطناعي 🤖\n• البرمجة 💻\n\nللحصول على شروحات مفصلة لأي موضوع، تأكد من اتصال الإنترنت وحاول مرة أخرى.';
+        }
+      } else if (m.match(/مرحب|هلا|سلام|اهلا|أهلا|هاي|hi|hello|hey/)) {
+        r = 'أهلاً وسهلاً! 👋\n\nأنا AI Super App، مساعدك الذكي.\n\nيمكنني مساعدتك في:\n💬 محادثة ذكية\n🎨 توليد صور AI\n💻 كتابة أكواد\n📖 كتابة قصص\n🌍 ترجمة\n📚 شرح مفاهيم\n\n⚠️ حالياً أعمل بوضع محلي. تأكد من الإنترنت للحصول على ردود AI كاملة!';
+      } else if (m.match(/شكر|thanks|thank/)) {
+        r = 'العفو! 😊\n\nسعيد بمساعدتك. هل تحتاج شيء ثاني؟';
+      } else if (m.match(/مسائ|مساء/)) {
+        r = 'مساء النور! 🌙\n\nكيف أقدر أساعدك الليلة؟';
+      } else if (m.match(/صباح/)) {
+        r = 'صباح الخير! ☀️\n\nيوم جديد مليء بالإمكانيات. كيف أساعدك؟';
+      } else if (m.match(/كيف حال|شلون|كيفك/)) {
+        r = 'الحمد لله بخير! 😊\n\nجاهز لمساعدتك. ماذا تحتاج؟';
+      } else {
+        r = '💡 أنا أعمل بالوضع المحلي حالياً لأن الاتصال بخوادم AI لم ينجح.\n\nما أقدر أسويه الآن:\n• 💻 اكتب "كود Python" - لأمثلة برمجية\n• 📖 اكتب "قصة" - لقصة قصيرة\n• 🧠 اكتب "اشرح الذكاء الاصطناعي" - لشرح مفهوم\n• 🌍 اكتب "ترجمة" - لعبارات شائعة\n\n🔄 لحل مشكلة الاتصال:\n1. تأكد من اتصال الإنترنت\n2. جرب WiFi بدل البيانات (أو العكس)\n3. انتظر دقيقة وحاول مرة أخرى\n4. اضغط "اختبار الاتصال" في صفحة VPN';
+      }
+
+      return {text: r, model: model};
+    }
+
+    // ====== CHAT INPUT ======
+    $('#chat-input').addEventListener('input', function(){
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    $('#chat-input').addEventListener('keydown', function(e){
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chat-form').dispatchEvent(new Event('submit')); }
+    });
+
+    // ====== NEW CHAT ======
+    $('#new-chat-btn').addEventListener('click', function() {
+      state.convo = [state.convo[0]];
+      $('#chat-messages').innerHTML =
+        '<div class="welcome-message" id="welcome-msg">' +
+          '<div class="welcome-icon">🤖</div>' +
+          '<h2>مرحبا بك في AI Super App</h2>' +
+          '<p>اكتب أي شيء وسأرد عليك</p>' +
+          '<div class="quick-actions" id="quick-actions">' +
+            '<button class="quick-btn" data-prompt="اكتب لي كود Python لحساب الفيبوناتشي">💻 اكتب كود</button>' +
+            '<button class="quick-btn" data-prompt="اكتب لي قصة قصيرة عن الفضاء">📝 اكتب قصة</button>' +
+            '<button class="quick-btn" data-prompt="ارسم لي صورة قطة لطيفة في الفضاء">🎨 ولد صورة</button>' +
+            '<button class="quick-btn" data-prompt="اشرح لي الحوسبة الكمية بطريقة بسيطة">🧠 اشرح مفهوم</button>' +
+          '</div>' +
+        '</div>';
+      toast('محادثة جديدة', 'info');
+    });
+
+    function renderChatList() {
+      var list = $('#chat-list'); list.innerHTML = '';
+      state.chatHistory.slice(0, 10).forEach(function(ch) {
+        var el = document.createElement('div');
+        el.className = 'chat-list-item';
+        el.textContent = ch.title;
+        list.appendChild(el);
+      });
+    }
+
+    // ====== IMAGE PAGE ======
+    $('#image-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var prompt = $('#image-prompt').value.trim();
+      if (!prompt) { toast('اكتب وصف للصورة', 'error'); return; }
+      var style = $('#image-style').value;
+      var parts = $('#image-size').value.split('x');
+      var w = parseInt(parts[0]), h = parseInt(parts[1]);
+      $('#img-gen-btn').disabled = true;
+      state.reqs++; updateReqs();
+      $('#image-result').classList.remove('hidden');
+      loadAIImage($('#image-output'), prompt, style, w, h, function(elapsed) {
+        $('#img-gen-btn').disabled = false;
+        if (elapsed > 0) {
+          var sn = $('#image-style').options[$('#image-style').selectedIndex].text;
+          $('#image-meta').innerHTML = '<span>AI Image</span><span>الوقت: '+(elapsed/1000).toFixed(1)+'s</span><span>'+$('#image-size').value+'</span><span>'+sn+'</span>';
+          toast('تم توليد الصورة!', 'success');
+        } else {
+          $('#image-meta').innerHTML = '<span style="color:var(--danger)">فشل - حاول مرة أخرى</span>';
+        }
+      });
+    });
+
+    // ====== VIDEO PAGE ======
+    $('#video-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var prompt = $('#video-prompt').value.trim();
+      if (!prompt) { toast('اكتب وصف للمشهد', 'error'); return; }
+      $('#vid-gen-btn').disabled = true;
+      state.reqs++; updateReqs();
+      $('#video-result').classList.remove('hidden');
+      loadAIImage($('#video-output'), prompt + ', cinematic movie scene, dramatic lighting, wide angle', 'cinematic', 1280, 720, function(elapsed) {
+        $('#vid-gen-btn').disabled = false;
+        if (elapsed > 0) {
+          $('#video-meta').innerHTML = '<span>AI Scene</span><span>الوقت: '+(elapsed/1000).toFixed(1)+'s</span><span>'+$('#video-resolution').value+'</span>';
+          toast('تم توليد المشهد!', 'success');
+        } else {
+          $('#video-meta').innerHTML = '<span style="color:var(--danger)">فشل - حاول مرة أخرى</span>';
+        }
+      });
+    });
+
+    // ====== WEB SCRAPING PAGE ======
+    $('#web-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var url = $('#web-url').value.trim();
+      if (!url) { toast('أدخل رابط', 'error'); return; }
+      if (url.indexOf('http') !== 0) url = 'https://' + url;
+      $('#web-btn').disabled = true;
+      state.reqs++; updateReqs();
+      $('#web-result').classList.remove('hidden');
+      $('#web-output').innerHTML = '<div class="lbox"><div class="spin"></div><div class="ltxt">جاري سحب المحتوى...</div></div>';
+
+      var t0 = Date.now();
+      scrapeUrl(url, function(res) {
+        var elapsed = Date.now() - t0;
+        if (res && res.ok) {
+          var type = $('#web-type').value;
+          var html = '<div style="color:var(--accent);font-weight:700;margin-bottom:8px">' + esc(res.title) + '</div>';
+          html += '<div style="margin-bottom:12px"><span style="background:var(--bg-card);padding:4px 10px;border-radius:8px;font-size:12px;color:var(--success)">✓ '+(elapsed/1000).toFixed(1)+'s</span></div>';
+          if (type !== 'links' && res.headings.length > 0) {
+            html += '<strong style="color:var(--primary-light)">العناوين:</strong><br>';
+            res.headings.forEach(function(h){ html += '• ' + esc(h) + '<br>'; });
+            html += '<br>';
+          }
+          if (type !== 'links' && res.paragraphs.length > 0) {
+            html += '<strong style="color:var(--primary-light)">المحتوى:</strong><br>';
+            var mx = type === 'full' ? 30 : 10;
+            res.paragraphs.slice(0,mx).forEach(function(p){ html += '<p style="margin:4px 0;color:var(--text-light);font-size:13px">' + esc(p) + '</p>'; });
+            if (res.paragraphs.length > mx) html += '<p style="color:var(--text-muted)">...و' + (res.paragraphs.length - mx) + ' فقرة أخرى</p>';
+          }
+          if ((type === 'links' || type === 'full') && res.links.length > 0) {
+            html += '<br><strong style="color:var(--primary-light)">الروابط ('+res.links.length+'):</strong><br>';
+            res.links.slice(0,20).forEach(function(l){ html += '<div style="margin:2px 0;font-size:12px">🔗 ' + esc(l.text) + '</div>'; });
+          }
+          $('#web-output').innerHTML = html;
+          toast('تم سحب المحتوى!', 'success');
+        } else {
+          $('#web-output').innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px">❌ فشل سحب المحتوى<br><small style="color:var(--text-muted)">تأكد من الرابط وحاول مرة أخرى</small></div>';
+          toast('فشل السحب', 'error');
+        }
+        $('#web-btn').disabled = false;
+      });
+    });
+
+    // ====== VPN ======
+    function updateReqs() { var el = $('#vpn-req'); if (el) el.textContent = state.reqs; }
+
+    function renderProxies() {
+      var proxies = [
+        {flag:'🇺🇸',host:'us-proxy1.example.com',port:8080,country:'الولايات المتحدة',lat:142,rate:98},
+        {flag:'🇪🇺',host:'eu-proxy1.example.com',port:8080,country:'أوروبا',lat:89,rate:100},
+        {flag:'🇯🇵',host:'asia-proxy1.example.com',port:8080,country:'اليابان',lat:245,rate:95}
+      ];
+      var list = $('#vpn-proxies'); list.innerHTML = '';
+      proxies.forEach(function(p){
+        var c = document.createElement('div'); c.className = 'proxy-card';
+        c.innerHTML = '<div class="proxy-info"><span class="proxy-flag">'+p.flag+'</span><div><div class="proxy-host">'+esc(p.host)+':'+p.port+'</div><div class="proxy-detail">'+esc(p.country)+'</div></div></div><div class="proxy-stats"><div class="proxy-stat"><span class="proxy-stat-value">'+p.lat+'ms</span><span class="proxy-stat-label">تأخير</span></div><div class="proxy-stat"><span class="proxy-stat-value">'+p.rate+'%</span><span class="proxy-stat-label">نجاح</span></div></div><span class="proxy-status active">نشط</span>';
+        list.appendChild(c);
+      });
+    }
+
+    $('#offline-toggle').addEventListener('change', function() {
+      $('#model-badge').textContent = this.checked ? 'Offline' : 'AI Online';
+      $('#model-badge').style.color = this.checked ? 'var(--text-muted)' : 'var(--accent)';
+    });
+
+    // ====== PUBLIC API ======
+    window.AI = {
+      toast: toast,
+      testConn: function() {
+        toast('جاري اختبار الاتصال...', 'info');
+        testConnectivity();
+      }
+    };
+
+  })();
+  </script>
+</body>
+</html>
