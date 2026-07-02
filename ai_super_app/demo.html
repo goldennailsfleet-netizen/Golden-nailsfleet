@@ -483,10 +483,12 @@
         if (stEl) stEl.innerHTML = '🎨 جاري توليد مشهد سينمائي...<br><small>يستغرق 15-40 ثانية</small>';
         loadAIImage(container, prompt + ', cinematic wide angle shot, dramatic lighting, movie still', 'cinematic', 1280, 720, function(elapsed) {
           var img = container.querySelector('.ai-img');
-          if (img && img.complete && img.naturalWidth > 0) {
+          if (img) {
             var wrap = img.closest('.img-wrap');
             if (wrap) {
-              wrap.className = 'vid-player';
+              wrap.classList.add('vid-player');
+              var spo = wrap.querySelector('.spo');
+              if (spo) spo.style.display = 'none';
               img.style.cssText = 'width:100%;display:block;animation:kenBurns 8s ease-in-out infinite alternate;transform-origin:center center';
               var ov = document.createElement('div');
               ov.className = 'vid-overlay';
