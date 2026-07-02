@@ -145,6 +145,14 @@
     .conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
     .conn-dot.on{background:var(--success)}.conn-dot.off{background:var(--danger)}.conn-dot.wait{background:var(--text-muted);animation:blink 1s infinite}
     @keyframes blink{50%{opacity:.3}}
+    @keyframes kenBurns{0%{transform:scale(1) translate(0,0)}50%{transform:scale(1.08) translate(-1.5%,-.5%)}100%{transform:scale(1.06) translate(1.5%,.5%)}}
+    @keyframes vidProgress{from{width:0}to{width:100%}}
+    .vid-player{position:relative;overflow:hidden;border-radius:12px;background:#000}
+    .vid-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:8px 12px;border-radius:0 0 12px 12px}
+    .vid-bar{height:3px;background:rgba(255,255,255,.3);border-radius:2px;margin-bottom:6px;overflow:hidden}
+    .vid-bar-fill{height:100%;background:var(--primary-light);border-radius:2px;animation:vidProgress 8s linear infinite}
+    .vid-controls{display:flex;align-items:center;gap:8px;color:#fff;font-size:12px}
+    .vid-badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
 
     @media(max-width:768px){
       .sidebar{transform:translateX(100%)}.sidebar.open{transform:translateX(0)}
@@ -440,6 +448,59 @@
       p += ', high quality, masterpiece';
       if (!seed) seed = Math.floor(Math.random() * 999999);
       return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(p) + '?width=' + w + '&height=' + h + '&nologo=true&seed=' + seed;
+    }
+
+    // ====== VIDEO GENERATION ======
+    function generateVideoScene(container, prompt, callback) {
+      var seed = Math.floor(Math.random() * 999999);
+      var t0 = Date.now();
+      container.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;height:220px;background:var(--bg2);border-radius:12px;flex-direction:column;gap:12px">' +
+        '<div class="spin"></div>' +
+        '<div id="vst'+seed+'" style="color:var(--text-muted);font-size:14px;text-align:center">🎬 جاري توليد الفيديو...<br><small>يستغرق 20-40 ثانية</small></div>' +
+        '</div>';
+      var stEl = container.querySelector('[id^="vst"]');
+
+      // Try Pollinations video endpoint first
+      var videoUrl = 'https://video.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?seed=' + seed;
+      var v = document.createElement('video');
+      v.muted = true; v.loop = true; v.playsInline = true; v.controls = true;
+      v.style.cssText = 'width:100%;border-radius:12px';
+
+      var vTimer = setTimeout(function(){ v.src = ''; fallbackToScene(); }, 20000);
+
+      v.onloadeddata = function() {
+        clearTimeout(vTimer);
+        container.innerHTML = '';
+        container.appendChild(v);
+        v.play().catch(function(){});
+        if (callback) callback(Date.now() - t0, 'video');
+      };
+      v.onerror = function() { clearTimeout(vTimer); fallbackToScene(); };
+      v.src = videoUrl; v.load();
+
+      function fallbackToScene() {
+        if (stEl) stEl.innerHTML = '🎨 جاري توليد مشهد سينمائي...<br><small>يستغرق 15-40 ثانية</small>';
+        loadAIImage(container, prompt + ', cinematic wide angle shot, dramatic lighting, movie still', 'cinematic', 1280, 720, function(elapsed) {
+          var img = container.querySelector('.ai-img');
+          if (img && img.complete && img.naturalWidth > 0) {
+            var wrap = img.closest('.img-wrap');
+            if (wrap) {
+              wrap.className = 'vid-player';
+              img.style.cssText = 'width:100%;display:block;animation:kenBurns 8s ease-in-out infinite alternate;transform-origin:center center';
+              var ov = document.createElement('div');
+              ov.className = 'vid-overlay';
+              ov.innerHTML = '<div class="vid-bar"><div class="vid-bar-fill"></div></div><div class="vid-controls"><span>▶</span><span style="flex:1"></span><span>0:08</span></div>';
+              var badge = document.createElement('div');
+              badge.className = 'vid-badge';
+              badge.textContent = '🎬 AI Scene';
+              wrap.appendChild(ov);
+              wrap.appendChild(badge);
+            }
+          }
+          if (callback) callback(elapsed, 'animated');
+        });
+      }
     }
 
     // ====== IMAGE LOADER WITH MULTI-RETRY ======
@@ -859,10 +920,12 @@
         var el = addMsg('assistant', '', 'AI Video', 0, true);
         var bbl = el.querySelector('.msg-bbl');
         var cid = 'vidc' + genId();
-        bbl.innerHTML = '🎬 جاري توليد مشهد الفيديو...<br><br><div id="'+cid+'"></div>';
+        bbl.innerHTML = '<span id="'+cid+'lbl">🎬 جاري توليد الفيديو...</span><br><br><div id="'+cid+'"></div>';
         var container = document.getElementById(cid);
-        loadAIImage(container, prompt + ', cinematic scene, wide angle', 'cinematic', 720, 480, function(elapsed) {
-          if (elapsed > 0) toast('تم توليد المشهد!', 'success');
+        generateVideoScene(container, prompt, function(elapsed, type) {
+          var lbl = document.getElementById(cid+'lbl');
+          if (lbl) lbl.textContent = type === 'video' ? '🎬 الفيديو جاهز:' : '🎬 المشهد السينمائي:';
+          if (elapsed > 0) toast(type === 'video' ? 'تم توليد الفيديو!' : 'تم توليد المشهد!', 'success');
           $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
           state.busy = false;
         });
@@ -1015,11 +1078,12 @@
       $('#vid-gen-btn').disabled = true;
       state.reqs++; updateReqs();
       $('#video-result').classList.remove('hidden');
-      loadAIImage($('#video-output'), prompt + ', cinematic movie scene, dramatic lighting, wide angle', 'cinematic', 1280, 720, function(elapsed) {
+      generateVideoScene($('#video-output'), prompt, function(elapsed, type) {
         $('#vid-gen-btn').disabled = false;
         if (elapsed > 0) {
-          $('#video-meta').innerHTML = '<span>AI Scene</span><span>الوقت: '+(elapsed/1000).toFixed(1)+'s</span><span>'+$('#video-resolution').value+'</span>';
-          toast('تم توليد المشهد!', 'success');
+          var label = type === 'video' ? 'فيديو حقيقي' : 'مشهد متحرك';
+          $('#video-meta').innerHTML = '<span>AI '+label+'</span><span>الوقت: '+(elapsed/1000).toFixed(1)+'s</span><span>'+$('#video-resolution').value+'</span>';
+          toast(type === 'video' ? 'تم توليد الفيديو!' : 'تم توليد المشهد!', 'success');
         } else {
           $('#video-meta').innerHTML = '<span style="color:var(--danger)">فشل - حاول مرة أخرى</span>';
         }
