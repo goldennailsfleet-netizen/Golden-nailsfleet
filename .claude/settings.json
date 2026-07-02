@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__github__actions_list",
+      "mcp__github__actions_get",
+      "mcp__Base44__list_user_apps",
+      "mcp__Base44__list_directory"
+    ]
+  }
+}
