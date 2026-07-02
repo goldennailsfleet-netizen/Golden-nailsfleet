@@ -871,41 +871,32 @@
 
     function handleTextChat(msg) {
       try {
-        // RESPOND INSTANTLY with smart local reply - no waiting
-        var sr = smartLocalReply(msg);
-        var el = addMsg('assistant', sr.text, sr.model, 0);
-        state.busy = false;
-
-        // Then try API in background - if it works, add AI response below
-        tryAIInBackground(msg, el);
+        if ($('#offline-toggle').checked) {
+          var or = offlineReply(msg);
+          addMsg('assistant', or.t, or.m, 0);
+          state.busy = false;
+          return;
+        }
+        addTyping('جاري التفكير...');
+        var t0 = Date.now();
+        callAI(msg, function(text, err) {
+          removeTyping();
+          if (text) {
+            addMsg('assistant', text, 'AI Online', Date.now() - t0);
+            $('#model-badge').textContent = 'AI Online';
+            $('#model-badge').style.color = 'var(--accent)';
+          } else {
+            var sr = smartLocalReply(msg);
+            addMsg('assistant', sr.text, sr.model, 0);
+          }
+          state.busy = false;
+          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+        });
       } catch(err) {
+        removeTyping();
         state.busy = false;
-        addMsg('assistant', 'خطأ: ' + (err.message || 'unknown'), 'Error', 0);
+        addMsg('assistant', 'خطأ: ' + (err.message || err), 'Error', 0);
       }
-    }
-
-    function tryAIInBackground(msg, localMsgEl) {
-      try {
-        var seed = Math.floor(Math.random() * 999999);
-        var url = 'https://text.pollinations.ai/' + encodeURIComponent(msg) + '?model=openai&seed=' + seed;
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', url, true);
-        xhr.timeout = 15000;
-        xhr.onload = function() {
-          try {
-            if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText && xhr.responseText.length > 5) {
-              addMsg('assistant', xhr.responseText, 'AI Online', 0);
-              $('#model-badge').textContent = 'AI Online';
-              $('#model-badge').style.color = 'var(--accent)';
-              $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
-              state.txtApiOk = true;
-            }
-          } catch(e) {}
-        };
-        xhr.onerror = function() {};
-        xhr.ontimeout = function() {};
-        xhr.send();
-      } catch(e) {}
     }
 
     function smartLocalReply(msg) {
