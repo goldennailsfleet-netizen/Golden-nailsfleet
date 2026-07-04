@@ -497,7 +497,7 @@
     var genId = function(){ return ++_uid; };
 
     // ====== STATE ======
-    var ENGINE_PROMPT = 'أنت AI Super App Engine. حوّل طلبات المستخدم إلى أوامر منظمة.\n\nعند طلب صورة → أخرج JSON فقط:\n{"type":"image","prompt":"<وصف إنجليزي احترافي مفصل يشمل: symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography>","negative_prompt":"extra fingers, missing fingers, deformed hands, bad anatomy, distorted face, blurry, low quality, cartoon, anime, plastic skin","model":"flux-pro"}\n\nعند طلب فيديو → أخرج JSON فقط:\n{"type":"video","prompt":"<وصف إنجليزي مفصل>","camera_motion":"<tracking/pan/tilt/zoom>","motion_description":"<وصف الحركة>","negative_prompt":"static, no motion, blurry, low quality"}\n\nعند طلب كود → أخرج JSON فقط:\n{"type":"code","language":"<javascript/python/html/css/dart/sql>","code":"<الكود النظيف>"}\n\nعند طلب بحث أو معلومات أو محادثة → أجب بنص عربي مفيد ومنظم مباشرة بدون JSON.\n\nقواعد الصور: واقعي 100%، وجه متناسق، 5 أصابع فقط، نسب بشرية صحيحة.\nقاعدة ذهبية: إذا الطلب غير واضح حسّنه تلقائياً ونفذه.';
+    var ENGINE_PROMPT = 'أنت AI Super App Engine مساعد ذكي يتحدث العربية بطلاقة.\n\nقواعد صارمة:\n1. طلب صورة → أخرج JSON فقط بدون أي نص إضافي:\n{"type":"image","prompt":"english description with smooth skin, natural proportions, 85mm lens, soft natural light"}\n\n2. طلب فيديو → أخرج JSON فقط:\n{"type":"video","prompt":"english description","camera_motion":"pan","motion_description":"motion details"}\n\n3. طلب كود → أخرج JSON فقط:\n{"type":"code","language":"javascript","code":"the code here"}\n\n4. أي سؤال أو محادثة أو معلومات → أجب بالعربية مباشرة كنص عادي فقط. ممنوع JSON تماماً.\n\nتذكر: الردود النصية = نص عربي فقط. الصور/الفيديو/الكود = JSON فقط.';
 
     var state = {
       busy: false,
@@ -807,60 +807,90 @@
       imgTimeout = setTimeout(tryNext, 30000);
     }
 
-    // ====== AI CHAT API - SIMPLE XHR WITH CALLBACK ======
+    // ====== AI CHAT API WITH CONVERSATION HISTORY ======
     function callAI(msg, callback) {
       var done = false;
       var seed = Math.floor(Math.random() * 999999);
-      var sysMsg = state.convo.length > 0 ? state.convo[0].content : '';
-      var url = 'https://text.pollinations.ai/' + encodeURIComponent(msg) + '?model=openai&jsonMode=false&system=' + encodeURIComponent(sysMsg) + '&seed=' + seed;
 
-      var urls = [
-        url,
-        'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-        'https://corsproxy.io/?' + encodeURIComponent(url),
-        'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url)
-      ];
+      // Add user message to history
+      state.convo.push({role: 'user', content: msg});
+      // Keep history manageable: system prompt + last 20 turns
+      if (state.convo.length > 22) {
+        state.convo = [state.convo[0]].concat(state.convo.slice(-20));
+      }
 
       function win(txt) {
         if (done) return;
         done = true;
         state.txtApiOk = true;
+        state.convo.push({role: 'assistant', content: txt});
         callback(txt, null);
       }
 
-      var fails = 0;
-      function lose() {
-        fails++;
-        if (fails >= urls.length && !done) {
-          done = true;
-          state.txtApiOk = false;
-          callback(null, 'fail');
+      function fail() {
+        if (done) return;
+        done = true;
+        state.txtApiOk = false;
+        // Remove the user message we added since the call failed
+        if (state.convo.length > 1 && state.convo[state.convo.length - 1].role === 'user') {
+          state.convo.pop();
         }
+        callback(null, 'fail');
       }
 
-      // Try all URLs in parallel with XHR (most compatible)
-      for (var i = 0; i < urls.length; i++) {
-        (function(u) {
+      var postTried = false;
+      function tryGet() {
+        if (done) return;
+        var sysMsg = state.convo[0].content;
+        var url = 'https://text.pollinations.ai/' + encodeURIComponent(msg) +
+          '?model=openai&jsonMode=false&system=' + encodeURIComponent(sysMsg) + '&seed=' + seed;
+        var proxyUrls = [
+          url,
+          'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+          'https://corsproxy.io/?' + encodeURIComponent(url)
+        ];
+        var gFails = 0;
+        proxyUrls.forEach(function(u) {
           try {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', u, true);
-            xhr.timeout = 12000;
-            xhr.onload = function() {
-              if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText && xhr.responseText.length > 3) {
-                win(xhr.responseText);
-              } else { lose(); }
+            var gxhr = new XMLHttpRequest();
+            gxhr.open('GET', u, true);
+            gxhr.timeout = 12000;
+            gxhr.onload = function() {
+              if (gxhr.status >= 200 && gxhr.status < 300 && gxhr.responseText && gxhr.responseText.length > 3) {
+                win(gxhr.responseText);
+              } else { gFails++; if (gFails >= proxyUrls.length) fail(); }
             };
-            xhr.onerror = lose;
-            xhr.ontimeout = lose;
-            xhr.send();
-          } catch(e) { lose(); }
-        })(urls[i]);
+            gxhr.onerror = function() { gFails++; if (gFails >= proxyUrls.length) fail(); };
+            gxhr.ontimeout = function() { gFails++; if (gFails >= proxyUrls.length) fail(); };
+            gxhr.send();
+          } catch(e) { gFails++; if (gFails >= proxyUrls.length) fail(); }
+        });
       }
 
-      // Safety timeout
-      setTimeout(function() {
-        if (!done) { done = true; callback(null, 'timeout'); }
-      }, 15000);
+      // Try POST first (supports full conversation history)
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://text.pollinations.ai/openai', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+          if (done || postTried) return;
+          postTried = true;
+          if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText) {
+            try {
+              var resp = JSON.parse(xhr.responseText);
+              var txt = resp.choices && resp.choices[0] && resp.choices[0].message && resp.choices[0].message.content;
+              if (txt) { win(txt); return; }
+            } catch(e) {}
+          }
+          tryGet();
+        };
+        xhr.onerror = function() { if (!postTried) { postTried = true; tryGet(); } };
+        xhr.ontimeout = function() { if (!postTried) { postTried = true; tryGet(); } };
+        xhr.send(JSON.stringify({model: 'openai', messages: state.convo, seed: seed}));
+      } catch(e) { tryGet(); }
+
+      setTimeout(function() { if (!done) { done = true; callback(null, 'timeout'); } }, 20000);
     }
 
     // ====== WEB SCRAPING ======
@@ -1232,7 +1262,14 @@
             if (cmd && cmd.type && (cmd.type === 'image' || cmd.type === 'video' || cmd.type === 'code')) {
               dispatchAICommand(cmd, t0);
             } else {
-              addMsg('assistant', text, 'AI Online', Date.now() - t0);
+              // If AI returned JSON for a text response, extract the text content
+              var displayText = text;
+              if (cmd && typeof cmd === 'object') {
+                displayText = cmd.message || cmd.response || cmd.content || cmd.text ||
+                              cmd.answer || cmd.reply || cmd.result ||
+                              (cmd.error ? cmd.error : null) || text;
+              }
+              addMsg('assistant', displayText, 'AI Online', Date.now() - t0);
               $('#model-badge').textContent = 'AI Online';
               $('#model-badge').style.color = 'var(--accent)';
               state.busy = false;
@@ -1486,7 +1523,9 @@
         state.aiMode = mode;
         $$('#ai-mode-grid .mode-card').forEach(function(c){ c.classList.remove('active'); });
         card.classList.add('active');
-        if (AI_MODE_PROMPTS[mode]) state.convo[0].content = AI_MODE_PROMPTS[mode];
+        if (AI_MODE_PROMPTS[mode]) {
+          state.convo = [{role:'system', content: AI_MODE_PROMPTS[mode]}];
+        }
         var names = {general:'عام',programmer:'مبرمج',doctor:'طبيب',lawyer:'محامي',teacher:'معلم',writer:'كاتب',chef:'طباخ',analyst:'محلل'};
         toast('وضع خبير: ' + (names[mode] || mode), 'success');
       });
