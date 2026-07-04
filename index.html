@@ -856,16 +856,23 @@
     }
 
     // ====== AI CHAT API WITH CONVERSATION HISTORY ======
-    function callAI(msg, callback) {
+    // searchContext: optional extra text injected into the call but NOT stored in history
+    function callAI(msg, searchContext, callback) {
+      if (typeof searchContext === 'function') { callback = searchContext; searchContext = null; }
       var done = false;
       var seed = Math.floor(Math.random() * 999999);
 
-      // Add user message to history
+      // Add user message to history (original, without search context)
       state.convo.push({role: 'user', content: msg});
       // Keep history manageable: system prompt + last 20 turns
       if (state.convo.length > 22) {
         state.convo = [state.convo[0]].concat(state.convo.slice(-20));
       }
+
+      // Build the actual message sent to API (may include search context)
+      var apiMsg = searchContext
+        ? msg + '\n\n[معلومات من البحث — استخدمها في إجابتك]:\n' + searchContext
+        : msg;
 
       function extractCleanText(txt) {
         // Strip JSON wrapper before storing in history so model doesn't repeat JSON pattern
@@ -905,7 +912,7 @@
       function tryGet() {
         if (done) return;
         var sysMsg = state.convo[0].content;
-        var url = 'https://text.pollinations.ai/' + encodeURIComponent(msg) +
+        var url = 'https://text.pollinations.ai/' + encodeURIComponent(apiMsg) +
           '?model=mistral&system=' + encodeURIComponent(sysMsg) + '&seed=' + seed;
         var proxyUrls = [
           url,
@@ -950,7 +957,12 @@
         };
         xhr.onerror = function() { if (!postTried) { postTried = true; tryGet(); } };
         xhr.ontimeout = function() { if (!postTried) { postTried = true; tryGet(); } };
-        xhr.send(JSON.stringify({model: 'mistral', messages: state.convo, seed: seed}));
+        // For POST: replace last user message with apiMsg (includes search context if any)
+        var postMsgs = state.convo.slice();
+        if (searchContext && postMsgs.length > 0 && postMsgs[postMsgs.length - 1].role === 'user') {
+          postMsgs = postMsgs.slice(0, -1).concat([{role:'user', content: apiMsg}]);
+        }
+        xhr.send(JSON.stringify({model: 'mistral', messages: postMsgs, seed: seed}));
       } catch(e) { tryGet(); }
 
       setTimeout(function() { if (!done) { done = true; callback(null, 'timeout'); } }, 20000);
@@ -1004,6 +1016,92 @@
           } catch(e) { fails++; if (!done && fails >= proxyUrls.length) callback({ok:false}); }
         })(proxyUrls[i]);
       }
+    }
+
+    // ====== WEB SEARCH AUGMENTATION ======
+    var SEARCH_TRIGGERS = [
+      'ابحث','بحث عن','اعثر','ابحث لي','معلومات عن','من هو','من هي','ما هو','ما هي','ما هي',
+      'متى','أين','اين','كيف يعمل','أخبرني عن','اخبرني','عرفني','أحدث','آخر أخبار',
+      'جديد','أخبار','سعر','كم ثمن','كم سعر','كم تكلفة',
+      'اكتشف','ما معنى','تعريف','شرح','مقارنة',
+      'search','find','who is','what is','when','where','latest','news','price','define'
+    ];
+
+    function shouldSearch(msg) {
+      var m = msg.toLowerCase();
+      for (var i = 0; i < SEARCH_TRIGGERS.length; i++) {
+        if (m.indexOf(SEARCH_TRIGGERS[i]) !== -1) return true;
+      }
+      return false;
+    }
+
+    function cleanSearchQuery(msg) {
+      return msg
+        .replace(/^(ابحث عن|ابحث لي|ابحث|بحث عن|معلومات عن|من هو|من هي|ما هو|ما هي|أخبرني عن|اخبرني عن|عرفني على|عرفني|اشرح لي|شرح|تعريف)/gi, '')
+        .replace(/[؟?!،,]/g, ' ')
+        .replace(/\s+/g, ' ').trim()
+        .substring(0, 120);
+    }
+
+    function fetchSearchContext(query, callback) {
+      var q = cleanSearchQuery(query);
+      if (!q) { callback(null); return; }
+
+      var done = false;
+      function finish(ctx) { if (!done) { done = true; callback(ctx); } }
+
+      // Source 1: DuckDuckGo Instant Answer
+      var ddgUrl = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(q) + '&format=json&no_html=1&skip_disambig=1&t=superapp';
+      var ddgProxied = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(ddgUrl);
+      var x1 = new XMLHttpRequest();
+      x1.open('GET', ddgProxied, true); x1.timeout = 6000;
+      x1.onload = function() {
+        if (done) return;
+        try {
+          var d = JSON.parse(x1.responseText);
+          var parts = [];
+          if (d.Answer) parts.push('إجابة مباشرة: ' + d.Answer);
+          if (d.AbstractText && d.AbstractText.length > 20) parts.push(d.AbstractText);
+          if (d.Definition && d.Definition.length > 10) parts.push('تعريف: ' + d.Definition);
+          if (d.RelatedTopics) {
+            d.RelatedTopics.slice(0, 3).forEach(function(t) {
+              if (t.Text && t.Text.length > 15) parts.push(t.Text);
+            });
+          }
+          if (parts.length > 0) { finish(parts.join('\n\n')); return; }
+        } catch(e) {}
+        // Fallback to Wikipedia
+        fetchWikipedia(q, finish);
+      };
+      x1.onerror = x1.ontimeout = function() { if (!done) fetchWikipedia(q, finish); };
+      x1.send();
+
+      // Source 2: Wikipedia summary API (parallel)
+      var wikiTimer = setTimeout(function() {
+        if (!done) fetchWikipedia(q, finish);
+      }, 3000);
+
+      setTimeout(function() { finish(null); }, 8000);
+    }
+
+    function fetchWikipedia(q, callback) {
+      var lang = /[؀-ۿ]/.test(q) ? 'ar' : 'en';
+      var wikiUrl = 'https://' + lang + '.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(q);
+      var proxied = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(wikiUrl);
+      var x = new XMLHttpRequest();
+      x.open('GET', proxied, true); x.timeout = 5000;
+      x.onload = function() {
+        try {
+          var d = JSON.parse(x.responseText);
+          if (d.extract && d.extract.length > 30) {
+            callback((d.title ? d.title + ': ' : '') + d.extract.substring(0, 600));
+            return;
+          }
+        } catch(e) {}
+        callback(null);
+      };
+      x.onerror = x.ontimeout = function() { callback(null); };
+      x.send();
     }
 
     // ====== INTENT DETECTION ======
@@ -1339,29 +1437,43 @@
         }
         addTyping('جاري التفكير...');
         var t0 = Date.now();
-        callAI(msg, function(text, err) {
-          removeTyping();
-          if (text) {
-            // Text chat ALWAYS shows text — never dispatch image/video regardless of AI output
-            var displayText = text;
-            var cmd = tryParseJSON(text);
-            if (cmd && typeof cmd === 'object') {
-              // Extract text from any JSON the model might return
-              displayText = cmd.message || cmd.response || cmd.content || cmd.text ||
-                            cmd.answer || cmd.reply || cmd.result ||
-                            (cmd.error ? cmd.error : null) || text;
+
+        function doCall(searchCtx) {
+          if (searchCtx) setTyping('🧠 جاري التحليل...');
+          callAI(msg, searchCtx, function(text, err) {
+            removeTyping();
+            if (text) {
+              // Text chat ALWAYS shows text — never dispatch image/video regardless of AI output
+              var displayText = text;
+              var cmd = tryParseJSON(text);
+              if (cmd && typeof cmd === 'object') {
+                // Extract text from any JSON the model might return
+                displayText = cmd.message || cmd.response || cmd.content || cmd.text ||
+                              cmd.answer || cmd.reply || cmd.result ||
+                              (cmd.error ? cmd.error : null) || text;
+              }
+              var label = searchCtx ? 'AI + بحث' : 'AI Online';
+              addMsg('assistant', displayText, label, Date.now() - t0);
+              $('#model-badge').textContent = label;
+              $('#model-badge').style.color = 'var(--accent)';
+              state.busy = false;
+            } else {
+              var sr = smartLocalReply(msg);
+              addMsg('assistant', sr.text, sr.model, 0);
+              state.busy = false;
             }
-            addMsg('assistant', displayText, 'AI Online', Date.now() - t0);
-            $('#model-badge').textContent = 'AI Online';
-            $('#model-badge').style.color = 'var(--accent)';
-            state.busy = false;
-          } else {
-            var sr = smartLocalReply(msg);
-            addMsg('assistant', sr.text, sr.model, 0);
-            state.busy = false;
-          }
-          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
-        });
+            $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+          });
+        }
+
+        if (shouldSearch(msg)) {
+          setTyping('🔍 جاري البحث...');
+          fetchSearchContext(msg, function(searchCtx) {
+            doCall(searchCtx);
+          });
+        } else {
+          doCall(null);
+        }
       } catch(err) {
         removeTyping();
         state.busy = false;
