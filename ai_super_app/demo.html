@@ -497,7 +497,7 @@
     var genId = function(){ return ++_uid; };
 
     // ====== STATE ======
-    var ENGINE_PROMPT = 'أنت AI Super App Engine. حوّل طلبات المستخدم إلى أوامر منظمة.\n\nعند طلب صورة → أخرج JSON فقط:\n{"type":"image","prompt":"<وصف إنجليزي احترافي مفصل يشمل: symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography>","negative_prompt":"extra fingers, missing fingers, deformed hands, bad anatomy, distorted face, blurry, low quality, cartoon, anime, plastic skin","model":"flux-realism"}\n\nعند طلب فيديو → أخرج JSON فقط:\n{"type":"video","prompt":"<وصف إنجليزي مفصل>","camera_motion":"<tracking/pan/tilt/zoom>","motion_description":"<وصف الحركة>","negative_prompt":"static, no motion, blurry, low quality"}\n\nعند طلب كود → أخرج JSON فقط:\n{"type":"code","language":"<javascript/python/html/css/dart/sql>","code":"<الكود النظيف>"}\n\nعند طلب بحث أو معلومات أو محادثة → أجب بنص عربي مفيد ومنظم مباشرة بدون JSON.\n\nقواعد الصور: واقعي 100%، وجه متناسق، 5 أصابع فقط، نسب بشرية صحيحة.\nقاعدة ذهبية: إذا الطلب غير واضح حسّنه تلقائياً ونفذه.';
+    var ENGINE_PROMPT = 'أنت AI Super App Engine. حوّل طلبات المستخدم إلى أوامر منظمة.\n\nعند طلب صورة → أخرج JSON فقط:\n{"type":"image","prompt":"<وصف إنجليزي احترافي مفصل يشمل: symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography>","negative_prompt":"extra fingers, missing fingers, deformed hands, bad anatomy, distorted face, blurry, low quality, cartoon, anime, plastic skin","model":"flux-pro"}\n\nعند طلب فيديو → أخرج JSON فقط:\n{"type":"video","prompt":"<وصف إنجليزي مفصل>","camera_motion":"<tracking/pan/tilt/zoom>","motion_description":"<وصف الحركة>","negative_prompt":"static, no motion, blurry, low quality"}\n\nعند طلب كود → أخرج JSON فقط:\n{"type":"code","language":"<javascript/python/html/css/dart/sql>","code":"<الكود النظيف>"}\n\nعند طلب بحث أو معلومات أو محادثة → أجب بنص عربي مفيد ومنظم مباشرة بدون JSON.\n\nقواعد الصور: واقعي 100%، وجه متناسق، 5 أصابع فقط، نسب بشرية صحيحة.\nقاعدة ذهبية: إذا الطلب غير واضح حسّنه تلقائياً ونفذه.';
 
     var state = {
       busy: false,
@@ -585,38 +585,41 @@
     ];
 
     // ====== IMAGE URL BUILDER ======
-    var NEG_PHOTO = 'extra fingers, missing fingers, deformed hands, bad anatomy, distorted face, asymmetrical face, deformed eyes, blurry, low quality, bad quality, cartoon, anime, plastic skin, illustration, painting, drawing, cgi, 3d render, sketch, watermark, text, signature, oversaturated, noise, grain, jpeg artifacts, worst quality, normal quality, out of frame, cropped badly, mutation, malformed, ugly, disfigured';
-    var NEG_BASE  = 'blurry, low quality, bad quality, distorted face, deformed eyes, bad hands, missing fingers, extra fingers, bad anatomy, ugly, disfigured, watermark, text, signature, worst quality, noise, grain';
-    var NEG_ANIME = NEG_BASE + ', photorealistic, 3d render, realistic photo, bad lineart';
-    var NEG_3D    = NEG_BASE + ', flat 2d, painting, sketch, bad topology';
+    // Short focused negatives — Pollinations ignores long ones
+    var NEG_PHOTO = 'ugly, deformed, extra fingers, missing fingers, bad hands, distorted face, blurry, cartoon, watermark, text, low quality, bad anatomy';
+    var NEG_ANIME = 'ugly, bad anatomy, extra fingers, bad hands, blurry, watermark, text, photorealistic';
+    var NEG_3D    = 'ugly, bad anatomy, flat 2d, blurry, watermark, text, low quality';
+    var NEG_BASE  = 'ugly, blurry, watermark, text, low quality, bad anatomy';
 
+    // flux-pro handles human anatomy far better than flux-realism
+    // Suffixes are SHORT — under 80 chars — to keep total URL under 1500 chars
     var STYLE_MAP = {
-      'photorealistic': { suffix:' symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography, Canon EOS R5, sharp facial details, 5 fingers, correct hand anatomy', model:'flux-realism', neg:NEG_PHOTO },
-      'hyperrealistic': { suffix:' symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography, Phase One IQ4, 120MP, studio softbox lighting, visible individual pores, correct bone structure', model:'flux-realism', neg:NEG_PHOTO },
-      '4k':            { suffix:' symmetrical face, natural proportions, 85mm lens, cinematic lighting, 4K professional photograph, ultra detailed, sharp focus, correct anatomy', model:'flux-realism', neg:NEG_PHOTO },
-      '8k':            { suffix:' symmetrical face, natural proportions, 85mm lens, cinematic lighting, 8K RAW photograph, maximum visible detail, ultra detailed, professional photography, accurate anatomy', model:'flux-realism', neg:NEG_PHOTO },
-      'cinematic':     { suffix:' symmetrical face, natural proportions, 85mm lens, cinematic Arri Alexa shot, dramatic cinematic lighting, shallow depth of field, color graded, ultra detailed, correct facial anatomy', model:'flux-realism', neg:NEG_PHOTO },
-      'anime':         { suffix:' anime illustration, clean precise line art, vibrant saturated colors, correct proportions, expressive eyes, smooth cel shading', model:'flux', neg:NEG_ANIME },
-      'oil_painting':  { suffix:' oil painting on canvas, museum quality, visible textured brushstrokes, accurate anatomy, classical portrait, chiaroscuro lighting', model:'flux', neg:NEG_BASE },
-      'digital_art':   { suffix:' digital concept art, ArtStation trending, correct anatomy, dramatic composition, cinematic lighting, ultra detailed textures', model:'flux', neg:NEG_BASE },
-      '3d':            { suffix:' Unreal Engine 5 render, ray tracing, subsurface scattering, correct topology, physically accurate materials, 8K textures', model:'flux', neg:NEG_3D }
+      'photorealistic': { suffix:'RAW photo, 85mm f1.8, natural light, sharp, photorealistic, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      'hyperrealistic': { suffix:'hyperrealistic photo, 85mm lens, studio light, sharp details, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      '4k':             { suffix:'4K photo, 85mm lens, cinematic light, sharp focus, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      '8k':             { suffix:'8K RAW photo, medium format, studio lighting, ultra sharp, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      'cinematic':      { suffix:'cinematic shot, anamorphic lens, dramatic lighting, film grain, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      'anime':          { suffix:'anime art, clean lineart, vibrant colors, correct proportions, expressive eyes', model:'flux', neg:NEG_ANIME },
+      'oil_painting':   { suffix:'oil painting, museum quality, textured brushstrokes, correct anatomy', model:'flux', neg:NEG_BASE },
+      'digital_art':    { suffix:'digital art, ArtStation, cinematic lighting, correct anatomy, ultra detailed', model:'flux', neg:NEG_BASE },
+      '3d':             { suffix:'Unreal Engine 5, ray tracing, PBR materials, 8K textures, correct topology', model:'flux', neg:NEG_3D }
     };
 
     function buildImgUrl(prompt, style, w, h, seed) {
       var p = hasArabic(prompt) ? translateAr(prompt) : prompt;
-      // Pollinations reliably handles up to 1536 — larger causes timeout/fallback to worse
-      w = Math.min(w, 1536); h = Math.min(h, 1536);
+      // Cap at 1024 — larger dimensions increase distortion risk with free API
+      w = Math.min(w, 1024); h = Math.min(h, 1024);
       var st = STYLE_MAP[style] || STYLE_MAP['hyperrealistic'];
-      var model = st.model;
-      var neg   = st.neg;
+      // Truncate base prompt to 200 chars to keep URL short
+      if (p.length > 200) p = p.substring(0, 200);
       p = p + ', ' + st.suffix;
       if (!seed) seed = Math.floor(Math.random() * 999999);
       return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(p) +
         '?width=' + w + '&height=' + h +
         '&nologo=true&seed=' + seed +
-        '&model=' + model +
-        '&negative=' + encodeURIComponent(neg) +
-        '&enhance=true';
+        '&model=' + st.model +
+        '&negative=' + encodeURIComponent(st.neg) +
+        '&enhance=true&safe=false';
     }
 
     // ====== VIDEO GENERATION ======
@@ -731,14 +734,15 @@
       var seed2 = Math.floor(Math.random() * 999999);
       var seed3 = Math.floor(Math.random() * 999999);
 
-      var neg512 = encodeURIComponent(NEG_PHOTO);
-      var p512   = encodeURIComponent((hasArabic(prompt)?translateAr(prompt):prompt) + ', photorealistic, sharp focus, correct anatomy, professional photo');
+      var pBase = (hasArabic(prompt) ? translateAr(prompt) : prompt).substring(0, 150);
+      var pEnc  = encodeURIComponent(pBase + ', RAW photo, 85mm lens, natural light, correct anatomy, photorealistic');
+      var negEnc = encodeURIComponent(NEG_PHOTO);
       var urls = [
-        buildImgUrl(prompt, style, w, h, seed1),
-        buildImgUrl(prompt, style, Math.min(w,1024), Math.min(h,1024), seed2),
-        PROXIES[0].wrap(buildImgUrl(prompt, style, 1024, 1024, seed3)),
-        PROXIES[1].wrap(buildImgUrl(prompt, style, 768, 768, seed1)),
-        'https://image.pollinations.ai/prompt/' + p512 + '?width=768&height=768&nologo=true&seed=' + seed2 + '&model=flux-realism&negative=' + neg512 + '&enhance=true'
+        buildImgUrl(prompt, style, 1024, 1024, seed1),
+        buildImgUrl(prompt, style, 896, 896, seed2),
+        'https://image.pollinations.ai/prompt/' + pEnc + '?width=1024&height=1024&nologo=true&seed=' + seed3 + '&model=flux-pro&negative=' + negEnc + '&enhance=true',
+        PROXIES[0].wrap(buildImgUrl(prompt, style, 768, 768, seed2)),
+        'https://image.pollinations.ai/prompt/' + pEnc + '?width=768&height=768&nologo=true&seed=' + seed1 + '&model=flux-pro&negative=' + negEnc
       ];
       var maxAttempts = urls.length;
 
