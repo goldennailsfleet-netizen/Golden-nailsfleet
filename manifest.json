@@ -1,0 +1,35 @@
+{
+  "name": "AI Super App",
+  "short_name": "AI App",
+  "description": "تطبيق الذكاء الاصطناعي الشامل",
+  "start_url": "/Golden-nailsfleet/",
+  "scope": "/Golden-nailsfleet/",
+  "display": "standalone",
+  "background_color": "#0f0f1a",
+  "theme_color": "#6c5ce7",
+  "orientation": "any",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "محادثة AI",
+      "url": "/Golden-nailsfleet/?page=chat",
+      "description": "ابدأ محادثة جديدة"
+    },
+    {
+      "name": "توليد صورة",
+      "url": "/Golden-nailsfleet/?page=image",
+      "description": "ولّد صورة بالذكاء الاصطناعي"
+    }
+  ]
+}
