@@ -586,19 +586,17 @@
 
     // ====== IMAGE URL BUILDER ======
     // Short focused negatives — Pollinations ignores long ones
-    var NEG_PHOTO = 'ugly, deformed, extra fingers, missing fingers, bad hands, distorted face, blurry, cartoon, watermark, text, low quality, bad anatomy';
+    var NEG_PHOTO = 'ugly, deformed, extra fingers, missing fingers, bad hands, distorted face, blurry, cartoon, watermark, text, low quality, bad anatomy, rough skin, skin artifacts, dry skin';
     var NEG_ANIME = 'ugly, bad anatomy, extra fingers, bad hands, blurry, watermark, text, photorealistic';
     var NEG_3D    = 'ugly, bad anatomy, flat 2d, blurry, watermark, text, low quality';
     var NEG_BASE  = 'ugly, blurry, watermark, text, low quality, bad anatomy';
 
-    // flux-pro handles human anatomy far better than flux-realism
-    // Suffixes are SHORT — under 80 chars — to keep total URL under 1500 chars
     var STYLE_MAP = {
-      'photorealistic': { suffix:'RAW photo, 85mm f1.8, natural light, sharp, photorealistic, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
-      'hyperrealistic': { suffix:'hyperrealistic photo, 85mm lens, studio light, sharp details, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
-      '4k':             { suffix:'4K photo, 85mm lens, cinematic light, sharp focus, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
-      '8k':             { suffix:'8K RAW photo, medium format, studio lighting, ultra sharp, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
-      'cinematic':      { suffix:'cinematic shot, anamorphic lens, dramatic lighting, film grain, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      'photorealistic': { suffix:'RAW photo, 85mm f1.4, soft natural light, smooth skin, photorealistic, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      'hyperrealistic': { suffix:'hyperrealistic portrait, 85mm lens, soft studio light, smooth skin, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      '4k':             { suffix:'4K photo, 85mm lens, soft light, smooth skin, sharp focus, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      '8k':             { suffix:'8K RAW photo, medium format, soft studio lighting, smooth skin, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
+      'cinematic':      { suffix:'cinematic shot, anamorphic lens, soft dramatic lighting, smooth skin, correct anatomy', model:'flux-pro', neg:NEG_PHOTO },
       'anime':          { suffix:'anime art, clean lineart, vibrant colors, correct proportions, expressive eyes', model:'flux', neg:NEG_ANIME },
       'oil_painting':   { suffix:'oil painting, museum quality, textured brushstrokes, correct anatomy', model:'flux', neg:NEG_BASE },
       'digital_art':    { suffix:'digital art, ArtStation, cinematic lighting, correct anatomy, ultra detailed', model:'flux', neg:NEG_BASE },
@@ -619,7 +617,7 @@
         '&nologo=true&seed=' + seed +
         '&model=' + st.model +
         '&negative=' + encodeURIComponent(st.neg) +
-        '&enhance=true&safe=false';
+        '&safe=false';
     }
 
     // ====== VIDEO GENERATION ======
@@ -664,8 +662,8 @@
           var img = new Image();
           img.onload = function() { srcs[i] = img.src; done(); };
           img.onerror = function() { done(); };
-          img.src = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(fp + ', symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography') +
-            '?width=1024&height=576&seed=' + (base + i) + '&nologo=true&model=flux-realism&negative=' + encodeURIComponent(NEG_PHOTO) + '&enhance=true';
+          img.src = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(fp + ', symmetrical face, smooth skin, 85mm lens, soft cinematic lighting, professional photography, correct anatomy') +
+            '?width=1024&height=576&seed=' + (base + i) + '&nologo=true&model=flux-pro&negative=' + encodeURIComponent(NEG_PHOTO);
         });
         function done() {
           loaded++;
@@ -740,7 +738,7 @@
       var urls = [
         buildImgUrl(prompt, style, 1024, 1024, seed1),
         buildImgUrl(prompt, style, 896, 896, seed2),
-        'https://image.pollinations.ai/prompt/' + pEnc + '?width=1024&height=1024&nologo=true&seed=' + seed3 + '&model=flux-pro&negative=' + negEnc + '&enhance=true',
+        'https://image.pollinations.ai/prompt/' + pEnc + '?width=1024&height=1024&nologo=true&seed=' + seed3 + '&model=flux-pro&negative=' + negEnc,
         PROXIES[0].wrap(buildImgUrl(prompt, style, 768, 768, seed2)),
         'https://image.pollinations.ai/prompt/' + pEnc + '?width=768&height=768&nologo=true&seed=' + seed1 + '&model=flux-pro&negative=' + negEnc
       ];
