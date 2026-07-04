@@ -264,7 +264,7 @@
             <form id="image-form">
               <div class="input-group"><label>وصف الصورة</label><textarea id="image-prompt" placeholder="مثال: فتاة جميلة في حديقة ورود" rows="3" maxlength="500"></textarea></div>
               <div class="form-row">
-                <div class="input-group"><label>الحجم</label><select id="image-size"><option value="1024x1024">1024×1024 قياسي</option><option value="1920x1080">1920×1080 HD</option><option value="2560x1440">2560×1440 2K</option><option value="3840x2160">3840×2160 4K</option><option value="1792x1024">1792×1024 أفقي</option><option value="1024x1792">1024×1792 عمودي</option></select></div>
+                <div class="input-group"><label>الحجم</label><select id="image-size"><option value="1024x1024">1024×1024 مربع</option><option value="1280x720">1280×720 HD أفقي</option><option value="1536x1024">1536×1024 واسع</option><option value="1024x1536">1024×1536 عمودي</option><option value="1344x768">1344×768 سينمائي</option></select></div>
                 <div class="input-group"><label>الأسلوب</label><select id="image-style"><option value="photorealistic">واقعي احترافي</option><option value="hyperrealistic">خارق الواقعية 8K</option><option value="8k">8K فائق الدقة</option><option value="4k">4K احترافي</option><option value="cinematic">سينمائي 4K</option><option value="anime">أنمي</option><option value="oil_painting">لوحة زيتية</option><option value="digital_art">فن رقمي 8K</option><option value="3d">ثلاثي الأبعاد</option></select></div>
               </div>
               <button type="submit" class="btn btn-primary btn-full" id="img-gen-btn">🎨 توليد الصورة</button>
@@ -433,31 +433,39 @@
     ];
 
     // ====== IMAGE URL BUILDER ======
+    // Negative prompt — the #1 fix for distorted faces & anatomy
+    var NEG_BASE = 'blurry, low quality, bad quality, distorted face, deformed eyes, asymmetrical face, bad hands, missing fingers, extra fingers, extra limbs, missing limbs, bad anatomy, ugly, disfigured, mutation, malformed, oversaturated, noise, grain, jpeg artifacts, watermark, text, signature, out of frame, cropped badly, worst quality, normal quality';
+    var NEG_PHOTO = NEG_BASE + ', cartoon, illustration, anime, painting, drawing, cgi, 3d render, sketch';
+    var NEG_ANIME = NEG_BASE + ', photorealistic, 3d render, realistic photo, bad lineart';
+    var NEG_3D    = NEG_BASE + ', flat 2d, painting, sketch, bad topology';
+
     var STYLE_MAP = {
-      'photorealistic': { suffix:', ultra photorealistic DSLR photograph, hyperrealistic skin texture, 8K UHD, sharp focus, natural subsurface scattering, lifelike eyes, natural lighting, bokeh background', model:'flux-realism' },
-      'hyperrealistic': { suffix:', hyperrealistic photography, ultra detailed pores and skin texture, 8K UHD, professional studio lighting, lifelike facial features, high dynamic range, physically accurate', model:'flux-realism' },
-      '4k':            { suffix:', 4K ultra HD, photorealistic, ultra sharp focus, professional photography, perfect balanced lighting, intricate details', model:'flux-realism' },
-      '8k':            { suffix:', 8K ultra HD resolution, hyperrealistic, maximum detail, award-winning photography, ultra fine detail on every element, perfect composition', model:'flux-pro' },
-      'anime':         { suffix:', anime style, vibrant colors, ultra detailed, studio Ghibli quality, cel shading, soft lighting', model:'flux' },
-      'oil_painting':  { suffix:', oil painting masterpiece, museum quality, textured brushstrokes, dramatic chiaroscuro lighting, ultra detailed', model:'flux' },
-      'digital_art':   { suffix:', digital art, concept art, artstation trending, ultra detailed, 8K resolution, dramatic lighting', model:'flux' },
-      'cinematic':     { suffix:', cinematic 4K, anamorphic lens, dramatic golden hour lighting, movie still, depth of field, film grain, IMAX quality', model:'flux-realism' },
-      '3d':            { suffix:', 3D render, Unreal Engine 5, octane render, ultra photorealistic, 8K, global illumination, subsurface scattering', model:'flux' }
+      'photorealistic': { suffix:' professional DSLR photo, Canon EOS R5, 85mm f/1.4 lens, natural window light, sharp facial details, realistic skin pores, natural hair strands, correct hand anatomy', model:'flux-realism', neg:NEG_PHOTO },
+      'hyperrealistic': { suffix:' hyperrealistic photograph, Phase One IQ4, 120MP sensor, studio softbox lighting, ultra sharp micro-details, visible individual pores, correct bone structure, natural eye reflections', model:'flux-realism', neg:NEG_PHOTO },
+      '4k':            { suffix:'4K professional photograph, sharp focus on subject, natural balanced lighting, correct proportions, detailed background', model:'flux-realism', neg:NEG_PHOTO },
+      '8k':            { suffix:' 8K RAW photograph, medium format camera, professional lighting rig, tack sharp throughout, maximum visible detail, accurate anatomy', model:'flux-realism', neg:NEG_PHOTO },
+      'cinematic':     { suffix:' cinematic Arri Alexa shot, anamorphic 40mm lens, dramatic natural lighting, shallow depth of field, color graded, correct facial anatomy', model:'flux-realism', neg:NEG_PHOTO },
+      'anime':         { suffix:' anime illustration, clean precise line art, vibrant saturated colors, correct proportions, expressive eyes, smooth cel shading', model:'flux', neg:NEG_ANIME },
+      'oil_painting':  { suffix:' oil painting on canvas, museum quality, visible textured brushstrokes, accurate anatomy, classical portrait technique, chiaroscuro lighting', model:'flux', neg:NEG_BASE },
+      'digital_art':   { suffix:' digital concept art, ArtStation trending, correct anatomy, dramatic composition, professional lighting, ultra detailed textures', model:'flux', neg:NEG_BASE },
+      '3d':            { suffix:' Unreal Engine 5 render, ray tracing, subsurface scattering, correct topology, physically accurate materials, 8K textures', model:'flux', neg:NEG_3D }
     };
 
     function buildImgUrl(prompt, style, w, h, seed) {
       var p = hasArabic(prompt) ? translateAr(prompt) : prompt;
-      var model = 'flux-realism';
-      if (style && STYLE_MAP[style]) {
-        p += STYLE_MAP[style].suffix;
-        model = STYLE_MAP[style].model;
-      } else {
-        p += ', ultra photorealistic, hyperrealistic, 8K UHD, ultra detailed';
-      }
-      p += ', masterpiece, best quality, intricate fine details, perfect anatomy';
+      // Pollinations reliably handles up to 1536 — larger causes timeout/fallback to worse
+      w = Math.min(w, 1536); h = Math.min(h, 1536);
+      var st = STYLE_MAP[style] || STYLE_MAP['hyperrealistic'];
+      var model = st.model;
+      var neg   = st.neg;
+      p = p + ', ' + st.suffix;
       if (!seed) seed = Math.floor(Math.random() * 999999);
       return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(p) +
-        '?width=' + w + '&height=' + h + '&nologo=true&seed=' + seed + '&model=' + model;
+        '?width=' + w + '&height=' + h +
+        '&nologo=true&seed=' + seed +
+        '&model=' + model +
+        '&negative=' + encodeURIComponent(neg) +
+        '&enhance=true';
     }
 
     // ====== VIDEO GENERATION ======
@@ -493,9 +501,9 @@
       function buildFrames() {
         var base = +uid.slice(1);
         var framePrompts = [
-          prompt + ', ultra photorealistic, cinematic 4K wide shot, dramatic lighting, hyperrealistic details, sharp focus',
-          prompt + ', ultra photorealistic, dynamic motion, action shot, cinematic 4K, motion blur, intricate details',
-          prompt + ', ultra photorealistic, extreme close up, cinematic 4K, dramatic lighting, ultra fine details, sharp focus'
+          prompt + ', wide establishing shot, natural golden hour lighting, correct anatomy, sharp facial details',
+          prompt + ', mid shot dynamic pose, motion blur on moving parts, dramatic side lighting, correct anatomy',
+          prompt + ', close up shot, shallow depth of field, soft catchlights in eyes, sharp facial features'
         ];
         var loaded = 0, srcs = [];
         framePrompts.forEach(function(fp, i) {
@@ -503,7 +511,7 @@
           img.onload = function() { srcs[i] = img.src; done(); };
           img.onerror = function() { done(); };
           img.src = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(fp) +
-            '?width=1280&height=720&seed=' + (base + i) + '&nologo=true';
+            '?width=1024&height=576&seed=' + (base + i) + '&nologo=true&model=flux-realism&negative=' + encodeURIComponent(NEG_PHOTO) + '&enhance=true';
         });
         function done() {
           loaded++;
@@ -572,12 +580,14 @@
       var seed2 = Math.floor(Math.random() * 999999);
       var seed3 = Math.floor(Math.random() * 999999);
 
+      var neg512 = encodeURIComponent(NEG_PHOTO);
+      var p512   = encodeURIComponent((hasArabic(prompt)?translateAr(prompt):prompt) + ', photorealistic, sharp focus, correct anatomy, professional photo');
       var urls = [
         buildImgUrl(prompt, style, w, h, seed1),
         buildImgUrl(prompt, style, Math.min(w,1024), Math.min(h,1024), seed2),
         PROXIES[0].wrap(buildImgUrl(prompt, style, 1024, 1024, seed3)),
-        PROXIES[1].wrap(buildImgUrl(prompt, 'photorealistic', 512, 512, seed1)),
-        'https://image.pollinations.ai/prompt/' + encodeURIComponent((hasArabic(prompt)?translateAr(prompt):prompt) + ', ultra photorealistic, 8K, hyperrealistic') + '?width=512&height=512&nologo=true&seed=' + seed2 + '&model=flux-realism'
+        PROXIES[1].wrap(buildImgUrl(prompt, style, 768, 768, seed1)),
+        'https://image.pollinations.ai/prompt/' + p512 + '?width=768&height=768&nologo=true&seed=' + seed2 + '&model=flux-realism&negative=' + neg512 + '&enhance=true'
       ];
       var maxAttempts = urls.length;
 
