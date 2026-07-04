@@ -849,11 +849,26 @@
         state.convo = [state.convo[0]].concat(state.convo.slice(-20));
       }
 
+      function extractCleanText(txt) {
+        // Strip JSON wrapper before storing in history so model doesn't repeat JSON pattern
+        try {
+          var c = txt.replace(/```json\s*/gi,'').replace(/```/g,'').trim();
+          var s = c.indexOf('{'), e = c.lastIndexOf('}');
+          if (s !== -1 && e > s) {
+            var p = JSON.parse(c.substring(s, e + 1));
+            var out = p.message || p.response || p.content || p.text || p.answer || p.reply || p.result;
+            if (out && typeof out === 'string' && out.length > 2) return out;
+          }
+        } catch(ex) {}
+        return txt;
+      }
+
       function win(txt) {
         if (done) return;
         done = true;
         state.txtApiOk = true;
-        state.convo.push({role: 'assistant', content: txt});
+        // Store CLEAN text in history — prevents model from seeing JSON and continuing in JSON format
+        state.convo.push({role: 'assistant', content: extractCleanText(txt)});
         callback(txt, null);
       }
 
@@ -873,7 +888,7 @@
         if (done) return;
         var sysMsg = state.convo[0].content;
         var url = 'https://text.pollinations.ai/' + encodeURIComponent(msg) +
-          '?model=openai&jsonMode=false&system=' + encodeURIComponent(sysMsg) + '&seed=' + seed;
+          '?model=mistral&system=' + encodeURIComponent(sysMsg) + '&seed=' + seed;
         var proxyUrls = [
           url,
           'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
@@ -917,7 +932,7 @@
         };
         xhr.onerror = function() { if (!postTried) { postTried = true; tryGet(); } };
         xhr.ontimeout = function() { if (!postTried) { postTried = true; tryGet(); } };
-        xhr.send(JSON.stringify({model: 'openai', messages: state.convo, seed: seed}));
+        xhr.send(JSON.stringify({model: 'mistral', messages: state.convo, seed: seed}));
       } catch(e) { tryGet(); }
 
       setTimeout(function() { if (!done) { done = true; callback(null, 'timeout'); } }, 20000);
