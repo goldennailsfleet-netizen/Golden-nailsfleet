@@ -154,13 +154,49 @@
     .vid-controls{display:flex;align-items:center;gap:8px;color:#fff;font-size:12px}
     .vid-badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
 
-    @media(max-width:768px){
-      .sidebar{transform:translateX(100%)}.sidebar.open{transform:translateX(0)}
-      .main-content{margin-right:0}#menu-btn{display:block}#close-sidebar{display:block}
-      .vpn-stats{grid-template-columns:repeat(2,1fr)}.form-row{flex-direction:column}
-      .message{max-width:95%}.quick-actions{flex-direction:column;align-items:center}
-      .quick-btn{width:100%;max-width:280px}.login-card{padding:28px 20px}
-    }
+    /* ====== FILES PAGE ====== */
+    .drop-zone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:36px 20px;text-align:center;cursor:pointer;transition:.3s;background:var(--bg2);margin-bottom:16px}
+    .drop-zone:hover,.drop-zone.drag-over{border-color:var(--primary);background:rgba(108,92,231,.08)}
+    .drop-zone .dz-icon{font-size:48px;margin-bottom:8px}
+    .drop-zone p{color:var(--text-muted);font-size:13px;margin:4px 0}
+    .editor-controls{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:16px}
+    .editor-controls label{font-size:12px;color:var(--text-muted);display:flex;flex-direction:column;gap:4px}
+    .editor-controls input[type=range]{width:100%;accent-color:var(--primary)}
+    .editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .file-info-box{margin-top:12px;padding:12px;background:var(--bg2);border-radius:var(--radius);font-size:13px;color:var(--text-muted)}
+
+    /* ====== CODE PAGE ====== */
+    .code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:12px}
+    .code-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-card);border-bottom:1px solid var(--border)}
+    #code-editor{width:100%;min-height:260px;resize:vertical;background:var(--bg2);color:#e8e8f0;font-family:'Courier New',monospace;font-size:14px;line-height:1.6;padding:14px;border:none;outline:none;direction:ltr;text-align:left;tab-size:2}
+    .code-output{background:#0a0a0a;border-top:1px solid var(--border);padding:12px;font-family:monospace;font-size:13px;white-space:pre-wrap;direction:ltr;text-align:left;max-height:200px;overflow-y:auto}
+    .code-output.err{color:#ff6b6b}.code-output.ok{color:#00b894}
+    .ai-btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .ai-btn-row .btn{font-size:13px;padding:8px 14px}
+
+    /* ====== SETTINGS PAGE ====== */
+    .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:12px}
+    .theme-card{border-radius:var(--radius);overflow:hidden;cursor:pointer;border:2px solid transparent;transition:.3s}
+    .theme-card.active,.theme-card:hover{border-color:var(--primary)}
+    .theme-swatch{height:52px;display:flex}
+    .theme-name{font-size:11px;text-align:center;padding:5px;background:var(--bg-card);color:var(--text-muted)}
+    .mode-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+    .mode-card{padding:10px 6px;border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;transition:.3s;background:var(--bg2);text-align:center}
+    .mode-card:hover,.mode-card.active{border-color:var(--primary);background:rgba(108,92,231,.12)}
+    .mode-card .mi{font-size:26px;margin-bottom:4px}
+    .mode-card .mn{font-size:11px;font-weight:600;color:var(--text-muted)}
+    .mode-card.active .mn{color:var(--primary-light)}
+    .setting-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border)}
+    .setting-row:last-child{border-bottom:none}
+    .setting-label{font-size:14px;font-weight:600}.setting-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+
+    /* ====== THEMES ====== */
+    body.theme-light{--bg:#f0f0f5;--bg2:#ffffff;--bg-card:#e8e8f0;--bg-input:#ffffff;--text:#1a1a2e;--text-muted:#666;--text-light:#444;--border:#ccc;--shadow:0 4px 20px rgba(0,0,0,.08)}
+    body.theme-ocean{--primary:#00b4d8;--primary-dark:#0096c7;--primary-light:#90e0ef;--accent:#48cae4;--bg:#03045e;--bg2:#023e8a;--bg-card:#0077b6;--bg-input:#023e8a;--border:#0096c7}
+    body.theme-sunset{--primary:#f77f00;--primary-dark:#d62828;--primary-light:#fcbf49;--accent:#f4a261;--bg:#1a0500;--bg2:#2d0a00;--bg-card:#3d1000;--bg-input:#2d0a00;--border:#5a2000}
+    body.theme-neon{--primary:#00ff41;--primary-dark:#00cc34;--primary-light:#39ff14;--accent:#ff00ff;--bg:#000;--bg2:#0a0a0a;--bg-card:#111;--bg-input:#0a0a0a;--border:#00ff4144;--text:#00ff41;--text-muted:#008822}
+
+    @media(max-width:768px){.mode-grid{grid-template-columns:repeat(4,1fr)}.sidebar{transform:translateX(100%)}.sidebar.open{transform:translateX(0)}.main-content{margin-right:0}#menu-btn{display:block}#close-sidebar{display:block}.vpn-stats{grid-template-columns:repeat(2,1fr)}.form-row{flex-direction:column}.message{max-width:95%}.quick-actions{flex-direction:column;align-items:center}.quick-btn{width:100%;max-width:280px}.login-card{padding:28px 20px}}
     @media(min-width:769px){#close-sidebar{display:none}}
     ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -207,8 +243,11 @@
         <button class="nav-item active" data-page="chat"><span>💬</span><span>المحادثة</span></button>
         <button class="nav-item" data-page="image"><span>🎨</span><span>توليد الصور</span></button>
         <button class="nav-item" data-page="video"><span>🎬</span><span>توليد الفيديو</span></button>
+        <button class="nav-item" data-page="files"><span>📁</span><span>الملفات</span></button>
+        <button class="nav-item" data-page="code"><span>💻</span><span>الأكواد</span></button>
         <button class="nav-item" data-page="web"><span>🌐</span><span>تصفح الويب</span></button>
         <button class="nav-item" data-page="vpn"><span>🔒</span><span>حالة VPN</span></button>
+        <button class="nav-item" data-page="settings"><span>⚙️</span><span>الإعدادات</span></button>
       </nav>
       <div class="sidebar-chats">
         <div class="sidebar-section-title">المحادثات السابقة</div>
@@ -324,6 +363,113 @@
           <div id="vpn-proxies" class="proxy-list"></div>
         </div>
       </div>
+
+      <div id="page-files" class="page">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>📁 رفع وتعديل الملفات</h3>
+            <div class="drop-zone" id="drop-zone">
+              <input type="file" id="file-input" style="display:none" accept="image/*,video/*,.pdf,.txt">
+              <div class="dz-icon">📂</div>
+              <p>اسحب ملفاتك هنا أو انقر للاختيار</p>
+              <p><small>صور، فيديو، PDF، نصوص</small></p>
+              <button class="btn btn-primary btn-sm" id="dz-btn">اختر ملف</button>
+            </div>
+            <div id="file-info-box" class="file-info-box hidden"></div>
+          </div>
+          <div id="image-editor-card" class="gen-card hidden">
+            <h3>🖼️ تعديل الصورة</h3>
+            <canvas id="edit-canvas" style="max-width:100%;border-radius:8px;display:block;margin:0 auto"></canvas>
+            <div class="editor-controls">
+              <label>السطوع <input type="range" id="ed-bright" min="-100" max="100" value="0"></label>
+              <label>التباين <input type="range" id="ed-contrast" min="-100" max="100" value="0"></label>
+              <label>التشبع <input type="range" id="ed-sat" min="-100" max="100" value="0"></label>
+              <label>الضبابية <input type="range" id="ed-blur" min="0" max="10" value="0" step="0.5"></label>
+            </div>
+            <div class="editor-actions">
+              <button class="btn btn-primary btn-sm" id="ed-rotate-btn">↩️ تدوير</button>
+              <button class="btn btn-accent btn-sm" id="ed-reset-btn">♻️ إعادة تعيين</button>
+              <button class="btn btn-outline btn-sm" id="ed-save-btn">💾 حفظ</button>
+              <button class="btn btn-outline btn-sm" id="ed-ai-btn">✨ تحسين بالـ AI</button>
+            </div>
+          </div>
+          <div id="file-preview-card" class="gen-card hidden">
+            <h3 id="file-preview-title">معاينة الملف</h3>
+            <div id="file-preview-content"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-code" class="page">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>💻 محرر الأكواد الذكي</h3>
+            <div class="form-row">
+              <div class="input-group"><label>اللغة</label><select id="code-lang"><option value="javascript">JavaScript</option><option value="python">Python</option><option value="html">HTML</option><option value="css">CSS</option><option value="sql">SQL</option><option value="bash">Bash</option></select></div>
+              <div class="input-group"><label>العنوان</label><input type="text" id="code-title" placeholder="اسم الكود..." maxlength="50"></div>
+            </div>
+            <div class="code-wrap">
+              <div class="code-header">
+                <span id="code-lang-label">JavaScript</span>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-sm btn-outline" id="code-copy-btn">📋 نسخ</button>
+                  <button class="btn btn-sm btn-accent" id="code-run-btn">▶ تشغيل</button>
+                </div>
+              </div>
+              <textarea id="code-editor" placeholder="// اكتب الكود هنا..." spellcheck="false"></textarea>
+              <div id="code-output" class="code-output hidden"></div>
+            </div>
+            <div class="ai-btn-row">
+              <button class="btn btn-primary btn-sm" id="ai-explain-btn">🔍 اشرح الكود</button>
+              <button class="btn btn-outline btn-sm" id="ai-fix-btn">🔧 اصلح الأخطاء</button>
+              <button class="btn btn-outline btn-sm" id="ai-improve-btn">⚡ حسّن الكود</button>
+              <button class="btn btn-outline btn-sm" id="ai-generate-btn">✨ ولد كود جديد</button>
+            </div>
+            <div id="code-ai-result" class="hidden" style="margin-top:12px;padding:16px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-settings" class="page">
+        <div class="gen-container">
+          <div class="gen-card">
+            <h3>🎨 السمة (الثيم)</h3>
+            <div class="theme-grid">
+              <div class="theme-card active" data-theme="default"><div class="theme-swatch"><div style="flex:1;background:#0f0f1a"></div><div style="flex:1;background:#6c5ce7"></div></div><div class="theme-name">الافتراضي</div></div>
+              <div class="theme-card" data-theme="theme-light"><div class="theme-swatch"><div style="flex:1;background:#f0f0f5"></div><div style="flex:1;background:#6c5ce7"></div></div><div class="theme-name">فاتح</div></div>
+              <div class="theme-card" data-theme="theme-ocean"><div class="theme-swatch"><div style="flex:1;background:#03045e"></div><div style="flex:1;background:#00b4d8"></div></div><div class="theme-name">المحيط</div></div>
+              <div class="theme-card" data-theme="theme-sunset"><div class="theme-swatch"><div style="flex:1;background:#1a0500"></div><div style="flex:1;background:#f77f00"></div></div><div class="theme-name">الغروب</div></div>
+              <div class="theme-card" data-theme="theme-neon"><div class="theme-swatch"><div style="flex:1;background:#000"></div><div style="flex:1;background:#00ff41"></div></div><div class="theme-name">نيون</div></div>
+            </div>
+          </div>
+          <div class="gen-card">
+            <h3>🤖 وضع خبير AI</h3>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">اختر تخصص الذكاء الاصطناعي للمحادثة</p>
+            <div class="mode-grid" id="ai-mode-grid">
+              <div class="mode-card active" data-mode="general"><div class="mi">🤖</div><div class="mn">عام</div></div>
+              <div class="mode-card" data-mode="programmer"><div class="mi">💻</div><div class="mn">مبرمج</div></div>
+              <div class="mode-card" data-mode="doctor"><div class="mi">⚕️</div><div class="mn">طبيب</div></div>
+              <div class="mode-card" data-mode="lawyer"><div class="mi">⚖️</div><div class="mn">محامي</div></div>
+              <div class="mode-card" data-mode="teacher"><div class="mi">👨‍🏫</div><div class="mn">معلم</div></div>
+              <div class="mode-card" data-mode="writer"><div class="mi">✍️</div><div class="mn">كاتب</div></div>
+              <div class="mode-card" data-mode="chef"><div class="mi">👨‍🍳</div><div class="mn">طباخ</div></div>
+              <div class="mode-card" data-mode="analyst"><div class="mi">📊</div><div class="mn">محلل</div></div>
+            </div>
+          </div>
+          <div class="gen-card">
+            <h3>⚙️ الإعدادات العامة</h3>
+            <div class="setting-row">
+              <div><div class="setting-label">جودة الصور في الدردشة</div><div class="setting-sub">الأسلوب الافتراضي للصور المولدة</div></div>
+              <select id="default-img-style" style="width:auto"><option value="hyperrealistic">خارق الواقعية</option><option value="photorealistic">واقعي</option><option value="cinematic">سينمائي</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="setting-label">الإصدار</div><div class="setting-sub">AI Super App</div></div>
+              <span style="color:var(--accent);font-size:13px">v2.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -360,7 +506,11 @@
         {role:'system', content:'أنت مساعد ذكي اسمك AI Super App. أجب باللغة العربية دائماً. يمكنك كتابة أكواد، تحليل نصوص، شرح مفاهيم، كتابة قصص ومقالات، ترجمة، حل مسائل، وأي شيء. أجب بشكل مفصل ومنظم ومفيد.'}
       ],
       imgApiOk: null,
-      txtApiOk: null
+      txtApiOk: null,
+      aiMode: 'general',
+      theme: (function(){ try { return localStorage.getItem('ai-theme') || 'default'; } catch(e) { return 'default'; } })(),
+      editorImg: null,
+      editorRot: 0
     };
 
     // ====== ARABIC→ENGLISH DICTIONARY ======
@@ -878,7 +1028,7 @@
         $$('.page').forEach(function(p){ p.style.display = 'none'; p.classList.remove('active'); });
         var el = $('#page-' + page);
         if (el) { el.style.display = 'flex'; el.classList.add('active'); }
-        var titles = {chat:'المحادثة',image:'توليد الصور',video:'توليد الفيديو',web:'تصفح الويب',vpn:'حالة VPN'};
+        var titles = {chat:'المحادثة',image:'توليد الصور',video:'توليد الفيديو',web:'تصفح الويب',vpn:'حالة VPN',files:'الملفات',code:'الأكواد',settings:'الإعدادات'};
         $('#page-title').textContent = titles[page] || '';
         $('#new-chat-btn').style.display = page === 'chat' ? '' : 'none';
         if (page === 'vpn') renderProxies();
@@ -1225,9 +1375,261 @@
       $('#model-badge').style.color = this.checked ? 'var(--text-muted)' : 'var(--accent)';
     });
 
+    // ====== THEME ======
+    var AI_MODE_PROMPTS = {
+      general:    'أنت مساعد ذكي اسمك AI Super App. أجب باللغة العربية دائماً. يمكنك كتابة أكواد، تحليل نصوص، شرح مفاهيم، كتابة قصص ومقالات، ترجمة، حل مسائل، وأي شيء. أجب بشكل مفصل ومنظم ومفيد.',
+      programmer: 'أنت خبير برمجة متقدم ذو خبرة في Python, JavaScript, TypeScript, Java, C++, Go, Rust, SQL وغيرها. أجب باللغة العربية. اكتب كوداً نظيفاً موثقاً. شرح الخوارزميات وأنماط التصميم. قدم أمثلة تطبيقية.',
+      doctor:     'أنت مساعد طبي تثقيفي. أجب باللغة العربية. قدم معلومات صحية تثقيفية ووقائية. تنبيه مهم: أنت لا تحل محل الطبيب المتخصص. دائماً انصح بمراجعة الطبيب للتشخيص والعلاج.',
+      lawyer:     'أنت مستشار قانوني تثقيفي. أجب باللغة العربية. قدم معلومات قانونية عامة ومفيدة. تنبيه مهم: هذا ليس استشارة قانونية رسمية. للقضايا الجدية راجع محامياً مرخصاً.',
+      teacher:    'أنت معلم متميز صبور وواضح. أجب باللغة العربية. اشرح المفاهيم بأمثلة بسيطة وتشبيهات من الحياة اليومية. استخدم الأسئلة والإجابات والخطوات المرتبة. قسّم المعلومات المعقدة لأجزاء صغيرة.',
+      writer:     'أنت كاتب مبدع محترف. أجب باللغة العربية. اكتب قصصاً ومقالات وشعراً وخطباً بأسلوب أدبي راقٍ. استخدم الصور البلاغية والتشبيهات والتنوع في الأساليب والأجناس الأدبية.',
+      chef:       'أنت طاهٍ محترف خبير في المطبخ العربي والعالمي. أجب باللغة العربية. قدم وصفات مفصلة مع الكميات الدقيقة ودرجات الحرارة وأوقات الطهي. شرح تقنيات الطهي ونصائح المطبخ.',
+      analyst:    'أنت محلل بيانات وأعمال متقدم. أجب باللغة العربية. حلل البيانات والأرقام وقدم تقارير منظمة. استخدم الجداول والمقارنات والإحصائيات. قدم توصيات مبنية على الأدلة والبيانات.'
+    };
+
+    function setTheme(theme) {
+      document.body.className = document.body.className.replace(/theme-\w+/g, '').trim();
+      if (theme !== 'default') document.body.classList.add(theme);
+      state.theme = theme;
+      try { localStorage.setItem('ai-theme', theme); } catch(e) {}
+      $$('.theme-card').forEach(function(c) { c.classList.toggle('active', c.dataset.theme === theme); });
+      toast('تم تغيير السمة', 'success');
+    }
+
+    // Apply saved theme on load
+    (function() {
+      var t = state.theme;
+      if (t && t !== 'default') {
+        document.body.classList.add(t);
+        $$('.theme-card').forEach(function(c){ c.classList.toggle('active', c.dataset.theme === t); });
+      }
+    })();
+
+    // Theme card clicks
+    $$('.theme-card').forEach(function(card) {
+      card.addEventListener('click', function() { setTheme(card.dataset.theme); });
+    });
+
+    // AI mode selection
+    $$('#ai-mode-grid .mode-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        var mode = card.dataset.mode;
+        state.aiMode = mode;
+        $$('#ai-mode-grid .mode-card').forEach(function(c){ c.classList.remove('active'); });
+        card.classList.add('active');
+        if (AI_MODE_PROMPTS[mode]) state.convo[0].content = AI_MODE_PROMPTS[mode];
+        var names = {general:'عام',programmer:'مبرمج',doctor:'طبيب',lawyer:'محامي',teacher:'معلم',writer:'كاتب',chef:'طباخ',analyst:'محلل'};
+        toast('وضع خبير: ' + (names[mode] || mode), 'success');
+      });
+    });
+
+    // ====== FILES PAGE ======
+    var editCanvas = document.getElementById('edit-canvas');
+    var editCtx = editCanvas ? editCanvas.getContext('2d') : null;
+
+    function initEditor(imgSrc) {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        state.editorImg = img;
+        state.editorRot = 0;
+        $('#ed-bright').value = 0; $('#ed-contrast').value = 0;
+        $('#ed-sat').value = 0; $('#ed-blur').value = 0;
+        redrawCanvas();
+        document.getElementById('image-editor-card').classList.remove('hidden');
+        $('#file-preview-card').classList.add('hidden');
+      };
+      img.src = imgSrc;
+    }
+
+    function redrawCanvas() {
+      if (!editCtx || !state.editorImg) return;
+      var img = state.editorImg;
+      var bright = parseInt($('#ed-bright').value) || 0;
+      var contrast = parseInt($('#ed-contrast').value) || 0;
+      var sat = parseInt($('#ed-sat').value) || 0;
+      var blur = parseFloat($('#ed-blur').value) || 0;
+      var rot = state.editorRot;
+      var sw = rot % 180 === 0 ? img.naturalWidth : img.naturalHeight;
+      var sh = rot % 180 === 0 ? img.naturalHeight : img.naturalWidth;
+      var maxW = (editCanvas.parentElement ? editCanvas.parentElement.offsetWidth - 32 : 0) || 600;
+      var scale = Math.min(1, maxW / sw);
+      editCanvas.width = Math.round(sw * scale);
+      editCanvas.height = Math.round(sh * scale);
+      editCtx.clearRect(0, 0, editCanvas.width, editCanvas.height);
+      editCtx.save();
+      editCtx.translate(editCanvas.width / 2, editCanvas.height / 2);
+      editCtx.rotate(rot * Math.PI / 180);
+      editCtx.filter = 'brightness(' + (100 + bright) + '%) contrast(' + (100 + contrast) + '%) saturate(' + (100 + sat) + '%)' + (blur > 0 ? ' blur(' + blur + 'px)' : '');
+      var dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
+      editCtx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+      editCtx.restore();
+    }
+
+    function formatSize(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+      return (b / 1048576).toFixed(1) + ' MB';
+    }
+
+    function handleFile(file) {
+      var info = $('#file-info-box');
+      info.innerHTML = '📄 <strong>' + esc(file.name) + '</strong> — ' + formatSize(file.size);
+      info.classList.remove('hidden');
+      if (file.type.indexOf('image/') === 0) {
+        var reader = new FileReader();
+        reader.onload = function(ev) { initEditor(ev.target.result); };
+        reader.readAsDataURL(file);
+      } else if (file.type.indexOf('video/') === 0) {
+        var reader2 = new FileReader();
+        reader2.onload = function(ev) {
+          document.getElementById('image-editor-card').classList.add('hidden');
+          $('#file-preview-title').textContent = '🎬 معاينة الفيديو';
+          $('#file-preview-content').innerHTML = '<video controls style="max-width:100%;border-radius:8px"><source src="' + ev.target.result + '"></video>';
+          $('#file-preview-card').classList.remove('hidden');
+        };
+        reader2.readAsDataURL(file);
+      } else if (file.type === 'text/plain') {
+        var reader3 = new FileReader();
+        reader3.onload = function(ev) {
+          document.getElementById('image-editor-card').classList.add('hidden');
+          $('#file-preview-title').textContent = '📄 ' + esc(file.name);
+          $('#file-preview-content').innerHTML = '<pre style="background:var(--bg2);padding:16px;border-radius:var(--radius);overflow:auto;font-size:13px;direction:ltr;text-align:left;max-height:400px">' + esc(ev.target.result.substring(0, 5000)) + '</pre>';
+          $('#file-preview-card').classList.remove('hidden');
+        };
+        reader3.readAsText(file);
+      } else {
+        document.getElementById('image-editor-card').classList.add('hidden');
+        $('#file-preview-title').textContent = '📁 معاينة الملف';
+        $('#file-preview-content').innerHTML = '<p style="color:var(--text-muted);padding:20px;text-align:center">نوع الملف: ' + esc(file.type || 'غير معروف') + '<br>لا يمكن معاينة هذا النوع مباشرة</p>';
+        $('#file-preview-card').classList.remove('hidden');
+      }
+    }
+
+    var dz = document.getElementById('drop-zone');
+    if (dz) {
+      dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('drag-over'); });
+      dz.addEventListener('dragleave', function() { dz.classList.remove('drag-over'); });
+      dz.addEventListener('drop', function(e) {
+        e.preventDefault(); dz.classList.remove('drag-over');
+        var file = e.dataTransfer.files[0];
+        if (file) handleFile(file);
+      });
+      dz.addEventListener('click', function(e) {
+        if (e.target.id !== 'dz-btn') $('#file-input').click();
+      });
+    }
+
+    $('#dz-btn').addEventListener('click', function(e) { e.stopPropagation(); $('#file-input').click(); });
+    $('#file-input').addEventListener('change', function(e) { var f = e.target.files[0]; if (f) handleFile(f); });
+
+    ['#ed-bright','#ed-contrast','#ed-sat','#ed-blur'].forEach(function(sel) {
+      $(sel).addEventListener('input', redrawCanvas);
+    });
+
+    $('#ed-rotate-btn').addEventListener('click', function() { state.editorRot = (state.editorRot + 90) % 360; redrawCanvas(); });
+    $('#ed-reset-btn').addEventListener('click', function() {
+      state.editorRot = 0;
+      ['#ed-bright','#ed-contrast','#ed-sat','#ed-blur'].forEach(function(s){ $(s).value = 0; });
+      redrawCanvas();
+    });
+    $('#ed-save-btn').addEventListener('click', function() {
+      if (!editCanvas || !editCanvas.width) { toast('لا توجد صورة', 'error'); return; }
+      var link = document.createElement('a');
+      link.download = 'edited-image.png';
+      link.href = editCanvas.toDataURL('image/png');
+      link.click();
+      toast('تم حفظ الصورة', 'success');
+    });
+    $('#ed-ai-btn').addEventListener('click', function() {
+      if (!state.editorImg) { toast('لا توجد صورة', 'error'); return; }
+      $('#ed-bright').value = 10; $('#ed-contrast').value = 15;
+      $('#ed-sat').value = 20; $('#ed-blur').value = 0;
+      redrawCanvas();
+      toast('تم تطبيق تحسينات AI', 'success');
+    });
+
+    // ====== CODE PAGE ======
+    var CODE_LANG_LABELS = {javascript:'JavaScript', python:'Python', html:'HTML', css:'CSS', sql:'SQL', bash:'Bash'};
+
+    $('#code-lang').addEventListener('change', function() {
+      $('#code-lang-label').textContent = CODE_LANG_LABELS[this.value] || this.value;
+    });
+
+    $('#code-copy-btn').addEventListener('click', function() {
+      var code = $('#code-editor').value;
+      if (!code) { toast('لا يوجد كود للنسخ', 'error'); return; }
+      try {
+        navigator.clipboard.writeText(code).then(function(){ toast('تم نسخ الكود', 'success'); });
+      } catch(e) {
+        var ta = document.createElement('textarea');
+        ta.value = code; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        toast('تم نسخ الكود', 'success');
+      }
+    });
+
+    $('#code-run-btn').addEventListener('click', function() {
+      var lang = $('#code-lang').value;
+      var code = $('#code-editor').value.trim();
+      var out = $('#code-output');
+      if (!code) { toast('اكتب كوداً أولاً', 'error'); return; }
+      out.classList.remove('hidden', 'err', 'ok');
+      if (lang === 'javascript') {
+        var logs = [];
+        var orig = console.log;
+        console.log = function() { logs.push(Array.from(arguments).map(function(a){ return typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a); }).join(' ')); };
+        try {
+          var result = new Function(code)();
+          console.log = orig;
+          var output = logs.join('\n');
+          if (result !== undefined) output += (output ? '\n' : '') + '→ ' + (typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result));
+          out.textContent = output || '(تم التنفيذ بنجاح - لا خرج)';
+          out.className = 'code-output ok';
+        } catch(err) {
+          console.log = orig;
+          out.textContent = '❌ خطأ: ' + err.message;
+          out.className = 'code-output err';
+        }
+      } else if (lang === 'html') {
+        var w = window.open('', '_blank', 'width=800,height=600');
+        if (w) { w.document.write(code); w.document.close(); out.textContent = '✓ تم فتح HTML في نافذة جديدة'; out.className = 'code-output ok'; }
+        else { out.textContent = '⚠️ السماح بالنوافذ المنبثقة لتشغيل HTML'; out.className = 'code-output'; }
+      } else {
+        out.textContent = '⚠️ لا يمكن تشغيل ' + (CODE_LANG_LABELS[lang]||lang) + ' في المتصفح. جرب "اشرح الكود" للتحليل.';
+        out.className = 'code-output';
+      }
+    });
+
+    function aiCodeAction(action) {
+      var code = $('#code-editor').value.trim();
+      var lang = CODE_LANG_LABELS[$('#code-lang').value] || $('#code-lang').value;
+      var result = $('#code-ai-result');
+      if (!code && action !== 'generate') { toast('اكتب كوداً أولاً', 'error'); return; }
+      var prompts = {
+        explain: 'اشرح هذا الكود ' + lang + ' بالتفصيل بالعربية:\n\n' + code,
+        fix: 'ابحث عن الأخطاء في هذا الكود ' + lang + ' وصححها:\n\n' + code,
+        improve: 'حسّن وطور هذا الكود ' + lang + ' مع شرح التحسينات:\n\n' + code,
+        generate: 'اكتب كود ' + lang + ' لـ: ' + (code || 'برنامج Hello World مع أمثلة عملية')
+      };
+      result.style.direction = 'ltr';
+      result.innerHTML = '<div style="display:flex;align-items:center;gap:8px;direction:rtl"><div class="spin" style="width:20px;height:20px;border-width:3px"></div>جاري التحليل...</div>';
+      result.classList.remove('hidden');
+      callAI(prompts[action], function(text, err) {
+        result.style.direction = 'ltr';
+        result.textContent = text || 'لم يتمكن AI من تحليل الكود. تأكد من الاتصال وحاول مجدداً.';
+      });
+    }
+
+    $('#ai-explain-btn').addEventListener('click', function(){ aiCodeAction('explain'); });
+    $('#ai-fix-btn').addEventListener('click', function(){ aiCodeAction('fix'); });
+    $('#ai-improve-btn').addEventListener('click', function(){ aiCodeAction('improve'); });
+    $('#ai-generate-btn').addEventListener('click', function(){ aiCodeAction('generate'); });
+
     // ====== PUBLIC API ======
     window.AI = {
       toast: toast,
+      setTheme: setTheme,
       testConn: function() {
         toast('جاري اختبار الاتصال...', 'info');
         testConnectivity();
