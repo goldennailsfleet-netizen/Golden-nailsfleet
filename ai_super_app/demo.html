@@ -497,7 +497,7 @@
     var genId = function(){ return ++_uid; };
 
     // ====== STATE ======
-    var ENGINE_PROMPT = 'أنت AI Super App Engine مساعد ذكي يتحدث العربية بطلاقة.\n\nقواعد صارمة:\n1. طلب صورة → أخرج JSON فقط بدون أي نص إضافي:\n{"type":"image","prompt":"english description with smooth skin, natural proportions, 85mm lens, soft natural light"}\n\n2. طلب فيديو → أخرج JSON فقط:\n{"type":"video","prompt":"english description","camera_motion":"pan","motion_description":"motion details"}\n\n3. طلب كود → أخرج JSON فقط:\n{"type":"code","language":"javascript","code":"the code here"}\n\n4. أي سؤال أو محادثة أو معلومات → أجب بالعربية مباشرة كنص عادي فقط. ممنوع JSON تماماً.\n\nتذكر: الردود النصية = نص عربي فقط. الصور/الفيديو/الكود = JSON فقط.';
+    var ENGINE_PROMPT = 'أنت مساعد AI ذكي ومفيد تتحدث العربية بطلاقة. أجب دائماً بنص عربي واضح ومنظم. كن مفيداً وموجزاً ودقيقاً. إذا طُلب منك كود، اكتبه مباشرة في ردك كنص عادي.';
 
     var state = {
       busy: false,
@@ -1073,6 +1073,20 @@
     $('#close-sidebar').addEventListener('click', function(){ $('#sidebar').classList.remove('open'); });
 
     // ====== CHAT MESSAGES ======
+    function renderText(text) {
+      // Minimal safe markdown: code blocks, inline code, bold, newlines
+      var s = text
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/```(\w*)\n?([\s\S]*?)```/g, function(_, lang, code) {
+          return '<pre style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;overflow-x:auto;font-size:13px;direction:ltr;text-align:left;margin:8px 0"><code>' + code.trim() + '</code></pre>';
+        })
+        .replace(/`([^`]+)`/g, '<code style="background:var(--bg);border-radius:4px;padding:2px 6px;font-size:13px;direction:ltr">$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
+      return s;
+    }
+
     function addMsg(role, content, model, latency, isHTML) {
       var w = $('#welcome-msg'); if (w) w.remove();
       var c = $('#chat-messages'), d = document.createElement('div');
@@ -1087,6 +1101,8 @@
       var body;
       if (isHTML) {
         body = sanitize(content);
+      } else if (role === 'assistant') {
+        body = renderText(content);
       } else {
         body = esc(content);
       }
