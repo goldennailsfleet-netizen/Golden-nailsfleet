@@ -529,11 +529,29 @@
     // ====== STATE ======
     var ENGINE_PROMPT = 'أنت مساعد AI ذكي ومفيد تتحدث العربية بطلاقة. أجب دائماً بنص عربي واضح ومنظم. كن مفيداً وموجزاً ودقيقاً. إذا طُلب منك كود، اكتبه مباشرة في ردك كنص عادي.';
 
+    var CHAT_KEY = 'ai_superapp_session';
+
+    function saveSession() {
+      try {
+        localStorage.setItem(CHAT_KEY, JSON.stringify({
+          convo: state.convo,
+          msgs: state.savedMsgs,
+          history: state.chatHistory,
+          counter: state.chatCounter
+        }));
+      } catch(e) {}
+    }
+
+    function clearSession() {
+      try { localStorage.removeItem(CHAT_KEY); } catch(e) {}
+    }
+
     var state = {
       busy: false,
       reqs: 0,
       chatHistory: [],
       chatCounter: 0,
+      savedMsgs: [],   // [{role, content, model}] for DOM restoration
       convo: [
         {role:'system', content: ENGINE_PROMPT}
       ],
@@ -1133,6 +1151,11 @@
     }
 
     function addMsg(role, content, model, latency, isHTML) {
+      // Persist text messages (skip HTML/image messages)
+      if (!isHTML && (role === 'user' || role === 'assistant')) {
+        state.savedMsgs.push({role: role, content: content, model: model || ''});
+        saveSession();
+      }
       var w = $('#welcome-msg'); if (w) w.remove();
       var c = $('#chat-messages'), d = document.createElement('div');
       d.className = 'message ' + role;
@@ -1408,7 +1431,9 @@
 
     // ====== NEW CHAT ======
     $('#new-chat-btn').addEventListener('click', function() {
-      state.convo = [state.convo[0]];
+      state.convo = [{role:'system', content: state.convo[0].content}];
+      state.savedMsgs = [];
+      clearSession();
       $('#chat-messages').innerHTML =
         '<div class="welcome-message" id="welcome-msg">' +
           '<div class="welcome-icon">🤖</div>' +
@@ -1517,11 +1542,16 @@
         brShowOverlay('');
         brSetStatus('');
         try {
+          var loc = iframe.contentWindow.location.href;
+          if (loc && loc !== 'about:blank' && loc !== brCurrentUrl) {
+            brCurrentUrl = loc;
+            $('#br-url-input').value = loc;
+          }
           var doc = iframe.contentDocument;
           if (!doc || !doc.body || doc.body.innerHTML.trim() === '') {
             blocked = true; brShowOverlay('br-blocked');
           }
-        } catch(e) { /* cross-origin is fine */ }
+        } catch(e) { /* cross-origin — page loaded fine */ }
       };
       iframe.onerror = function() {
         clearTimeout(timer);
@@ -1886,6 +1916,47 @@
     $('#ai-fix-btn').addEventListener('click', function(){ aiCodeAction('fix'); });
     $('#ai-improve-btn').addEventListener('click', function(){ aiCodeAction('improve'); });
     $('#ai-generate-btn').addEventListener('click', function(){ aiCodeAction('generate'); });
+
+    // ====== RESTORE SAVED SESSION ======
+    (function() {
+      try {
+        var raw = localStorage.getItem(CHAT_KEY);
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        if (!data || !data.msgs || data.msgs.length === 0) return;
+
+        // Restore convo history (keep current system prompt)
+        if (data.convo && data.convo.length > 1) {
+          state.convo = [{role:'system', content: ENGINE_PROMPT}].concat(
+            data.convo.slice(1).filter(function(m){ return m.role === 'user' || m.role === 'assistant'; }).slice(-20)
+          );
+        }
+
+        // Restore savedMsgs
+        state.savedMsgs = data.msgs || [];
+
+        // Restore chatHistory sidebar
+        if (data.history && data.history.length) {
+          state.chatHistory = data.history;
+          state.chatCounter = data.counter || data.history.length;
+          renderChatList();
+        }
+
+        // Reconstruct DOM messages (skip saveSession calls to avoid double-saving)
+        var w = $('#welcome-msg'); if (w) w.remove();
+        var c = $('#chat-messages');
+        data.msgs.forEach(function(m) {
+          var d = document.createElement('div');
+          d.className = 'message ' + m.role;
+          var av = m.role === 'user' ? '👤' : '🤖';
+          var meta = m.model ? '<div class="msg-meta">' + esc(m.model) + '</div>' : '';
+          var body = m.role === 'assistant' ? renderText(m.content) : esc(m.content);
+          d.innerHTML = '<div class="msg-av">' + av + '</div><div class="msg-body"><div class="msg-bbl">' + body + '</div>' + meta + '</div>';
+          c.appendChild(d);
+        });
+        c.scrollTop = c.scrollHeight;
+      } catch(e) {}
+    })();
 
     // ====== PUBLIC API ======
     window.AI = {
