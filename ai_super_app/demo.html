@@ -497,13 +497,15 @@
     var genId = function(){ return ++_uid; };
 
     // ====== STATE ======
+    var ENGINE_PROMPT = 'أنت AI Super App Engine. حوّل طلبات المستخدم إلى أوامر منظمة.\n\nعند طلب صورة → أخرج JSON فقط:\n{"type":"image","prompt":"<وصف إنجليزي احترافي مفصل يشمل: symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography>","negative_prompt":"extra fingers, missing fingers, deformed hands, bad anatomy, distorted face, blurry, low quality, cartoon, anime, plastic skin","model":"flux-realism"}\n\nعند طلب فيديو → أخرج JSON فقط:\n{"type":"video","prompt":"<وصف إنجليزي مفصل>","camera_motion":"<tracking/pan/tilt/zoom>","motion_description":"<وصف الحركة>","negative_prompt":"static, no motion, blurry, low quality"}\n\nعند طلب كود → أخرج JSON فقط:\n{"type":"code","language":"<javascript/python/html/css/dart/sql>","code":"<الكود النظيف>"}\n\nعند طلب بحث أو معلومات أو محادثة → أجب بنص عربي مفيد ومنظم مباشرة بدون JSON.\n\nقواعد الصور: واقعي 100%، وجه متناسق، 5 أصابع فقط، نسب بشرية صحيحة.\nقاعدة ذهبية: إذا الطلب غير واضح حسّنه تلقائياً ونفذه.';
+
     var state = {
       busy: false,
       reqs: 0,
       chatHistory: [],
       chatCounter: 0,
       convo: [
-        {role:'system', content:'أنت مساعد ذكي اسمك AI Super App. أجب باللغة العربية دائماً. يمكنك كتابة أكواد، تحليل نصوص، شرح مفاهيم، كتابة قصص ومقالات، ترجمة، حل مسائل، وأي شيء. أجب بشكل مفصل ومنظم ومفيد.'}
+        {role:'system', content: ENGINE_PROMPT}
       ],
       imgApiOk: null,
       txtApiOk: null,
@@ -583,21 +585,20 @@
     ];
 
     // ====== IMAGE URL BUILDER ======
-    // Negative prompt — the #1 fix for distorted faces & anatomy
-    var NEG_BASE = 'blurry, low quality, bad quality, distorted face, deformed eyes, asymmetrical face, bad hands, missing fingers, extra fingers, extra limbs, missing limbs, bad anatomy, ugly, disfigured, mutation, malformed, oversaturated, noise, grain, jpeg artifacts, watermark, text, signature, out of frame, cropped badly, worst quality, normal quality';
-    var NEG_PHOTO = NEG_BASE + ', cartoon, illustration, anime, painting, drawing, cgi, 3d render, sketch';
+    var NEG_PHOTO = 'extra fingers, missing fingers, deformed hands, bad anatomy, distorted face, asymmetrical face, deformed eyes, blurry, low quality, bad quality, cartoon, anime, plastic skin, illustration, painting, drawing, cgi, 3d render, sketch, watermark, text, signature, oversaturated, noise, grain, jpeg artifacts, worst quality, normal quality, out of frame, cropped badly, mutation, malformed, ugly, disfigured';
+    var NEG_BASE  = 'blurry, low quality, bad quality, distorted face, deformed eyes, bad hands, missing fingers, extra fingers, bad anatomy, ugly, disfigured, watermark, text, signature, worst quality, noise, grain';
     var NEG_ANIME = NEG_BASE + ', photorealistic, 3d render, realistic photo, bad lineart';
     var NEG_3D    = NEG_BASE + ', flat 2d, painting, sketch, bad topology';
 
     var STYLE_MAP = {
-      'photorealistic': { suffix:' professional DSLR photo, Canon EOS R5, 85mm f/1.4 lens, natural window light, sharp facial details, realistic skin pores, natural hair strands, correct hand anatomy', model:'flux-realism', neg:NEG_PHOTO },
-      'hyperrealistic': { suffix:' hyperrealistic photograph, Phase One IQ4, 120MP sensor, studio softbox lighting, ultra sharp micro-details, visible individual pores, correct bone structure, natural eye reflections', model:'flux-realism', neg:NEG_PHOTO },
-      '4k':            { suffix:'4K professional photograph, sharp focus on subject, natural balanced lighting, correct proportions, detailed background', model:'flux-realism', neg:NEG_PHOTO },
-      '8k':            { suffix:' 8K RAW photograph, medium format camera, professional lighting rig, tack sharp throughout, maximum visible detail, accurate anatomy', model:'flux-realism', neg:NEG_PHOTO },
-      'cinematic':     { suffix:' cinematic Arri Alexa shot, anamorphic 40mm lens, dramatic natural lighting, shallow depth of field, color graded, correct facial anatomy', model:'flux-realism', neg:NEG_PHOTO },
+      'photorealistic': { suffix:' symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography, Canon EOS R5, sharp facial details, 5 fingers, correct hand anatomy', model:'flux-realism', neg:NEG_PHOTO },
+      'hyperrealistic': { suffix:' symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography, Phase One IQ4, 120MP, studio softbox lighting, visible individual pores, correct bone structure', model:'flux-realism', neg:NEG_PHOTO },
+      '4k':            { suffix:' symmetrical face, natural proportions, 85mm lens, cinematic lighting, 4K professional photograph, ultra detailed, sharp focus, correct anatomy', model:'flux-realism', neg:NEG_PHOTO },
+      '8k':            { suffix:' symmetrical face, natural proportions, 85mm lens, cinematic lighting, 8K RAW photograph, maximum visible detail, ultra detailed, professional photography, accurate anatomy', model:'flux-realism', neg:NEG_PHOTO },
+      'cinematic':     { suffix:' symmetrical face, natural proportions, 85mm lens, cinematic Arri Alexa shot, dramatic cinematic lighting, shallow depth of field, color graded, ultra detailed, correct facial anatomy', model:'flux-realism', neg:NEG_PHOTO },
       'anime':         { suffix:' anime illustration, clean precise line art, vibrant saturated colors, correct proportions, expressive eyes, smooth cel shading', model:'flux', neg:NEG_ANIME },
-      'oil_painting':  { suffix:' oil painting on canvas, museum quality, visible textured brushstrokes, accurate anatomy, classical portrait technique, chiaroscuro lighting', model:'flux', neg:NEG_BASE },
-      'digital_art':   { suffix:' digital concept art, ArtStation trending, correct anatomy, dramatic composition, professional lighting, ultra detailed textures', model:'flux', neg:NEG_BASE },
+      'oil_painting':  { suffix:' oil painting on canvas, museum quality, visible textured brushstrokes, accurate anatomy, classical portrait, chiaroscuro lighting', model:'flux', neg:NEG_BASE },
+      'digital_art':   { suffix:' digital concept art, ArtStation trending, correct anatomy, dramatic composition, cinematic lighting, ultra detailed textures', model:'flux', neg:NEG_BASE },
       '3d':            { suffix:' Unreal Engine 5 render, ray tracing, subsurface scattering, correct topology, physically accurate materials, 8K textures', model:'flux', neg:NEG_3D }
     };
 
@@ -660,7 +661,7 @@
           var img = new Image();
           img.onload = function() { srcs[i] = img.src; done(); };
           img.onerror = function() { done(); };
-          img.src = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(fp) +
+          img.src = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(fp + ', symmetrical face, natural proportions, realistic skin texture, 85mm lens, cinematic lighting, ultra detailed, professional photography') +
             '?width=1024&height=576&seed=' + (base + i) + '&nologo=true&model=flux-realism&negative=' + encodeURIComponent(NEG_PHOTO) + '&enhance=true';
         });
         function done() {
@@ -1152,6 +1153,66 @@
       } catch(err) { state.busy = false; addMsg('assistant', 'خطأ في توليد الفيديو: ' + err.message, 'Error', 0); }
     }
 
+    function tryParseJSON(text) {
+      try {
+        var cleaned = text.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+        var start = cleaned.indexOf('{');
+        var end = cleaned.lastIndexOf('}');
+        if (start !== -1 && end > start) {
+          return JSON.parse(cleaned.substring(start, end + 1));
+        }
+      } catch(e) {}
+      return null;
+    }
+
+    function dispatchAICommand(cmd, t0) {
+      var el, bbl, cid;
+      if (cmd.type === 'image') {
+        var prompt = cmd.prompt || '';
+        el = addMsg('assistant', '', 'AI Image Engine', 0, true);
+        bbl = el.querySelector('.msg-bbl');
+        cid = 'imgc' + genId();
+        bbl.innerHTML = '🎨 جاري توليد الصورة...<br><br><div id="' + cid + '"></div>';
+        loadAIImage(document.getElementById(cid), prompt, 'hyperrealistic', 1024, 1024, function(elapsed) {
+          if (elapsed > 0) toast('تم توليد الصورة!', 'success');
+          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+          state.busy = false;
+        });
+
+      } else if (cmd.type === 'video') {
+        var vp = cmd.prompt || '';
+        if (cmd.motion_description) vp += ', ' + cmd.motion_description;
+        if (cmd.camera_motion) vp += ', camera ' + cmd.camera_motion;
+        el = addMsg('assistant', '', 'AI Video Engine', 0, true);
+        bbl = el.querySelector('.msg-bbl');
+        cid = 'vidc' + genId();
+        bbl.innerHTML = '<span id="' + cid + 'lbl">🎬 جاري توليد الفيديو...</span><br><br><div id="' + cid + '"></div>';
+        generateVideoScene(document.getElementById(cid), vp, function(elapsed, type) {
+          var lbl = document.getElementById(cid + 'lbl');
+          if (lbl) lbl.textContent = '🎬 المشهد السينمائي:';
+          if (elapsed > 0) toast('تم توليد المشهد!', 'success');
+          $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
+          state.busy = false;
+        });
+
+      } else if (cmd.type === 'code') {
+        var lang = (cmd.language || 'javascript').toLowerCase();
+        var code = cmd.code || '';
+        var langLabels = {javascript:'JavaScript', python:'Python', html:'HTML', css:'CSS', dart:'Dart', sql:'SQL', bash:'Bash'};
+        var ll = langLabels[lang] || lang;
+        var codeBlock = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:8px">' +
+          '<div style="background:var(--bg-card);padding:6px 12px;font-size:12px;color:var(--accent);border-bottom:1px solid var(--border)">' + esc(ll) + '</div>' +
+          '<pre style="padding:14px;font-family:monospace;font-size:13px;overflow-x:auto;direction:ltr;text-align:left;color:#e8e8f0;margin:0;white-space:pre-wrap;word-break:break-all">' + esc(code) + '</pre></div>';
+        addMsg('assistant', '💻 كود ' + ll + ':<br>' + codeBlock, 'AI Code Engine', Date.now() - t0, true);
+        state.busy = false;
+
+      } else {
+        var resp = cmd.response || cmd.content || cmd.text || JSON.stringify(cmd);
+        addMsg('assistant', resp, 'AI Engine', Date.now() - t0);
+        state.busy = false;
+      }
+    }
+
     function handleTextChat(msg) {
       try {
         if ($('#offline-toggle').checked) {
@@ -1165,14 +1226,20 @@
         callAI(msg, function(text, err) {
           removeTyping();
           if (text) {
-            addMsg('assistant', text, 'AI Online', Date.now() - t0);
-            $('#model-badge').textContent = 'AI Online';
-            $('#model-badge').style.color = 'var(--accent)';
+            var cmd = tryParseJSON(text);
+            if (cmd && cmd.type && (cmd.type === 'image' || cmd.type === 'video' || cmd.type === 'code')) {
+              dispatchAICommand(cmd, t0);
+            } else {
+              addMsg('assistant', text, 'AI Online', Date.now() - t0);
+              $('#model-badge').textContent = 'AI Online';
+              $('#model-badge').style.color = 'var(--accent)';
+              state.busy = false;
+            }
           } else {
             var sr = smartLocalReply(msg);
             addMsg('assistant', sr.text, sr.model, 0);
+            state.busy = false;
           }
-          state.busy = false;
           $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
         });
       } catch(err) {
@@ -1377,7 +1444,7 @@
 
     // ====== THEME ======
     var AI_MODE_PROMPTS = {
-      general:    'أنت مساعد ذكي اسمك AI Super App. أجب باللغة العربية دائماً. يمكنك كتابة أكواد، تحليل نصوص، شرح مفاهيم، كتابة قصص ومقالات، ترجمة، حل مسائل، وأي شيء. أجب بشكل مفصل ومنظم ومفيد.',
+      general:    ENGINE_PROMPT,
       programmer: 'أنت خبير برمجة متقدم ذو خبرة في Python, JavaScript, TypeScript, Java, C++, Go, Rust, SQL وغيرها. أجب باللغة العربية. اكتب كوداً نظيفاً موثقاً. شرح الخوارزميات وأنماط التصميم. قدم أمثلة تطبيقية.',
       doctor:     'أنت مساعد طبي تثقيفي. أجب باللغة العربية. قدم معلومات صحية تثقيفية ووقائية. تنبيه مهم: أنت لا تحل محل الطبيب المتخصص. دائماً انصح بمراجعة الطبيب للتشخيص والعلاج.',
       lawyer:     'أنت مستشار قانوني تثقيفي. أجب باللغة العربية. قدم معلومات قانونية عامة ومفيدة. تنبيه مهم: هذا ليس استشارة قانونية رسمية. للقضايا الجدية راجع محامياً مرخصاً.',
