@@ -452,56 +452,104 @@
 
     // ====== VIDEO GENERATION ======
     function generateVideoScene(container, prompt, callback) {
-      var seed = Math.floor(Math.random() * 999999);
+      var uid = 'v' + Math.floor(Math.random() * 999999);
       var t0 = Date.now();
+
       container.innerHTML =
         '<div style="display:flex;align-items:center;justify-content:center;height:220px;background:var(--bg2);border-radius:12px;flex-direction:column;gap:12px">' +
         '<div class="spin"></div>' +
-        '<div id="vst'+seed+'" style="color:var(--text-muted);font-size:14px;text-align:center">🎬 جاري توليد الفيديو...<br><small>يستغرق 20-40 ثانية</small></div>' +
+        '<div id="' + uid + 'st" style="color:var(--text-muted);font-size:14px;text-align:center">🎬 جاري توليد الفيديو...<br><small>يستغرق 30-60 ثانية</small></div>' +
         '</div>';
-      var stEl = container.querySelector('[id^="vst"]');
 
-      // Try Pollinations video endpoint first
-      var videoUrl = 'https://video.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?seed=' + seed;
+      function upd(msg) { var e = document.getElementById(uid+'st'); if (e) e.innerHTML = msg; }
+
+      // Try real video API first
       var v = document.createElement('video');
       v.muted = true; v.loop = true; v.playsInline = true; v.controls = true;
-      v.style.cssText = 'width:100%;border-radius:12px';
-
-      var vTimer = setTimeout(function(){ v.src = ''; fallbackToScene(); }, 20000);
-
+      var vt = setTimeout(function() { v.onerror = null; v.src = ''; buildFrames(); }, 15000);
       v.onloadeddata = function() {
-        clearTimeout(vTimer);
+        clearTimeout(vt);
         container.innerHTML = '';
+        v.style.cssText = 'width:100%;border-radius:12px';
         container.appendChild(v);
         v.play().catch(function(){});
-        if (callback) callback(Date.now() - t0, 'video');
+        callback && callback(Date.now()-t0, 'video');
       };
-      v.onerror = function() { clearTimeout(vTimer); fallbackToScene(); };
-      v.src = videoUrl; v.load();
+      v.onerror = function() { clearTimeout(vt); buildFrames(); };
+      v.src = 'https://video.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?seed=' + uid.slice(1);
+      v.load();
 
-      function fallbackToScene() {
-        if (stEl) stEl.innerHTML = '🎨 جاري توليد مشهد سينمائي...<br><small>يستغرق 15-40 ثانية</small>';
-        loadAIImage(container, prompt + ', cinematic wide angle shot, dramatic lighting, movie still', 'cinematic', 1280, 720, function(elapsed) {
-          var img = container.querySelector('.ai-img');
-          if (img) {
-            var wrap = img.closest('.img-wrap');
-            if (wrap) {
-              wrap.classList.add('vid-player');
-              var spo = wrap.querySelector('.spo');
-              if (spo) spo.style.display = 'none';
-              img.style.cssText = 'width:100%;display:block;animation:kenBurns 8s ease-in-out infinite alternate;transform-origin:center center';
-              var ov = document.createElement('div');
-              ov.className = 'vid-overlay';
-              ov.innerHTML = '<div class="vid-bar"><div class="vid-bar-fill"></div></div><div class="vid-controls"><span>▶</span><span style="flex:1"></span><span>0:08</span></div>';
-              var badge = document.createElement('div');
-              badge.className = 'vid-badge';
-              badge.textContent = '🎬 AI Scene';
-              wrap.appendChild(ov);
-              wrap.appendChild(badge);
-            }
-          }
-          if (callback) callback(elapsed, 'animated');
+      // Generate 3 frames with different angles then cross-fade
+      function buildFrames() {
+        var base = +uid.slice(1);
+        var framePrompts = [
+          prompt + ', cinematic wide shot, dramatic lighting',
+          prompt + ', in motion, dynamic angle, cinematic',
+          prompt + ', close up shot, cinematic lighting'
+        ];
+        var loaded = 0, srcs = [];
+        framePrompts.forEach(function(fp, i) {
+          var img = new Image();
+          img.onload = function() { srcs[i] = img.src; done(); };
+          img.onerror = function() { done(); };
+          img.src = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(fp) +
+            '?width=1280&height=720&seed=' + (base + i) + '&nologo=true';
         });
+        function done() {
+          loaded++;
+          upd('🎬 جاري توليد الحركة (' + loaded + '/3)...<br><small>يستغرق 30-60 ثانية</small>');
+          if (loaded === 3) renderFrames(srcs.filter(Boolean));
+        }
+      }
+
+      function renderFrames(srcs) {
+        if (!srcs.length) { callback && callback(0, 'error'); return; }
+        var n = srcs.length, dur = n * 3;
+
+        // Inject per-frame keyframes
+        var old = document.getElementById(uid+'css'); if (old) old.remove();
+        var st = document.createElement('style'); st.id = uid+'css';
+        var kbFrom = ['scale(1) translate(0,0)','scale(1.1) translate(-2%,-1%)','scale(1.05) translate(1%,0.5%)'];
+        var kbTo   = ['scale(1.1) translate(-1%,-0.5%)','scale(1) translate(1%,0.5%)','scale(1.08) translate(-0.5%,-1%)'];
+        var css = '';
+        srcs.forEach(function(_, i) {
+          var step = 100 / n;
+          var fi = (i * step).toFixed(1), ho = (i * step + step * 0.6).toFixed(1), fo = (i * step + step * 0.85).toFixed(1);
+          css += '@keyframes ' + uid + 'f' + i + '{';
+          if (i === 0) css += '0%{opacity:1}' + ho + '%{opacity:1}' + fo + '%{opacity:0}95%{opacity:0}100%{opacity:1}';
+          else css += '0%{opacity:0}' + fi + '%{opacity:0}' + (parseFloat(fi)+3).toFixed(1) + '%{opacity:1}' + ho + '%{opacity:1}' + fo + '%{opacity:0}100%{opacity:0}';
+          css += '}@keyframes ' + uid + 'k' + i + '{from{transform:' + kbFrom[i%3] + '}to{transform:' + kbTo[i%3] + '}}';
+        });
+        st.textContent = css;
+        document.head.appendChild(st);
+
+        // Build DOM
+        container.innerHTML = '';
+        var wrap = document.createElement('div');
+        wrap.className = 'img-wrap vid-player';
+        wrap.style.cssText = 'position:relative;overflow:hidden;border-radius:12px;background:#000';
+        container.appendChild(wrap);
+
+        srcs.forEach(function(src, i) {
+          var el = document.createElement('img');
+          el.src = src;
+          el.style.cssText = 'width:100%;display:block;' +
+            'position:' + (i === 0 ? 'relative' : 'absolute') + ';top:0;left:0;' +
+            'animation:' + uid + 'f' + i + ' ' + dur + 's ease-in-out infinite,' +
+                           uid + 'k' + i + ' ' + (dur*0.9).toFixed(1) + 's ease-in-out infinite alternate;' +
+            'transform-origin:center center';
+          wrap.appendChild(el);
+        });
+
+        var ov = document.createElement('div');
+        ov.className = 'vid-overlay';
+        ov.innerHTML = '<div class="vid-bar"><div class="vid-bar-fill" style="animation-duration:' + dur + 's"></div></div>' +
+          '<div class="vid-controls"><span>▶</span><span style="flex:1"></span><span>0:' + (dur < 10 ? '0'+dur : dur) + '</span></div>';
+        var badge = document.createElement('div');
+        badge.className = 'vid-badge'; badge.textContent = '🎬 AI Video';
+        wrap.appendChild(ov); wrap.appendChild(badge);
+
+        callback && callback(Date.now()-t0, 'animated');
       }
     }
 
