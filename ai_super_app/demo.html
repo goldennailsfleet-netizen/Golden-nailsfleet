@@ -264,8 +264,8 @@
             <form id="image-form">
               <div class="input-group"><label>وصف الصورة</label><textarea id="image-prompt" placeholder="مثال: فتاة جميلة في حديقة ورود" rows="3" maxlength="500"></textarea></div>
               <div class="form-row">
-                <div class="input-group"><label>الحجم</label><select id="image-size"><option>1024x1024</option><option>512x512</option><option>1792x1024</option></select></div>
-                <div class="input-group"><label>الأسلوب</label><select id="image-style"><option value="">افتراضي</option><option value="photorealistic">واقعي</option><option value="anime">أنمي</option><option value="oil_painting">لوحة زيتية</option><option value="digital_art">فن رقمي</option><option value="cinematic">سينمائي</option><option value="3d">ثلاثي الأبعاد</option></select></div>
+                <div class="input-group"><label>الحجم</label><select id="image-size"><option value="1024x1024">1024×1024 قياسي</option><option value="1920x1080">1920×1080 HD</option><option value="2560x1440">2560×1440 2K</option><option value="3840x2160">3840×2160 4K</option><option value="1792x1024">1792×1024 أفقي</option><option value="1024x1792">1024×1792 عمودي</option></select></div>
+                <div class="input-group"><label>الأسلوب</label><select id="image-style"><option value="photorealistic">واقعي احترافي</option><option value="hyperrealistic">خارق الواقعية 8K</option><option value="8k">8K فائق الدقة</option><option value="4k">4K احترافي</option><option value="cinematic">سينمائي 4K</option><option value="anime">أنمي</option><option value="oil_painting">لوحة زيتية</option><option value="digital_art">فن رقمي 8K</option><option value="3d">ثلاثي الأبعاد</option></select></div>
               </div>
               <button type="submit" class="btn btn-primary btn-full" id="img-gen-btn">🎨 توليد الصورة</button>
             </form>
@@ -433,21 +433,31 @@
     ];
 
     // ====== IMAGE URL BUILDER ======
+    var STYLE_MAP = {
+      'photorealistic': { suffix:', ultra photorealistic DSLR photograph, hyperrealistic skin texture, 8K UHD, sharp focus, natural subsurface scattering, lifelike eyes, natural lighting, bokeh background', model:'flux-realism' },
+      'hyperrealistic': { suffix:', hyperrealistic photography, ultra detailed pores and skin texture, 8K UHD, professional studio lighting, lifelike facial features, high dynamic range, physically accurate', model:'flux-realism' },
+      '4k':            { suffix:', 4K ultra HD, photorealistic, ultra sharp focus, professional photography, perfect balanced lighting, intricate details', model:'flux-realism' },
+      '8k':            { suffix:', 8K ultra HD resolution, hyperrealistic, maximum detail, award-winning photography, ultra fine detail on every element, perfect composition', model:'flux-pro' },
+      'anime':         { suffix:', anime style, vibrant colors, ultra detailed, studio Ghibli quality, cel shading, soft lighting', model:'flux' },
+      'oil_painting':  { suffix:', oil painting masterpiece, museum quality, textured brushstrokes, dramatic chiaroscuro lighting, ultra detailed', model:'flux' },
+      'digital_art':   { suffix:', digital art, concept art, artstation trending, ultra detailed, 8K resolution, dramatic lighting', model:'flux' },
+      'cinematic':     { suffix:', cinematic 4K, anamorphic lens, dramatic golden hour lighting, movie still, depth of field, film grain, IMAX quality', model:'flux-realism' },
+      '3d':            { suffix:', 3D render, Unreal Engine 5, octane render, ultra photorealistic, 8K, global illumination, subsurface scattering', model:'flux' }
+    };
+
     function buildImgUrl(prompt, style, w, h, seed) {
-      var p = prompt;
-      if (hasArabic(p)) p = translateAr(p);
-      var styleMap = {
-        'photorealistic': ', photorealistic photograph, 8k, ultra detailed',
-        'anime': ', anime style, manga art, vibrant colors, cel shading',
-        'oil_painting': ', oil painting, classic art, textured brushstrokes, masterpiece',
-        'digital_art': ', digital art, concept art, trending on artstation, detailed',
-        'cinematic': ', cinematic lighting, dramatic scene, movie still, depth of field',
-        '3d': ', 3D render, octane render, unreal engine, detailed 3D art'
-      };
-      if (style && styleMap[style]) p += styleMap[style];
-      p += ', high quality, masterpiece';
+      var p = hasArabic(prompt) ? translateAr(prompt) : prompt;
+      var model = 'flux-realism';
+      if (style && STYLE_MAP[style]) {
+        p += STYLE_MAP[style].suffix;
+        model = STYLE_MAP[style].model;
+      } else {
+        p += ', ultra photorealistic, hyperrealistic, 8K UHD, ultra detailed';
+      }
+      p += ', masterpiece, best quality, intricate fine details, perfect anatomy';
       if (!seed) seed = Math.floor(Math.random() * 999999);
-      return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(p) + '?width=' + w + '&height=' + h + '&nologo=true&seed=' + seed;
+      return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(p) +
+        '?width=' + w + '&height=' + h + '&nologo=true&seed=' + seed + '&model=' + model;
     }
 
     // ====== VIDEO GENERATION ======
@@ -483,9 +493,9 @@
       function buildFrames() {
         var base = +uid.slice(1);
         var framePrompts = [
-          prompt + ', cinematic wide shot, dramatic lighting',
-          prompt + ', in motion, dynamic angle, cinematic',
-          prompt + ', close up shot, cinematic lighting'
+          prompt + ', ultra photorealistic, cinematic 4K wide shot, dramatic lighting, hyperrealistic details, sharp focus',
+          prompt + ', ultra photorealistic, dynamic motion, action shot, cinematic 4K, motion blur, intricate details',
+          prompt + ', ultra photorealistic, extreme close up, cinematic 4K, dramatic lighting, ultra fine details, sharp focus'
         ];
         var loaded = 0, srcs = [];
         framePrompts.forEach(function(fp, i) {
@@ -564,10 +574,10 @@
 
       var urls = [
         buildImgUrl(prompt, style, w, h, seed1),
-        buildImgUrl(prompt, style, Math.min(w,512), Math.min(h,512), seed2),
-        PROXIES[0].wrap(buildImgUrl(prompt, style, 512, 512, seed3)),
-        PROXIES[1].wrap(buildImgUrl(prompt, '', 256, 256, seed1)),
-        'https://image.pollinations.ai/prompt/' + encodeURIComponent(hasArabic(prompt)?translateAr(prompt):prompt) + '?width=256&height=256&nologo=true&seed=' + seed2
+        buildImgUrl(prompt, style, Math.min(w,1024), Math.min(h,1024), seed2),
+        PROXIES[0].wrap(buildImgUrl(prompt, style, 1024, 1024, seed3)),
+        PROXIES[1].wrap(buildImgUrl(prompt, 'photorealistic', 512, 512, seed1)),
+        'https://image.pollinations.ai/prompt/' + encodeURIComponent((hasArabic(prompt)?translateAr(prompt):prompt) + ', ultra photorealistic, 8K, hyperrealistic') + '?width=512&height=512&nologo=true&seed=' + seed2 + '&model=flux-realism'
       ];
       var maxAttempts = urls.length;
 
@@ -956,7 +966,7 @@
         var cid = 'imgc' + genId();
         bbl.innerHTML = '🎨 جاري توليد الصورة...<br><br><div id="'+cid+'"></div>';
         var container = document.getElementById(cid);
-        loadAIImage(container, prompt, '', 512, 512, function(elapsed) {
+        loadAIImage(container, prompt, 'hyperrealistic', 1024, 1024, function(elapsed) {
           if (elapsed > 0) toast('تم توليد الصورة!', 'success');
           $('#chat-messages').scrollTop = $('#chat-messages').scrollHeight;
           state.busy = false;
