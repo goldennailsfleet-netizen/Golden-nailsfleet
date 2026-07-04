@@ -1342,22 +1342,19 @@
         callAI(msg, function(text, err) {
           removeTyping();
           if (text) {
+            // Text chat ALWAYS shows text — never dispatch image/video regardless of AI output
+            var displayText = text;
             var cmd = tryParseJSON(text);
-            if (cmd && cmd.type && (cmd.type === 'image' || cmd.type === 'video' || cmd.type === 'code')) {
-              dispatchAICommand(cmd, t0);
-            } else {
-              // If AI returned JSON for a text response, extract the text content
-              var displayText = text;
-              if (cmd && typeof cmd === 'object') {
-                displayText = cmd.message || cmd.response || cmd.content || cmd.text ||
-                              cmd.answer || cmd.reply || cmd.result ||
-                              (cmd.error ? cmd.error : null) || text;
-              }
-              addMsg('assistant', displayText, 'AI Online', Date.now() - t0);
-              $('#model-badge').textContent = 'AI Online';
-              $('#model-badge').style.color = 'var(--accent)';
-              state.busy = false;
+            if (cmd && typeof cmd === 'object') {
+              // Extract text from any JSON the model might return
+              displayText = cmd.message || cmd.response || cmd.content || cmd.text ||
+                            cmd.answer || cmd.reply || cmd.result ||
+                            (cmd.error ? cmd.error : null) || text;
             }
+            addMsg('assistant', displayText, 'AI Online', Date.now() - t0);
+            $('#model-badge').textContent = 'AI Online';
+            $('#model-badge').style.color = 'var(--accent)';
+            state.busy = false;
           } else {
             var sr = smartLocalReply(msg);
             addMsg('assistant', sr.text, sr.model, 0);
