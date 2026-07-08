@@ -823,7 +823,7 @@
 
     // ====== IMAGE URL BUILDER ======
     // Short focused negatives — Pollinations ignores long ones
-    var NEG_PHOTO = 'ugly, deformed, extra fingers, missing fingers, bad hands, distorted face, blurry, cartoon, watermark, text, low quality, bad anatomy, rough skin, skin artifacts, dry skin';
+    var NEG_PHOTO = 'ugly, deformed, extra fingers, missing fingers, bad hands, mutated hands, distorted face, disfigured, blurry, out of focus, cartoon, watermark, text, signature, low quality, bad anatomy, rough skin, skin artifacts, grainy, noisy, pixelated, oversaturated, draft, amateur';
     var NEG_ANIME = 'ugly, bad anatomy, extra fingers, bad hands, blurry, watermark, text, photorealistic';
     var NEG_3D    = 'ugly, bad anatomy, flat 2d, blurry, watermark, text, low quality';
     var NEG_BASE  = 'ugly, blurry, watermark, text, low quality, bad anatomy';
@@ -959,7 +959,7 @@
       }
     }
 
-    // ====== IMAGE LOADER WITH MULTI-RETRY ======
+    // ====== IMAGE LOADER — QUALITY-FIRST MULTI-RETRY ======
     function loadAIImage(container, prompt, style, w, h, callback) {
       var id = genId();
       var t0 = Date.now();
@@ -968,28 +968,62 @@
       var seed2 = Math.floor(Math.random() * 999999);
       var seed3 = Math.floor(Math.random() * 999999);
 
-      var pBase = (hasArabic(prompt) ? translateAr(prompt) : prompt).substring(0, 150);
-      var negShort = NEG_PHOTO.substring(0, 100);
-      var negEnc   = encodeURIComponent(negShort);
-      var pEnc     = encodeURIComponent(pBase + ', natural light, correct anatomy, photorealistic');
+      var st    = STYLE_MAP[style] || STYLE_MAP['hyperrealistic'];
+      var pBase = (hasArabic(prompt) ? translateAr(prompt) : prompt).substring(0, 200);
+      // Quality-boosted full prompt
+      var pFull = pBase + ', ' + st.suffix + ', masterpiece, best quality, ultra detailed, sharp focus, professional';
+      if (pFull.length > 450) pFull = pFull.substring(0, 450);
+      // Shorter variant for fallback URLs
+      var pShort = pBase + ', ' + st.suffix;
+      if (pShort.length > 250) pShort = pShort.substring(0, 250);
 
-      // Strategy: start with fast 'flux' model at small size, then escalate to flux-pro
+      var negFull  = NEG_PHOTO + ', worst quality, low resolution, jpeg artifacts, noise, grain, amateur';
+      var negShort = NEG_PHOTO.substring(0, 120);
+
+      var W = Math.min(w || 1024, 1024);
+      var H = Math.min(h || 1024, 1024);
+
+      var pFullEnc  = encodeURIComponent(pFull);
+      var pShortEnc = encodeURIComponent(pShort);
+      var negFullEnc  = encodeURIComponent(negFull);
+      var negShortEnc = encodeURIComponent(negShort);
+
+      function q(p, W, H, model, seed, neg) {
+        return 'https://image.pollinations.ai/prompt/' + p +
+          '?width=' + W + '&height=' + H +
+          '&model=' + model + '&nologo=true&seed=' + seed +
+          '&negative=' + neg;
+      }
+
+      // Quality-first strategy: flux-pro with full prompt, then escalating fallbacks
       var urls = [
-        'https://image.pollinations.ai/prompt/' + pEnc + '?width=768&height=768&nologo=true&seed=' + seed1 + '&model=flux&negative=' + negEnc,
-        buildImgUrl(prompt, style, 1024, 1024, seed1),
-        buildImgUrl(prompt, style, 896, 896, seed2),
-        'https://image.pollinations.ai/prompt/' + pEnc + '?width=768&height=768&nologo=true&seed=' + seed2 + '&model=flux-pro&negative=' + negEnc,
-        PROXIES[0].wrap('https://image.pollinations.ai/prompt/' + pEnc + '?width=768&height=768&nologo=true&seed=' + seed3 + '&model=flux'),
-        'https://image.pollinations.ai/prompt/' + pEnc + '?width=512&height=512&nologo=true&seed=' + seed3 + '&model=flux'
+        q(pFullEnc,  W,   H,   'flux-pro', seed1, negFullEnc),   // best: full prompt, full size
+        q(pFullEnc,  W,   H,   'flux-pro', seed2, negFullEnc),   // retry: diff seed, same quality
+        q(pShortEnc, 896, 896, 'flux-pro', seed3, negShortEnc),  // smaller size, still flux-pro
+        q(pShortEnc, 768, 768, 'flux-pro', seed1, negShortEnc),  // 768 flux-pro
+        q(pShortEnc, W,   H,   'flux',     seed2, negShortEnc),  // flux fast, full size
+        q(pShortEnc, 768, 768, 'flux',     seed3, negShortEnc)   // last resort
       ];
+      // Timeout per attempt (ms) — longer for quality attempts
+      var timeouts = [65000, 60000, 50000, 40000, 30000, 20000];
+      var msgs = [
+        '🎨 جاري الإنشاء بأعلى جودة (flux‑pro)...',
+        '🔄 محاولة ثانية بـ flux‑pro...',
+        '🔄 flux‑pro بحجم أصغر قليلاً...',
+        '🔄 flux‑pro 768px...',
+        '⚡ نموذج سريع (flux)...',
+        '📐 آخر محاولة...'
+      ];
+
       var maxAttempts = urls.length;
       var timerInterval = null;
+      var imgTimeout = null;
 
       container.innerHTML =
         '<div class="img-wrap">' +
           '<div class="spo" id="spo'+id+'">' +
             '<div class="spin"></div>' +
-            '<div class="ltxt" id="st'+id+'">🎨 جاري توليد الصورة...<br><small id="stm'+id+'">0 ثانية</small></div>' +
+            '<div class="ltxt" id="st'+id+'">' + msgs[0] + '<br><small id="stm'+id+'">0 ثانية</small></div>' +
           '</div>' +
           '<img class="ai-img" id="im'+id+'" alt="AI Generated" crossorigin="anonymous" />' +
         '</div>' +
@@ -1004,15 +1038,16 @@
       var acts   = document.getElementById('ia'+id);
       var dlnk   = document.getElementById('dl'+id);
 
-      // Live elapsed timer
-      timerInterval = setInterval(function() {
-        if (stimer) stimer.textContent = Math.round((Date.now()-t0)/1000) + ' ثانية';
-      }, 1000);
-
-      var imgTimeout = null;
+      function startTimer() {
+        var tStart = Date.now();
+        timerInterval = setInterval(function() {
+          if (stimer) stimer.textContent = Math.round((Date.now()-tStart)/1000) + ' ثانية';
+        }, 1000);
+      }
+      startTimer();
 
       function cleanup() {
-        if (imgTimeout) { clearTimeout(imgTimeout); imgTimeout = null; }
+        if (imgTimeout)    { clearTimeout(imgTimeout);  imgTimeout    = null; }
         if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
       }
 
@@ -1029,44 +1064,34 @@
         cleanup();
         attempt++;
         if (attempt < maxAttempts) {
-          var msgs = [
-            '🔄 جودة أعلى (flux-pro)...',
-            '🔄 حجم مختلف...',
-            '🔄 سرعة أكبر...',
-            '🌐 عبر بروكسي...',
-            '📐 حجم أصغر (آخر محاولة)...'
-          ];
-          if (stxt) stxt.innerHTML = (msgs[attempt-1] || '🔄 محاولة '+(attempt+1)+'...') + '<br><small id="stm'+id+'">0 ثانية</small>';
+          if (stxt) stxt.innerHTML = msgs[attempt] + '<br><small id="stm'+id+'">0 ثانية</small>';
           stimer = document.getElementById('stm'+id);
-          var tStart = Date.now();
-          timerInterval = setInterval(function() {
-            if (stimer) stimer.textContent = Math.round((Date.now()-tStart)/1000) + ' ثانية';
-          }, 1000);
+          startTimer();
           img.removeAttribute('crossorigin');
           img.src = '';
           img.src = urls[attempt];
-          imgTimeout = setTimeout(tryNext, 25000);
+          imgTimeout = setTimeout(tryNext, timeouts[attempt]);
         } else {
           if (overlay) {
             overlay.innerHTML =
               '<div class="ltxt">' +
               '<div style="font-size:28px;margin-bottom:8px">❌</div>' +
               '<div style="color:var(--danger);font-weight:600;margin-bottom:8px">فشل توليد الصورة</div>' +
-              '<small style="color:var(--text-muted);line-height:1.8">• خدمة Pollinations مشغولة — انتظر دقيقة وأعد المحاولة<br>' +
+              '<small style="color:var(--text-muted);line-height:1.8">• خدمة Pollinations مشغولة — انتظر دقيقة وحاول مجدداً<br>' +
               '• جرب كتابة الوصف بالإنجليزي<br>' +
-              '• جرب حجماً أصغر</small><br><br>' +
-              '<button onclick="this.closest(\'.gen-result\').querySelector(\'form\') && document.getElementById(\'img-gen-btn\').click()" ' +
-              'style="padding:8px 20px;border-radius:20px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-family:inherit">🔄 إعادة المحاولة</button>' +
+              '• قلّل الحجم من الإعدادات</small><br><br>' +
+              '<button onclick="document.getElementById(\'img-gen-btn\') && document.getElementById(\'img-gen-btn\').click()" ' +
+              'style="padding:8px 20px;border-radius:20px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-family:inherit;font-size:14px">🔄 إعادة المحاولة</button>' +
               '</div>';
           }
           if (callback) callback(-1);
         }
       }
 
-      img.onload = success;
+      img.onload  = success;
       img.onerror = tryNext;
-      img.src = urls[0];
-      imgTimeout = setTimeout(tryNext, 25000);
+      img.src     = urls[0];
+      imgTimeout  = setTimeout(tryNext, timeouts[0]);
     }
 
     // ====== AI CHAT API WITH CONVERSATION HISTORY ======
@@ -2252,35 +2277,82 @@
     function aiTransformImage(aiKey, customPromptOverride) {
       var prompt = customPromptOverride || AI_PROMPTS[aiKey];
       if (!prompt) return;
-      var statusEl  = document.getElementById('ai-gen-status');
-      var textEl    = document.getElementById('ai-gen-text');
+      var statusEl   = document.getElementById('ai-gen-status');
+      var textEl     = document.getElementById('ai-gen-text');
       var resultCard = document.getElementById('ai-result-card');
       var resultImg  = document.getElementById('ai-result-img');
       $$('.ai-preset-btn').forEach(function(b){ b.classList.add('ai-loading'); });
       statusEl.classList.remove('hidden');
-      textEl.textContent = '🎨 جاري الإنشاء بـ AI...';
       resultCard.classList.add('hidden');
       resultImg.src = '';
-      var seed = Math.floor(Math.random() * 999999);
-      var finalPrompt = prompt + ', masterpiece, best quality, highly detailed, 8k resolution, professional photography, award winning';
-      var negPrompt = 'ugly, deformed, blurry, low quality, watermark, text, bad anatomy, cartoon, sketch, amateur, poorly drawn';
-      var url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(finalPrompt) +
-        '?width=768&height=768&model=flux-pro&nologo=true&seed=' + seed +
-        '&negative=' + encodeURIComponent(negPrompt);
-      var img = new Image();
-      img.onload = function() {
-        $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
-        statusEl.classList.add('hidden');
-        resultImg.src = url;
-        resultCard.classList.remove('hidden');
-        toast('✨ تم إنشاء الصورة بـ AI', 'success');
-      };
-      img.onerror = function() {
-        $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
-        textEl.textContent = '❌ فشل التوليد — حاول مرة أخرى';
-        toast('فشل التوليد', 'error');
-      };
-      img.src = url;
+
+      var seeds = [
+        Math.floor(Math.random() * 999999),
+        Math.floor(Math.random() * 999999),
+        Math.floor(Math.random() * 999999)
+      ];
+      var attempt = 0;
+      var negPrompt = 'ugly, deformed, blurry, low quality, watermark, text, bad anatomy, cartoon, sketch, amateur, poorly drawn, noise, grain';
+      var negEnc = encodeURIComponent(negPrompt);
+      var finalPrompt = prompt + ', masterpiece, best quality, highly detailed, 8k resolution, professional photography, award winning, ultra realistic';
+
+      var t0 = Date.now();
+      var timerIv = setInterval(function() {
+        if (textEl) {
+          var s = Math.round((Date.now()-t0)/1000);
+          textEl.textContent = '🎨 جاري الإنشاء بـ AI... (' + s + ' ث)';
+        }
+      }, 1000);
+
+      function buildUrl(seed, w) {
+        return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(finalPrompt) +
+          '?width=' + w + '&height=' + w + '&model=flux-pro&nologo=true&seed=' + seed +
+          '&negative=' + negEnc;
+      }
+
+      var configs = [
+        { seed: seeds[0], w: 1024 },
+        { seed: seeds[1], w: 1024 },
+        { seed: seeds[2], w: 896  }
+      ];
+
+      function tryAttempt() {
+        if (attempt >= configs.length) {
+          clearInterval(timerIv);
+          $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
+          textEl.textContent = '❌ فشل التوليد — حاول مرة أخرى';
+          toast('فشل التوليد', 'error');
+          return;
+        }
+        var cfg = configs[attempt];
+        textEl.textContent = '🎨 جاري الإنشاء' + (attempt > 0 ? ' (محاولة '+(attempt+1)+')' : '') + '...';
+        var url = buildUrl(cfg.seed, cfg.w);
+        var img = new Image();
+        var tmr = setTimeout(function() {
+          img.onload = img.onerror = null;
+          img.src = '';
+          attempt++;
+          tryAttempt();
+        }, 70000);
+        img.onload = function() {
+          clearTimeout(tmr);
+          clearInterval(timerIv);
+          $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
+          statusEl.classList.add('hidden');
+          resultImg.src = url;
+          resultCard.classList.remove('hidden');
+          var elapsed = ((Date.now()-t0)/1000).toFixed(1);
+          toast('✨ تم إنشاء الصورة بـ AI في ' + elapsed + ' ث', 'success');
+        };
+        img.onerror = function() {
+          clearTimeout(tmr);
+          attempt++;
+          tryAttempt();
+        };
+        img.src = url;
+      }
+
+      tryAttempt();
     }
 
     function formatSize(b) {
