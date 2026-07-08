@@ -163,16 +163,56 @@
     .vid-controls{display:flex;align-items:center;gap:8px;color:#fff;font-size:12px}
     .vid-badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
 
-    /* ====== FILES PAGE ====== */
+    /* ====== FILES PAGE — PRO EDITOR ====== */
     .drop-zone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:36px 20px;text-align:center;cursor:pointer;transition:.3s;background:var(--bg2);margin-bottom:16px}
     .drop-zone:hover,.drop-zone.drag-over{border-color:var(--primary);background:rgba(108,92,231,.08)}
     .drop-zone .dz-icon{font-size:48px;margin-bottom:8px}
     .drop-zone p{color:var(--text-muted);font-size:13px;margin:4px 0}
-    .editor-controls{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:16px}
-    .editor-controls label{font-size:12px;color:var(--text-muted);display:flex;flex-direction:column;gap:4px}
-    .editor-controls input[type=range]{width:100%;accent-color:var(--primary)}
-    .editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
     .file-info-box{margin-top:12px;padding:12px;background:var(--bg2);border-radius:var(--radius);font-size:13px;color:var(--text-muted)}
+    /* editor header + tabs */
+    .editor-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+    .editor-tabs{display:flex;gap:4px;flex-wrap:wrap}
+    .etab{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-size:13px;font-family:inherit;transition:.2s}
+    .etab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .etab:hover:not(.active){background:var(--bg2);color:var(--text)}
+    .etab-panel{display:block}.etab-panel.hidden{display:none}
+    /* canvas area */
+    .canvas-area{background:repeating-conic-gradient(var(--bg2) 0% 25%,var(--bg) 0% 50%) 0 0/20px 20px;border-radius:var(--radius);overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:140px;margin-bottom:14px;position:relative}
+    #edit-canvas{max-width:100%;max-height:420px;display:block;border-radius:4px}
+    /* adjustments tab */
+    .ctrl-row{display:grid;grid-template-columns:80px 1fr 34px;align-items:center;gap:8px;margin-bottom:6px}
+    .ctrl-label{font-size:12px;color:var(--text-muted);text-align:right;white-space:nowrap}
+    .ctrl-val{font-size:11px;color:var(--primary);text-align:center;font-weight:600}
+    .ctrl-row input[type=range]{width:100%;accent-color:var(--primary);height:4px;cursor:pointer}
+    /* effects grid */
+    .effects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px}
+    .effect-card{border:2px solid var(--border);border-radius:var(--radius);padding:6px 4px 5px;text-align:center;cursor:pointer;font-size:11px;color:var(--text-muted);background:var(--bg2);transition:.2s;font-family:inherit;line-height:1.3}
+    .effect-card:hover{border-color:var(--primary);color:var(--primary)}.effect-card.active{border-color:var(--primary);background:rgba(108,92,231,.12);color:var(--primary);font-weight:600}
+    .ep{width:100%;aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;margin-bottom:3px;background:linear-gradient(135deg,#a855f7 0%,#6c5ce7 100%);color:#fff}
+    .ep-none{filter:none}.ep-vivid{filter:saturate(200%) contrast(120%)}.ep-dramatic{filter:contrast(150%) brightness(75%)}.ep-bw{filter:grayscale(100%) contrast(115%)}
+    .ep-vintage{filter:sepia(70%) contrast(88%) brightness(88%)}.ep-warm{filter:sepia(30%) saturate(150%) hue-rotate(-15deg)}.ep-cold{filter:saturate(70%) hue-rotate(185deg) brightness(108%)}
+    .ep-cinematic{filter:contrast(125%) saturate(75%) brightness(88%)}.ep-soft{filter:brightness(112%) contrast(84%) saturate(88%) blur(0.5px)}
+    .ep-sunset{filter:sepia(45%) hue-rotate(-25deg) saturate(160%) brightness(107%)}.ep-night{filter:hue-rotate(205deg) brightness(65%) saturate(130%) contrast(135%)}
+    .ep-spring{filter:saturate(140%) hue-rotate(12deg) brightness(110%) contrast(92%)}.ep-fade{filter:brightness(120%) contrast(78%) saturate(55%)}
+    .ep-sepia{filter:sepia(100%) contrast(108%)}.ep-neon{filter:saturate(220%) contrast(160%) brightness(125%) hue-rotate(265deg)}.ep-matte{filter:contrast(88%) saturate(65%) brightness(108%)}
+    /* ai panel */
+    .ai-section-title{font-size:13px;font-weight:600;color:var(--text-muted);margin:14px 0 8px;display:flex;align-items:center;gap:6px}
+    .ai-preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-bottom:4px}
+    .ai-preset-btn{padding:9px 6px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);cursor:pointer;font-size:12px;font-family:inherit;transition:.2s;text-align:center;line-height:1.4}
+    .ai-preset-btn:hover{border-color:var(--primary);background:rgba(108,92,231,.1);color:var(--primary)}
+    .ai-preset-btn.ai-loading{opacity:.5;pointer-events:none;animation:pulse 1s ease-in-out infinite}
+    .ai-result-card{margin-top:12px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+    .ai-result-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .ai-result-header span{font-size:13px;font-weight:600}
+    .ai-result-card img{width:100%;display:block}
+    /* tools grid */
+    .tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+    .tool-card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 8px;text-align:center;cursor:pointer;background:var(--bg2);color:var(--text);transition:.2s;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:24px;border-width:1px}
+    .tool-card span{font-size:11px;color:var(--text-muted)}.tool-card:hover{border-color:var(--primary);background:rgba(108,92,231,.08)}
+    .tool-card.active-tool{border-color:var(--primary);background:rgba(108,92,231,.15)}
+    .text-tool-panel{margin-top:10px;padding:12px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+    .editor-action-bar{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+    .export-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
     /* ====== CODE PAGE ====== */
     .code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:12px}
@@ -252,7 +292,7 @@
         <button class="nav-item active" data-page="chat"><span>💬</span><span>المحادثة</span></button>
         <button class="nav-item" data-page="image"><span>🎨</span><span>توليد الصور</span></button>
         <button class="nav-item" data-page="video"><span>🎬</span><span>توليد الفيديو</span></button>
-        <button class="nav-item" data-page="files"><span>📁</span><span>الملفات</span></button>
+        <button class="nav-item" data-page="files"><span>🎨</span><span>تعديل الصور</span></button>
         <button class="nav-item" data-page="code"><span>💻</span><span>الأكواد</span></button>
         <button class="nav-item" data-page="web"><span>🌐</span><span>تصفح الويب</span></button>
         <button class="nav-item" data-page="vpn"><span>🔒</span><span>حالة VPN</span></button>
@@ -396,33 +436,177 @@
 
       <div id="page-files" class="page">
         <div class="gen-container">
+          <!-- Upload Zone -->
           <div class="gen-card">
-            <h3>📁 رفع وتعديل الملفات</h3>
+            <h3>🎨 استوديو تعديل الصور</h3>
             <div class="drop-zone" id="drop-zone">
               <input type="file" id="file-input" style="display:none" accept="image/*,video/*,.pdf,.txt">
-              <div class="dz-icon">📂</div>
-              <p>اسحب ملفاتك هنا أو انقر للاختيار</p>
-              <p><small>صور، فيديو، PDF، نصوص</small></p>
-              <button class="btn btn-primary btn-sm" id="dz-btn">اختر ملف</button>
+              <div class="dz-icon">🖼️</div>
+              <p style="font-size:15px;font-weight:600;color:var(--text)">اسحب صورتك هنا أو انقر للاختيار</p>
+              <p><small>JPG • PNG • WEBP • GIF</small></p>
+              <button class="btn btn-primary btn-sm" id="dz-btn">📂 اختر ملفاً</button>
             </div>
             <div id="file-info-box" class="file-info-box hidden"></div>
           </div>
+
+          <!-- Pro Image Editor -->
           <div id="image-editor-card" class="gen-card hidden">
-            <h3>🖼️ تعديل الصورة</h3>
-            <canvas id="edit-canvas" style="max-width:100%;border-radius:8px;display:block;margin:0 auto"></canvas>
-            <div class="editor-controls">
-              <label>السطوع <input type="range" id="ed-bright" min="-100" max="100" value="0"></label>
-              <label>التباين <input type="range" id="ed-contrast" min="-100" max="100" value="0"></label>
-              <label>التشبع <input type="range" id="ed-sat" min="-100" max="100" value="0"></label>
-              <label>الضبابية <input type="range" id="ed-blur" min="0" max="10" value="0" step="0.5"></label>
+            <div class="editor-header">
+              <h3 style="margin:0">🎨 استوديو التعديل الاحترافي</h3>
+              <div class="editor-tabs" id="editor-tabs">
+                <button class="etab active" data-tab="adjust">🎚️ تعديلات</button>
+                <button class="etab" data-tab="effects">✨ تأثيرات</button>
+                <button class="etab" data-tab="ai">🤖 AI ذكي</button>
+                <button class="etab" data-tab="tools">🛠️ أدوات</button>
+              </div>
             </div>
-            <div class="editor-actions">
-              <button class="btn btn-primary btn-sm" id="ed-rotate-btn">↩️ تدوير</button>
-              <button class="btn btn-accent btn-sm" id="ed-reset-btn">♻️ إعادة تعيين</button>
-              <button class="btn btn-outline btn-sm" id="ed-save-btn">💾 حفظ</button>
-              <button class="btn btn-outline btn-sm" id="ed-ai-btn">✨ تحسين بالـ AI</button>
+
+            <!-- Canvas Display -->
+            <div class="canvas-area" id="canvas-area">
+              <canvas id="edit-canvas"></canvas>
+            </div>
+
+            <!-- TAB: Adjustments -->
+            <div class="etab-panel" id="etab-adjust">
+              <div class="ctrl-row"><span class="ctrl-label">☀️ السطوع</span><input type="range" id="ed-bright" min="-100" max="100" value="0"><span class="ctrl-val" id="val-bright">0</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">◑ التباين</span><input type="range" id="ed-contrast" min="-100" max="100" value="0"><span class="ctrl-val" id="val-contrast">0</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">🎨 التشبع</span><input type="range" id="ed-sat" min="-100" max="100" value="0"><span class="ctrl-val" id="val-sat">0</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">🌡️ الدفء</span><input type="range" id="ed-warm" min="-60" max="60" value="0"><span class="ctrl-val" id="val-warm">0</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">🔆 الإضاءة</span><input type="range" id="ed-high" min="-80" max="80" value="0"><span class="ctrl-val" id="val-high">0</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">🌑 الظلال</span><input type="range" id="ed-shad" min="-80" max="80" value="0"><span class="ctrl-val" id="val-shad">0</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">💧 الضبابية</span><input type="range" id="ed-blur" min="0" max="15" value="0" step="0.5"><span class="ctrl-val" id="val-blur">0</span></div>
+              <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                <button class="btn btn-accent btn-sm" id="ed-auto-btn">✨ تحسين تلقائي</button>
+                <button class="btn btn-outline btn-sm" id="ed-reset-btn">↺ إعادة تعيين</button>
+              </div>
+            </div>
+
+            <!-- TAB: Effects Presets -->
+            <div class="etab-panel hidden" id="etab-effects">
+              <div class="effects-grid">
+                <button class="effect-card active" data-effect="none"><div class="ep ep-none">A</div>عادي</button>
+                <button class="effect-card" data-effect="vivid"><div class="ep ep-vivid">A</div>حيوي</button>
+                <button class="effect-card" data-effect="dramatic"><div class="ep ep-dramatic">A</div>درامي</button>
+                <button class="effect-card" data-effect="bw"><div class="ep ep-bw">A</div>أبيض وأسود</button>
+                <button class="effect-card" data-effect="vintage"><div class="ep ep-vintage">A</div>عتيق</button>
+                <button class="effect-card" data-effect="warm"><div class="ep ep-warm">A</div>دافئ</button>
+                <button class="effect-card" data-effect="cold"><div class="ep ep-cold">A</div>بارد</button>
+                <button class="effect-card" data-effect="cinematic"><div class="ep ep-cinematic">A</div>سينمائي</button>
+                <button class="effect-card" data-effect="soft"><div class="ep ep-soft">A</div>ناعم</button>
+                <button class="effect-card" data-effect="sunset"><div class="ep ep-sunset">A</div>غروب</button>
+                <button class="effect-card" data-effect="night"><div class="ep ep-night">A</div>ليلي</button>
+                <button class="effect-card" data-effect="spring"><div class="ep ep-spring">A</div>ربيعي</button>
+                <button class="effect-card" data-effect="fade"><div class="ep ep-fade">A</div>باهت</button>
+                <button class="effect-card" data-effect="sepia"><div class="ep ep-sepia">A</div>سيبيا</button>
+                <button class="effect-card" data-effect="neon"><div class="ep ep-neon">A</div>نيون</button>
+                <button class="effect-card" data-effect="matte"><div class="ep ep-matte">A</div>ماتي</button>
+              </div>
+            </div>
+
+            <!-- TAB: AI Smart -->
+            <div class="etab-panel hidden" id="etab-ai">
+              <p class="ai-section-title">🎨 تحويل النمط الفني</p>
+              <div class="ai-preset-grid">
+                <button class="ai-preset-btn" data-ai="style:anime">🎌<br>أنمي</button>
+                <button class="ai-preset-btn" data-ai="style:oil">🖼️<br>زيتي</button>
+                <button class="ai-preset-btn" data-ai="style:pencil">✏️<br>رصاص</button>
+                <button class="ai-preset-btn" data-ai="style:watercolor">💧<br>مائية</button>
+                <button class="ai-preset-btn" data-ai="style:pixar">🎬<br>بيكسار 3D</button>
+                <button class="ai-preset-btn" data-ai="style:comic">💥<br>كوميك</button>
+                <button class="ai-preset-btn" data-ai="style:scifi">🚀<br>خيال علمي</button>
+                <button class="ai-preset-btn" data-ai="style:fantasy">🧙<br>فانتازيا</button>
+              </div>
+              <p class="ai-section-title">🌍 تغيير الخلفية</p>
+              <div class="ai-preset-grid">
+                <button class="ai-preset-btn" data-ai="bg:beach">🏖️<br>شاطئ</button>
+                <button class="ai-preset-btn" data-ai="bg:mountains">🏔️<br>جبال</button>
+                <button class="ai-preset-btn" data-ai="bg:city">🌃<br>مدينة ليلية</button>
+                <button class="ai-preset-btn" data-ai="bg:forest">🌲<br>غابة سحرية</button>
+                <button class="ai-preset-btn" data-ai="bg:space">🌌<br>الفضاء</button>
+                <button class="ai-preset-btn" data-ai="bg:paris">🗼<br>باريس</button>
+                <button class="ai-preset-btn" data-ai="bg:studio">📸<br>استوديو</button>
+                <button class="ai-preset-btn" data-ai="bg:desert">🏜️<br>صحراء</button>
+              </div>
+              <p class="ai-section-title">👗 تغيير الأزياء</p>
+              <div class="ai-preset-grid">
+                <button class="ai-preset-btn" data-ai="outfit:formal">👔<br>رسمي</button>
+                <button class="ai-preset-btn" data-ai="outfit:sports">🏃<br>رياضي</button>
+                <button class="ai-preset-btn" data-ai="outfit:royal">👑<br>ملكي</button>
+                <button class="ai-preset-btn" data-ai="outfit:traditional">🧕<br>تقليدي</button>
+                <button class="ai-preset-btn" data-ai="outfit:astronaut">🧑‍🚀<br>رائد فضاء</button>
+                <button class="ai-preset-btn" data-ai="outfit:hero">🦸<br>بطل خارق</button>
+                <button class="ai-preset-btn" data-ai="outfit:knight">⚔️<br>فارس</button>
+                <button class="ai-preset-btn" data-ai="outfit:casual">👕<br>كاجوال</button>
+              </div>
+              <p class="ai-section-title">✨ تعديل مخصص بالوصف</p>
+              <div style="display:flex;gap:8px">
+                <input type="text" id="ai-custom-prompt" placeholder="مثال: ارتداء بدلة فضائية في باريس عند الغروب..." style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit;font-size:13px" dir="rtl">
+                <button class="btn btn-primary btn-sm" id="ai-custom-btn">✨ توليد</button>
+              </div>
+              <div id="ai-gen-status" class="hidden" style="margin-top:10px;padding:12px;background:var(--bg2);border-radius:var(--radius);text-align:center;color:var(--text-muted);font-size:13px">
+                <span id="ai-gen-text">⏳ جاري التوليد...</span>
+              </div>
+              <div id="ai-result-card" class="ai-result-card hidden" style="margin-top:12px">
+                <div class="ai-result-header">
+                  <span>🤖 النسخة المولّدة بـ AI</span>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-sm btn-outline" id="ai-result-save">💾 حفظ</button>
+                    <button class="btn btn-sm btn-outline" id="ai-result-copy">🔗 نسخ رابط</button>
+                  </div>
+                </div>
+                <img id="ai-result-img" src="" alt="AI Result" loading="lazy">
+              </div>
+            </div>
+
+            <!-- TAB: Tools -->
+            <div class="etab-panel hidden" id="etab-tools">
+              <div class="tools-grid">
+                <button class="tool-card" id="ed-rotate-btn">↩️<span>تدوير 90°</span></button>
+                <button class="tool-card" id="ed-fliph-btn">↔️<span>قلب أفقي</span></button>
+                <button class="tool-card" id="ed-flipv-btn">↕️<span>قلب عمودي</span></button>
+                <button class="tool-card" id="ed-text-btn">🔤<span>إضافة نص</span></button>
+                <button class="tool-card" id="ed-vignette-btn">🔲<span>ظل الإطار</span></button>
+                <button class="tool-card" id="ed-border-btn">🖼️<span>إطار أبيض</span></button>
+              </div>
+              <!-- Text Tool Panel -->
+              <div id="text-tool-panel" class="text-tool-panel hidden">
+                <input type="text" id="ed-text-input" placeholder="اكتب النص هنا..." style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;width:100%;box-sizing:border-box" dir="rtl">
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                  <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">الحجم <input type="range" id="ed-text-size" min="14" max="96" value="36" style="width:80px;accent-color:var(--primary)"> <span id="val-text-size">36</span></label>
+                  <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">اللون <input type="color" id="ed-text-color" value="#ffffff" style="width:36px;height:28px;border:none;border-radius:4px;cursor:pointer;background:none"></label>
+                  <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">الموضع
+                    <select id="ed-text-pos" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:inherit;font-size:12px">
+                      <option value="bottom">أسفل</option>
+                      <option value="center">وسط</option>
+                      <option value="top">أعلى</option>
+                    </select>
+                  </label>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-primary btn-sm" id="ed-text-apply">✅ تطبيق</button>
+                  <button class="btn btn-outline btn-sm" id="ed-text-clear">🗑️ مسح النصوص</button>
+                  <button class="btn btn-outline btn-sm" id="ed-text-cancel">✕ إغلاق</button>
+                </div>
+              </div>
+              <!-- Export -->
+              <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+                <p style="font-size:12px;color:var(--text-muted);margin:0 0 8px">💾 تحميل الصورة المعدّلة</p>
+                <div class="export-row">
+                  <button class="btn btn-primary btn-sm" id="ed-save-png">📥 PNG (عالية الجودة)</button>
+                  <button class="btn btn-outline btn-sm" id="ed-save-jpg">📥 JPG</button>
+                  <button class="btn btn-outline btn-sm" id="ed-copy-clip">📋 نسخ للحافظة</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="editor-action-bar">
+              <span id="img-size-info" style="font-size:11px;color:var(--text-muted)"></span>
+              <button class="btn btn-outline btn-sm" id="ed-new-btn">🔄 صورة جديدة</button>
             </div>
           </div>
+
+          <!-- Non-image file preview -->
           <div id="file-preview-card" class="gen-card hidden">
             <h3 id="file-preview-title">معاينة الملف</h3>
             <div id="file-preview-content"></div>
@@ -560,7 +744,12 @@
       aiMode: 'general',
       theme: (function(){ try { return localStorage.getItem('ai-theme') || 'default'; } catch(e) { return 'default'; } })(),
       editorImg: null,
-      editorRot: 0
+      editorRot: 0,
+      editorFlipH: false, editorFlipV: false,
+      editorVignette: false, editorBorder: false,
+      editorHue: 0, editorSepia: 0, editorGrayscale: 0,
+      editorTextOverlays: [],
+      editorEffect: 'none'
     };
 
     // ====== ARABIC→ENGLISH DICTIONARY ======
@@ -1823,9 +2012,55 @@
       });
     });
 
-    // ====== FILES PAGE ======
+    // ====== FILES PAGE — PRO EDITOR ======
     var editCanvas = document.getElementById('edit-canvas');
     var editCtx = editCanvas ? editCanvas.getContext('2d') : null;
+
+    var EFFECT_PRESETS = {
+      none:     {bright:0,contrast:0,sat:0,warm:0,high:0,shad:0,blur:0,hue:0,sepia:0,gray:0},
+      vivid:    {bright:5,contrast:20,sat:100,warm:0,high:10,shad:0,blur:0,hue:0,sepia:0,gray:0},
+      dramatic: {bright:-12,contrast:50,sat:20,warm:0,high:-10,shad:-20,blur:0,hue:0,sepia:0,gray:0},
+      bw:       {bright:0,contrast:10,sat:-100,warm:0,high:0,shad:0,blur:0,hue:0,sepia:0,gray:100},
+      vintage:  {bright:-10,contrast:-10,sat:-20,warm:20,high:-5,shad:10,blur:0,hue:0,sepia:60,gray:0},
+      warm:     {bright:5,contrast:5,sat:30,warm:30,high:5,shad:-5,blur:0,hue:-15,sepia:20,gray:0},
+      cold:     {bright:5,contrast:5,sat:-10,warm:-40,high:5,shad:5,blur:0,hue:185,sepia:0,gray:0},
+      cinematic:{bright:-5,contrast:22,sat:-20,warm:0,high:-15,shad:-10,blur:0,hue:0,sepia:0,gray:0},
+      soft:     {bright:10,contrast:-15,sat:-10,warm:10,high:5,shad:15,blur:1,hue:0,sepia:0,gray:0},
+      sunset:   {bright:5,contrast:10,sat:40,warm:50,high:0,shad:-10,blur:0,hue:-25,sepia:30,gray:0},
+      night:    {bright:-20,contrast:30,sat:20,warm:-30,high:-20,shad:-30,blur:0,hue:205,sepia:0,gray:0},
+      spring:   {bright:10,contrast:-5,sat:30,warm:10,high:10,shad:10,blur:0,hue:12,sepia:0,gray:0},
+      fade:     {bright:15,contrast:-22,sat:-40,warm:10,high:10,shad:20,blur:0,hue:0,sepia:0,gray:0},
+      sepia:    {bright:0,contrast:5,sat:-100,warm:0,high:0,shad:0,blur:0,hue:0,sepia:100,gray:0},
+      neon:     {bright:20,contrast:50,sat:200,warm:0,high:20,shad:0,blur:0,hue:265,sepia:0,gray:0},
+      matte:    {bright:5,contrast:-10,sat:-30,warm:0,high:-10,shad:10,blur:0,hue:0,sepia:0,gray:0}
+    };
+
+    var AI_PROMPTS = {
+      'style:anime':    'beautiful anime style illustration, Studio Ghibli inspired, highly detailed, vibrant colors, cinematic anime art, digital painting masterpiece',
+      'style:oil':      'classical oil painting, museum quality artwork, impasto technique, detailed brushwork, gallery masterpiece, old masters style',
+      'style:pencil':   'detailed pencil sketch drawing, professional illustration, fine art pencil technique, charcoal and graphite, realistic sketch art',
+      'style:watercolor':'delicate watercolor painting, soft washes, professional watercolor illustration, artistic, beautiful color blending',
+      'style:pixar':    'Pixar 3D animation movie style, cinematic lighting, ultra detailed CGI render, Disney Pixar masterpiece, 4K animation',
+      'style:comic':    'comic book art style, vibrant bold colors, dynamic inking, Marvel DC superhero comic illustration, halftone dots',
+      'style:scifi':    'futuristic cyberpunk science fiction digital art, neon lights, epic sci-fi scene, Blade Runner aesthetic, ultra detailed',
+      'style:fantasy':  'epic high fantasy digital painting, magical atmosphere, detailed fantasy world, Lord of the Rings style, cinematic',
+      'bg:beach':       'portrait photo, person at stunning tropical beach, crystal clear turquoise water, golden sand, palm trees, golden hour photography, professional 85mm portrait',
+      'bg:mountains':   'portrait photo, person standing in dramatic mountain landscape, snow capped peaks, epic vista, dramatic clouds, professional landscape portrait photography',
+      'bg:city':        'portrait photo, person in modern city at night, bokeh city lights, urban skyline, neon reflections, cinematic night photography',
+      'bg:forest':      'portrait photo, person in magical enchanted forest, golden rays of light through trees, lush green nature, fairytale forest photography',
+      'bg:space':       'portrait photo, person in outer space, earth visible, stars and galaxies, cinematic space scene, sci-fi epic photography',
+      'bg:paris':       'portrait photo, person at Eiffel Tower Paris France, beautiful Parisian architecture, bokeh background, golden hour, professional travel photography',
+      'bg:studio':      'professional studio portrait photography, perfect three-point lighting, seamless grey background, high-end photography, award-winning portrait',
+      'bg:desert':      'portrait photo, person in dramatic golden desert at sunset, vast sand dunes, epic landscape, professional travel photography, warm golden light',
+      'outfit:formal':  'person wearing elegant tailored business suit, premium fashion, professional attire, high fashion photography, studio lighting, stylish and powerful look',
+      'outfit:sports':  'person wearing professional athletic performance sportswear, dynamic pose, sports photography, Nike Adidas style athletic wear, energetic',
+      'outfit:royal':   'person wearing magnificent royal crown and regal clothing, royal palace grand interior, regal portrait photography, majestic and powerful',
+      'outfit:traditional':'person wearing beautiful traditional cultural dress, cultural heritage fashion, intricate embroidery, professional fashion photography',
+      'outfit:astronaut':'person wearing NASA astronaut spacesuit, ISS space station background, ultra realistic photography, cinematic lighting, heroic pose',
+      'outfit:hero':    'person in heroic superhero costume and cape, dynamic superhero pose, comic book style, epic cinematic lighting, ultra detailed',
+      'outfit:knight':  'person in detailed medieval knight armor, castle background, epic fantasy photography, dramatic cinematic lighting, heroic',
+      'outfit:casual':  'person wearing stylish modern casual fashion, lifestyle photography, natural daylight, trendy street style, fashion editorial'
+    };
 
     function initEditor(imgSrc) {
       var img = new Image();
@@ -1833,37 +2068,177 @@
       img.onload = function() {
         state.editorImg = img;
         state.editorRot = 0;
-        $('#ed-bright').value = 0; $('#ed-contrast').value = 0;
-        $('#ed-sat').value = 0; $('#ed-blur').value = 0;
+        state.editorFlipH = false; state.editorFlipV = false;
+        state.editorVignette = false; state.editorBorder = false;
+        state.editorHue = 0; state.editorSepia = 0; state.editorGrayscale = 0;
+        state.editorTextOverlays = [];
+        state.editorEffect = 'none';
+        var sliders = ['#ed-bright','#ed-contrast','#ed-sat','#ed-warm','#ed-high','#ed-shad','#ed-blur'];
+        sliders.forEach(function(s){ $(s).value = 0; });
+        updateSliderLabels();
+        $$('.effect-card').forEach(function(c){ c.classList.toggle('active', c.dataset.effect === 'none'); });
         redrawCanvas();
         document.getElementById('image-editor-card').classList.remove('hidden');
         $('#file-preview-card').classList.add('hidden');
+        $('#img-size-info').textContent = img.naturalWidth + '×' + img.naturalHeight + ' px';
+        // show adjust tab by default
+        switchEditorTab('adjust');
+        // hide AI result
+        document.getElementById('ai-result-card').classList.add('hidden');
+        document.getElementById('ai-gen-status').classList.add('hidden');
       };
       img.src = imgSrc;
+    }
+
+    function updateSliderLabels() {
+      var map = {bright:'val-bright',contrast:'val-contrast',sat:'val-sat',warm:'val-warm',high:'val-high',shad:'val-shad',blur:'val-blur'};
+      Object.keys(map).forEach(function(k) {
+        var el = document.getElementById(map[k]);
+        var sl = document.getElementById('ed-' + k);
+        if (el && sl) el.textContent = sl.value;
+      });
     }
 
     function redrawCanvas() {
       if (!editCtx || !state.editorImg) return;
       var img = state.editorImg;
-      var bright = parseInt($('#ed-bright').value) || 0;
-      var contrast = parseInt($('#ed-contrast').value) || 0;
-      var sat = parseInt($('#ed-sat').value) || 0;
-      var blur = parseFloat($('#ed-blur').value) || 0;
-      var rot = state.editorRot;
-      var sw = rot % 180 === 0 ? img.naturalWidth : img.naturalHeight;
+      var bright  = parseInt($('#ed-bright').value) || 0;
+      var contrast= parseInt($('#ed-contrast').value) || 0;
+      var sat     = parseInt($('#ed-sat').value) || 0;
+      var warm    = parseInt($('#ed-warm').value) || 0;
+      var high    = parseInt($('#ed-high').value) || 0;
+      var shad    = parseInt($('#ed-shad').value) || 0;
+      var blur    = parseFloat($('#ed-blur').value) || 0;
+      var hue     = state.editorHue || 0;
+      var sepia   = state.editorSepia || 0;
+      var gray    = state.editorGrayscale || 0;
+      var rot     = state.editorRot;
+      var flipH   = state.editorFlipH;
+      var flipV   = state.editorFlipV;
+
+      var sw = rot % 180 === 0 ? img.naturalWidth  : img.naturalHeight;
       var sh = rot % 180 === 0 ? img.naturalHeight : img.naturalWidth;
       var maxW = (editCanvas.parentElement ? editCanvas.parentElement.offsetWidth - 32 : 0) || 600;
-      var scale = Math.min(1, maxW / sw);
-      editCanvas.width = Math.round(sw * scale);
+      var scale = Math.min(1, maxW / sw, 420 / sh);
+      editCanvas.width  = Math.round(sw * scale);
       editCanvas.height = Math.round(sh * scale);
       editCtx.clearRect(0, 0, editCanvas.width, editCanvas.height);
       editCtx.save();
       editCtx.translate(editCanvas.width / 2, editCanvas.height / 2);
       editCtx.rotate(rot * Math.PI / 180);
-      editCtx.filter = 'brightness(' + (100 + bright) + '%) contrast(' + (100 + contrast) + '%) saturate(' + (100 + sat) + '%)' + (blur > 0 ? ' blur(' + blur + 'px)' : '');
+      editCtx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+      // Build CSS filter: warmth → hue-rotate, highlights/shadows → brightness tweak
+      var totalBright = 100 + bright + high * 0.4 + shad * 0.2;
+      var hueTotal = (warm > 0 ? -warm * 0.3 : warm * 0.3) + hue;
+      var filters = [
+        'brightness(' + totalBright + '%)',
+        'contrast(' + (100 + contrast) + '%)',
+        'saturate(' + (100 + sat) + '%)'
+      ];
+      if (gray > 0)   filters.push('grayscale(' + gray + '%)');
+      if (sepia > 0)  filters.push('sepia(' + sepia + '%)');
+      if (hueTotal !== 0) filters.push('hue-rotate(' + hueTotal.toFixed(1) + 'deg)');
+      if (blur > 0)   filters.push('blur(' + blur + 'px)');
+      editCtx.filter = filters.join(' ');
+
       var dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
       editCtx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
       editCtx.restore();
+
+      // Vignette (post-filter, pure canvas)
+      if (state.editorVignette) {
+        var cx = editCanvas.width / 2, cy = editCanvas.height / 2;
+        var r0 = Math.min(cx, cy) * 0.5, r1 = Math.max(cx, cy) * 1.1;
+        var grd = editCtx.createRadialGradient(cx, cy, r0, cx, cy, r1);
+        grd.addColorStop(0, 'rgba(0,0,0,0)');
+        grd.addColorStop(1, 'rgba(0,0,0,0.72)');
+        editCtx.fillStyle = grd;
+        editCtx.fillRect(0, 0, editCanvas.width, editCanvas.height);
+      }
+
+      // White border
+      if (state.editorBorder) {
+        var bw = Math.round(Math.min(editCanvas.width, editCanvas.height) * 0.045);
+        editCtx.strokeStyle = '#ffffff';
+        editCtx.lineWidth = bw * 2;
+        editCtx.strokeRect(0, 0, editCanvas.width, editCanvas.height);
+      }
+
+      // Text overlays
+      state.editorTextOverlays.forEach(function(ov) {
+        var size = parseInt(ov.size) || 36;
+        editCtx.font = 'bold ' + size + 'px Arial, sans-serif';
+        editCtx.textAlign = 'center';
+        editCtx.shadowColor = 'rgba(0,0,0,0.9)';
+        editCtx.shadowBlur = 6;
+        editCtx.fillStyle = ov.color || '#ffffff';
+        var y = ov.pos === 'top' ? size + 12
+               : ov.pos === 'center' ? editCanvas.height / 2
+               : editCanvas.height - 18;
+        editCtx.fillText(ov.text, editCanvas.width / 2, y);
+        editCtx.shadowBlur = 0;
+      });
+    }
+
+    function switchEditorTab(tab) {
+      $$('.etab').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === tab); });
+      $$('.etab-panel').forEach(function(p){ p.classList.add('hidden'); });
+      var panel = document.getElementById('etab-' + tab);
+      if (panel) panel.classList.remove('hidden');
+    }
+
+    function applyEffect(name) {
+      var p = EFFECT_PRESETS[name] || EFFECT_PRESETS.none;
+      $('#ed-bright').value   = p.bright;
+      $('#ed-contrast').value = p.contrast;
+      $('#ed-sat').value      = p.sat;
+      $('#ed-warm').value     = p.warm;
+      $('#ed-high').value     = p.high;
+      $('#ed-shad').value     = p.shad;
+      $('#ed-blur').value     = p.blur;
+      state.editorHue        = p.hue;
+      state.editorSepia      = p.sepia;
+      state.editorGrayscale  = p.gray;
+      state.editorEffect     = name;
+      updateSliderLabels();
+      $$('.effect-card').forEach(function(c){ c.classList.toggle('active', c.dataset.effect === name); });
+      redrawCanvas();
+    }
+
+    function aiTransformImage(aiKey) {
+      var prompt = AI_PROMPTS[aiKey];
+      if (!prompt) return;
+      var label = aiKey.split(':')[1] || aiKey;
+      // Mark all AI buttons as loading
+      $$('.ai-preset-btn').forEach(function(b){ b.classList.add('ai-loading'); });
+      var statusEl = document.getElementById('ai-gen-status');
+      var textEl = document.getElementById('ai-gen-text');
+      var resultCard = document.getElementById('ai-result-card');
+      statusEl.classList.remove('hidden');
+      textEl.textContent = '🎨 جاري الإنشاء بـ AI...';
+      resultCard.classList.add('hidden');
+      var seed = Math.floor(Math.random() * 999999);
+      var w = 768, h = 768;
+      var finalPrompt = prompt + ', masterpiece, best quality, highly detailed, 8k resolution, professional photography, award winning';
+      var url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(finalPrompt) +
+        '?width=' + w + '&height=' + h + '&model=flux-pro&nologo=true&seed=' + seed +
+        '&negative=' + encodeURIComponent('ugly, deformed, blurry, low quality, watermark, text, bad anatomy, cartoon, sketch, amateur');
+      var img = new Image();
+      img.onload = function() {
+        $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
+        statusEl.classList.add('hidden');
+        document.getElementById('ai-result-img').src = url;
+        resultCard.classList.remove('hidden');
+        toast('تم إنشاء الصورة بـ AI ✨', 'success');
+      };
+      img.onerror = function() {
+        $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
+        textEl.textContent = '❌ فشل التوليد، حاول مرة أخرى';
+        toast('فشل التوليد', 'error');
+      };
+      img.src = url;
+      document.getElementById('ai-result-img').src = '';
     }
 
     function formatSize(b) {
@@ -1923,30 +2298,189 @@
     $('#dz-btn').addEventListener('click', function(e) { e.stopPropagation(); $('#file-input').click(); });
     $('#file-input').addEventListener('change', function(e) { var f = e.target.files[0]; if (f) handleFile(f); });
 
-    ['#ed-bright','#ed-contrast','#ed-sat','#ed-blur'].forEach(function(sel) {
-      $(sel).addEventListener('input', redrawCanvas);
+    // Slider inputs → redraw + update labels
+    ['bright','contrast','sat','warm','high','shad','blur'].forEach(function(k) {
+      var el = document.getElementById('ed-' + k);
+      if (!el) return;
+      el.addEventListener('input', function() {
+        var lbl = document.getElementById('val-' + k);
+        if (lbl) lbl.textContent = el.value;
+        state.editorEffect = 'none'; // manual adjustment overrides preset
+        redrawCanvas();
+      });
     });
 
-    $('#ed-rotate-btn').addEventListener('click', function() { state.editorRot = (state.editorRot + 90) % 360; redrawCanvas(); });
-    $('#ed-reset-btn').addEventListener('click', function() {
-      state.editorRot = 0;
-      ['#ed-bright','#ed-contrast','#ed-sat','#ed-blur'].forEach(function(s){ $(s).value = 0; });
-      redrawCanvas();
+    // Editor tabs
+    $$('.etab').forEach(function(btn) {
+      btn.addEventListener('click', function() { switchEditorTab(btn.dataset.tab); });
     });
-    $('#ed-save-btn').addEventListener('click', function() {
-      if (!editCanvas || !editCanvas.width) { toast('لا توجد صورة', 'error'); return; }
-      var link = document.createElement('a');
-      link.download = 'edited-image.png';
-      link.href = editCanvas.toDataURL('image/png');
-      link.click();
-      toast('تم حفظ الصورة', 'success');
+
+    // Effect presets
+    $$('.effect-card').forEach(function(card) {
+      card.addEventListener('click', function() { applyEffect(card.dataset.effect); });
     });
-    $('#ed-ai-btn').addEventListener('click', function() {
+
+    // Auto-enhance
+    $('#ed-auto-btn').addEventListener('click', function() {
       if (!state.editorImg) { toast('لا توجد صورة', 'error'); return; }
-      $('#ed-bright').value = 10; $('#ed-contrast').value = 15;
-      $('#ed-sat').value = 20; $('#ed-blur').value = 0;
+      applyEffect('vivid');
+      $('#ed-bright').value = 8; $('#ed-contrast').value = 18;
+      updateSliderLabels(); redrawCanvas();
+      toast('✨ تم التحسين التلقائي', 'success');
+    });
+
+    // Reset
+    $('#ed-reset-btn').addEventListener('click', function() {
+      state.editorRot = 0; state.editorFlipH = false; state.editorFlipV = false;
+      state.editorVignette = false; state.editorBorder = false;
+      state.editorHue = 0; state.editorSepia = 0; state.editorGrayscale = 0;
+      state.editorTextOverlays = []; state.editorEffect = 'none';
+      $$('.tool-card').forEach(function(t){ t.classList.remove('active-tool'); });
+      applyEffect('none');
+      toast('تم إعادة التعيين', 'success');
+    });
+
+    // Tools tab buttons
+    $('#ed-rotate-btn').addEventListener('click', function() {
+      state.editorRot = (state.editorRot + 90) % 360; redrawCanvas(); toast('↩️ تدوير 90°', 'success');
+    });
+    $('#ed-fliph-btn').addEventListener('click', function() {
+      state.editorFlipH = !state.editorFlipH; redrawCanvas();
+      toast(state.editorFlipH ? '↔️ قلب أفقي' : '↔️ استعادة', 'success');
+    });
+    $('#ed-flipv-btn').addEventListener('click', function() {
+      state.editorFlipV = !state.editorFlipV; redrawCanvas();
+      toast(state.editorFlipV ? '↕️ قلب عمودي' : '↕️ استعادة', 'success');
+    });
+    $('#ed-vignette-btn').addEventListener('click', function() {
+      state.editorVignette = !state.editorVignette; redrawCanvas();
+      this.classList.toggle('active-tool', state.editorVignette);
+      toast(state.editorVignette ? '🔲 ظل الإطار مفعّل' : '🔲 إلغاء', 'success');
+    });
+    $('#ed-border-btn').addEventListener('click', function() {
+      state.editorBorder = !state.editorBorder; redrawCanvas();
+      this.classList.toggle('active-tool', state.editorBorder);
+      toast(state.editorBorder ? '🖼️ إطار مضاف' : '🖼️ إلغاء', 'success');
+    });
+
+    // Text tool
+    $('#ed-text-btn').addEventListener('click', function() {
+      var panel = document.getElementById('text-tool-panel');
+      var hidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !hidden);
+      this.classList.toggle('active-tool', hidden);
+    });
+    (function() {
+      var sizeEl = document.getElementById('ed-text-size');
+      if (sizeEl) sizeEl.addEventListener('input', function() { document.getElementById('val-text-size').textContent = sizeEl.value; });
+    })();
+    $('#ed-text-apply').addEventListener('click', function() {
+      var txt = document.getElementById('ed-text-input').value.trim();
+      if (!txt) { toast('اكتب نصاً أولاً', 'error'); return; }
+      state.editorTextOverlays.push({
+        text: txt,
+        size: document.getElementById('ed-text-size').value,
+        color: document.getElementById('ed-text-color').value,
+        pos: document.getElementById('ed-text-pos').value
+      });
       redrawCanvas();
-      toast('تم تطبيق تحسينات AI', 'success');
+      document.getElementById('ed-text-input').value = '';
+      toast('✅ تم إضافة النص', 'success');
+    });
+    $('#ed-text-clear').addEventListener('click', function() {
+      state.editorTextOverlays = []; redrawCanvas(); toast('تم مسح النصوص', 'success');
+    });
+    $('#ed-text-cancel').addEventListener('click', function() {
+      document.getElementById('text-tool-panel').classList.add('hidden');
+      document.getElementById('ed-text-btn').classList.remove('active-tool');
+    });
+
+    // Export buttons
+    $('#ed-save-png').addEventListener('click', function() {
+      if (!editCanvas || !editCanvas.width) { toast('لا توجد صورة', 'error'); return; }
+      var link = document.createElement('a'); link.download = 'edited-image.png';
+      link.href = editCanvas.toDataURL('image/png'); link.click();
+      toast('💾 تم حفظ PNG', 'success');
+    });
+    $('#ed-save-jpg').addEventListener('click', function() {
+      if (!editCanvas || !editCanvas.width) { toast('لا توجد صورة', 'error'); return; }
+      var link = document.createElement('a'); link.download = 'edited-image.jpg';
+      link.href = editCanvas.toDataURL('image/jpeg', 0.92); link.click();
+      toast('💾 تم حفظ JPG', 'success');
+    });
+    $('#ed-copy-clip').addEventListener('click', function() {
+      if (!editCanvas || !editCanvas.width) { toast('لا توجد صورة', 'error'); return; }
+      editCanvas.toBlob(function(blob) {
+        try {
+          navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(function(){
+            toast('📋 تم النسخ للحافظة', 'success');
+          }).catch(function(){ toast('النسخ غير مدعوم في هذا المتصفح', 'error'); });
+        } catch(e) { toast('النسخ غير مدعوم في هذا المتصفح', 'error'); }
+      });
+    });
+
+    // New image button
+    $('#ed-new-btn').addEventListener('click', function() {
+      document.getElementById('image-editor-card').classList.add('hidden');
+      $('#file-input').value = ''; $('#file-info-box').classList.add('hidden');
+    });
+
+    // AI presets
+    $$('.ai-preset-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var aiKey = btn.dataset.ai;
+        if (!aiKey) return;
+        aiTransformImage(aiKey);
+      });
+    });
+    $('#ai-custom-btn').addEventListener('click', function() {
+      var prompt = document.getElementById('ai-custom-prompt').value.trim();
+      if (!prompt) { toast('اكتب وصفاً أولاً', 'error'); return; }
+      var translated = hasArabic(prompt) ? translateAr(prompt) : prompt;
+      aiTransformImage('custom:' + translated);
+    });
+    // Override custom key in AI_PROMPTS at call time
+    var _origAiTransform = aiTransformImage;
+    aiTransformImage = function(aiKey) {
+      if (aiKey.startsWith('custom:')) {
+        var customPrompt = aiKey.slice(7);
+        var statusEl = document.getElementById('ai-gen-status');
+        var textEl   = document.getElementById('ai-gen-text');
+        var resultCard = document.getElementById('ai-result-card');
+        $$('.ai-preset-btn').forEach(function(b){ b.classList.add('ai-loading'); });
+        statusEl.classList.remove('hidden'); textEl.textContent = '🎨 جاري الإنشاء...';
+        resultCard.classList.add('hidden');
+        var seed = Math.floor(Math.random() * 999999);
+        var url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(customPrompt + ', masterpiece, highly detailed, 8k') +
+          '?width=768&height=768&model=flux-pro&nologo=true&seed=' + seed +
+          '&negative=' + encodeURIComponent('ugly, deformed, blurry, low quality, watermark, text');
+        var img = new Image();
+        img.onload = function() {
+          $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
+          statusEl.classList.add('hidden');
+          document.getElementById('ai-result-img').src = url;
+          resultCard.classList.remove('hidden');
+          toast('✨ تم الإنشاء', 'success');
+        };
+        img.onerror = function() {
+          $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
+          textEl.textContent = '❌ فشل، حاول مرة أخرى';
+        };
+        img.src = url;
+      } else {
+        _origAiTransform(aiKey);
+      }
+    };
+    $('#ai-result-save').addEventListener('click', function() {
+      var src = document.getElementById('ai-result-img').src;
+      if (!src) return;
+      var link = document.createElement('a'); link.download = 'ai-image.png'; link.href = src; link.click();
+      toast('💾 تم الحفظ', 'success');
+    });
+    $('#ai-result-copy').addEventListener('click', function() {
+      var src = document.getElementById('ai-result-img').src;
+      if (!src) return;
+      try { navigator.clipboard.writeText(src).then(function(){ toast('🔗 تم نسخ الرابط', 'success'); }); } catch(e) {}
     });
 
     // ====== CODE PAGE ======
