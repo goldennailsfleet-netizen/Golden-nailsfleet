@@ -177,7 +177,7 @@
     .etab:hover:not(.active){background:var(--bg2);color:var(--text)}
     .etab-panel{display:block}.etab-panel.hidden{display:none}
     /* canvas area */
-    .canvas-area{background:repeating-conic-gradient(var(--bg2) 0% 25%,var(--bg) 0% 50%) 0 0/20px 20px;border-radius:var(--radius);overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:140px;margin-bottom:14px;position:relative}
+    .canvas-area{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:140px;margin-bottom:14px;position:relative;padding:8px}
     #edit-canvas{max-width:100%;max-height:420px;display:block;border-radius:4px}
     /* adjustments tab */
     .ctrl-row{display:grid;grid-template-columns:80px 1fr 34px;align-items:center;gap:8px;margin-bottom:6px}
@@ -1209,11 +1209,11 @@
 
     // ====== WEB SEARCH AUGMENTATION ======
     var SEARCH_TRIGGERS = [
-      'ابحث','بحث عن','اعثر','ابحث لي','معلومات عن','من هو','من هي','ما هو','ما هي','ما هي',
+      'ابحث','بحث عن','اعثر','ابحث لي','معلومات عن','من هو','من هي','ما هو','ما هي',
       'متى','أين','اين','كيف يعمل','أخبرني عن','اخبرني','عرفني','أحدث','آخر أخبار',
       'جديد','أخبار','سعر','كم ثمن','كم سعر','كم تكلفة',
-      'اكتشف','ما معنى','تعريف','شرح','مقارنة',
-      'search','find','who is','what is','when','where','latest','news','price','define'
+      'اكتشف','ما معنى','تعريف','شرح','مقارنة','حول','عن',
+      'search','find','who is','what is','when','where','latest','news','price','define','about'
     ];
 
     function shouldSearch(msg) {
@@ -1237,60 +1237,78 @@
       if (!q) { callback(null); return; }
 
       var done = false;
-      function finish(ctx) { if (!done) { done = true; callback(ctx); } }
+      var wikiTimer = null;
+      var giveUpTimer = null;
+      function finish(ctx) {
+        if (done) return;
+        done = true;
+        if (wikiTimer)  clearTimeout(wikiTimer);
+        if (giveUpTimer) clearTimeout(giveUpTimer);
+        callback(ctx);
+      }
 
-      // Source 1: DuckDuckGo Instant Answer
-      var ddgUrl = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(q) + '&format=json&no_html=1&skip_disambig=1&t=superapp';
-      var ddgProxied = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(ddgUrl);
+      function proxyUrl(url) {
+        return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+      }
+
+      // Source 1: DuckDuckGo Instant Answer (via proxy)
+      var ddgUrl = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(q) + '&format=json&no_html=1&skip_disambig=1&t=aiapp';
       var x1 = new XMLHttpRequest();
-      x1.open('GET', ddgProxied, true); x1.timeout = 6000;
+      x1.open('GET', proxyUrl(ddgUrl), true); x1.timeout = 6000;
       x1.onload = function() {
         if (done) return;
         try {
           var d = JSON.parse(x1.responseText);
           var parts = [];
-          if (d.Answer) parts.push('إجابة مباشرة: ' + d.Answer);
+          if (d.Answer && d.Answer.length > 3) parts.push('إجابة مباشرة: ' + d.Answer);
           if (d.AbstractText && d.AbstractText.length > 20) parts.push(d.AbstractText);
           if (d.Definition && d.Definition.length > 10) parts.push('تعريف: ' + d.Definition);
           if (d.RelatedTopics) {
             d.RelatedTopics.slice(0, 3).forEach(function(t) {
-              if (t.Text && t.Text.length > 15) parts.push(t.Text);
+              if (t && t.Text && t.Text.length > 15) parts.push(t.Text);
             });
           }
           if (parts.length > 0) { finish(parts.join('\n\n')); return; }
         } catch(e) {}
-        // Fallback to Wikipedia
         fetchWikipedia(q, finish);
       };
       x1.onerror = x1.ontimeout = function() { if (!done) fetchWikipedia(q, finish); };
       x1.send();
 
-      // Source 2: Wikipedia summary API (parallel)
-      var wikiTimer = setTimeout(function() {
-        if (!done) fetchWikipedia(q, finish);
-      }, 3000);
+      // Source 2: Wikipedia (parallel fallback after 3.5s if DDG hasn't responded)
+      wikiTimer = setTimeout(function() { if (!done) fetchWikipedia(q, finish); }, 3500);
 
-      setTimeout(function() { finish(null); }, 8000);
+      // Hard timeout: give up after 9s to avoid hanging
+      giveUpTimer = setTimeout(function() { finish(null); }, 9000);
     }
 
     function fetchWikipedia(q, callback) {
       var lang = /[؀-ۿ]/.test(q) ? 'ar' : 'en';
       var wikiUrl = 'https://' + lang + '.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(q);
-      var proxied = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(wikiUrl);
-      var x = new XMLHttpRequest();
-      x.open('GET', proxied, true); x.timeout = 5000;
-      x.onload = function() {
-        try {
-          var d = JSON.parse(x.responseText);
-          if (d.extract && d.extract.length > 30) {
-            callback((d.title ? d.title + ': ' : '') + d.extract.substring(0, 600));
-            return;
-          }
-        } catch(e) {}
-        callback(null);
-      };
-      x.onerror = x.ontimeout = function() { callback(null); };
-      x.send();
+      var proxies = [
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(wikiUrl),
+        'https://corsproxy.io/?' + encodeURIComponent(wikiUrl)
+      ];
+      var tried = 0;
+      function tryNext() {
+        if (tried >= proxies.length) { callback(null); return; }
+        var url = proxies[tried++];
+        var x = new XMLHttpRequest();
+        x.open('GET', url, true); x.timeout = 5000;
+        x.onload = function() {
+          try {
+            var d = JSON.parse(x.responseText);
+            if (d.extract && d.extract.length > 30) {
+              callback((d.title ? d.title + ':\n' : '') + d.extract.substring(0, 700));
+              return;
+            }
+          } catch(e) {}
+          tryNext();
+        };
+        x.onerror = x.ontimeout = tryNext;
+        x.send();
+      }
+      tryNext();
     }
 
     // ====== INTENT DETECTION ======
@@ -2206,39 +2224,38 @@
       redrawCanvas();
     }
 
-    function aiTransformImage(aiKey) {
-      var prompt = AI_PROMPTS[aiKey];
+    function aiTransformImage(aiKey, customPromptOverride) {
+      var prompt = customPromptOverride || AI_PROMPTS[aiKey];
       if (!prompt) return;
-      var label = aiKey.split(':')[1] || aiKey;
-      // Mark all AI buttons as loading
-      $$('.ai-preset-btn').forEach(function(b){ b.classList.add('ai-loading'); });
-      var statusEl = document.getElementById('ai-gen-status');
-      var textEl = document.getElementById('ai-gen-text');
+      var statusEl  = document.getElementById('ai-gen-status');
+      var textEl    = document.getElementById('ai-gen-text');
       var resultCard = document.getElementById('ai-result-card');
+      var resultImg  = document.getElementById('ai-result-img');
+      $$('.ai-preset-btn').forEach(function(b){ b.classList.add('ai-loading'); });
       statusEl.classList.remove('hidden');
       textEl.textContent = '🎨 جاري الإنشاء بـ AI...';
       resultCard.classList.add('hidden');
+      resultImg.src = '';
       var seed = Math.floor(Math.random() * 999999);
-      var w = 768, h = 768;
       var finalPrompt = prompt + ', masterpiece, best quality, highly detailed, 8k resolution, professional photography, award winning';
+      var negPrompt = 'ugly, deformed, blurry, low quality, watermark, text, bad anatomy, cartoon, sketch, amateur, poorly drawn';
       var url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(finalPrompt) +
-        '?width=' + w + '&height=' + h + '&model=flux-pro&nologo=true&seed=' + seed +
-        '&negative=' + encodeURIComponent('ugly, deformed, blurry, low quality, watermark, text, bad anatomy, cartoon, sketch, amateur');
+        '?width=768&height=768&model=flux-pro&nologo=true&seed=' + seed +
+        '&negative=' + encodeURIComponent(negPrompt);
       var img = new Image();
       img.onload = function() {
         $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
         statusEl.classList.add('hidden');
-        document.getElementById('ai-result-img').src = url;
+        resultImg.src = url;
         resultCard.classList.remove('hidden');
-        toast('تم إنشاء الصورة بـ AI ✨', 'success');
+        toast('✨ تم إنشاء الصورة بـ AI', 'success');
       };
       img.onerror = function() {
         $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
-        textEl.textContent = '❌ فشل التوليد، حاول مرة أخرى';
+        textEl.textContent = '❌ فشل التوليد — حاول مرة أخرى';
         toast('فشل التوليد', 'error');
       };
       img.src = url;
-      document.getElementById('ai-result-img').src = '';
     }
 
     function formatSize(b) {
@@ -2410,13 +2427,23 @@
     });
     $('#ed-copy-clip').addEventListener('click', function() {
       if (!editCanvas || !editCanvas.width) { toast('لا توجد صورة', 'error'); return; }
-      editCanvas.toBlob(function(blob) {
-        try {
-          navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(function(){
-            toast('📋 تم النسخ للحافظة', 'success');
-          }).catch(function(){ toast('النسخ غير مدعوم في هذا المتصفح', 'error'); });
-        } catch(e) { toast('النسخ غير مدعوم في هذا المتصفح', 'error'); }
-      });
+      try {
+        if (navigator.clipboard && window.ClipboardItem) {
+          editCanvas.toBlob(function(blob) {
+            navigator.clipboard.write([new ClipboardItem({'image/png': blob})])
+              .then(function(){ toast('📋 تم النسخ للحافظة', 'success'); })
+              .catch(function(){
+                // Fallback: open image in new tab
+                var w = window.open(); w.document.write('<img src="' + editCanvas.toDataURL() + '">');
+                toast('افتح الصورة وانسخها يدوياً', 'success');
+              });
+          });
+        } else {
+          var w = window.open();
+          w.document.write('<img src="' + editCanvas.toDataURL() + '" style="max-width:100%">');
+          toast('افتح الصورة وانسخها من النافذة الجديدة', 'success');
+        }
+      } catch(e) { toast('النسخ غير مدعوم في هذا المتصفح', 'error'); }
     });
 
     // New image button
@@ -2437,40 +2464,8 @@
       var prompt = document.getElementById('ai-custom-prompt').value.trim();
       if (!prompt) { toast('اكتب وصفاً أولاً', 'error'); return; }
       var translated = hasArabic(prompt) ? translateAr(prompt) : prompt;
-      aiTransformImage('custom:' + translated);
+      aiTransformImage(null, translated);
     });
-    // Override custom key in AI_PROMPTS at call time
-    var _origAiTransform = aiTransformImage;
-    aiTransformImage = function(aiKey) {
-      if (aiKey.startsWith('custom:')) {
-        var customPrompt = aiKey.slice(7);
-        var statusEl = document.getElementById('ai-gen-status');
-        var textEl   = document.getElementById('ai-gen-text');
-        var resultCard = document.getElementById('ai-result-card');
-        $$('.ai-preset-btn').forEach(function(b){ b.classList.add('ai-loading'); });
-        statusEl.classList.remove('hidden'); textEl.textContent = '🎨 جاري الإنشاء...';
-        resultCard.classList.add('hidden');
-        var seed = Math.floor(Math.random() * 999999);
-        var url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(customPrompt + ', masterpiece, highly detailed, 8k') +
-          '?width=768&height=768&model=flux-pro&nologo=true&seed=' + seed +
-          '&negative=' + encodeURIComponent('ugly, deformed, blurry, low quality, watermark, text');
-        var img = new Image();
-        img.onload = function() {
-          $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
-          statusEl.classList.add('hidden');
-          document.getElementById('ai-result-img').src = url;
-          resultCard.classList.remove('hidden');
-          toast('✨ تم الإنشاء', 'success');
-        };
-        img.onerror = function() {
-          $$('.ai-preset-btn').forEach(function(b){ b.classList.remove('ai-loading'); });
-          textEl.textContent = '❌ فشل، حاول مرة أخرى';
-        };
-        img.src = url;
-      } else {
-        _origAiTransform(aiKey);
-      }
-    };
     $('#ai-result-save').addEventListener('click', function() {
       var src = document.getElementById('ai-result-img').src;
       if (!src) return;
